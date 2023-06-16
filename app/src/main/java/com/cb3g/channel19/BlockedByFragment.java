@@ -39,13 +39,10 @@ public class BlockedByFragment extends DialogFragment {
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setAdapter(new recycler_adapter(data));
-        binding.okay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                dismiss();
-            }
+        binding.okay.setOnClickListener(v -> {
+            context.sendBroadcast(new Intent("nineteenVibrate"));
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            dismiss();
         });
     }
 
@@ -56,7 +53,7 @@ public class BlockedByFragment extends DialogFragment {
     }
 
     class recycler_adapter extends RecyclerView.Adapter<recycler_adapter.MyViewHolder> {
-        private ArrayList<String> handles;
+        private final ArrayList<String> handles;
 
         public recycler_adapter(ArrayList<String> handles) {
             this.handles = handles;

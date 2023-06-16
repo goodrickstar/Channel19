@@ -13,7 +13,7 @@ import com.example.android.multidex.myapplication.R;
 import org.jetbrains.annotations.NotNull;
 
 public class Account extends Fragment {
-    private TextView statustv;
+    private TextView status;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -23,7 +23,7 @@ public class Account extends Fragment {
     @Override
     public void onViewCreated(@NotNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        statustv = view.findViewById(R.id.statustv);
+        status = view.findViewById(R.id.statustv);
     }
 
     @Override
@@ -33,7 +33,7 @@ public class Account extends Fragment {
     }
 
     public void setStatus(Boolean status) {
-        if (status) statustv.setText(R.string.pro_mode);
-        else statustv.setText(R.string.peak_tune);
+        if (status) this.status.setText(R.string.pro_mode);
+        else this.status.setText(R.string.peak_tune);
     }
 }

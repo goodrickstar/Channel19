@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -29,10 +28,10 @@ public class Blocked extends DialogFragment {
     private TextView count;
     private Context context;
     private SharedPreferences settings;
-    private List<String> ids = new ArrayList<>();
-    private List<String> handles = new ArrayList<>();
+    private final List<String> ids = new ArrayList<>();
+    private final List<String> handles = new ArrayList<>();
     private List<Block> photo, text, radio;
-    private RecycleAdapter adapter = new RecycleAdapter();
+    private final RecycleAdapter adapter = new RecycleAdapter();
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -77,38 +76,29 @@ public class Blocked extends DialogFragment {
         compileIds(photo);
         count = view.findViewById(R.id.middle);
         count.setText(String.valueOf(ids.size()));
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                switch (v.getId()) {
-                    case R.id.order:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        dismiss();
-                        break;
-                    case R.id.save:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        context.sendBroadcast(new Intent("nineteenUpdateBlocks").putExtra("photoIDs", RadioService.gson.toJson(photo)).putExtra("textIDs", RadioService.gson.toJson(text)).putExtra("blockedIDs", RadioService.gson.toJson(radio)));
-                        dismiss();
-                        break;
-                }
+        View.OnClickListener listener = v -> {
+            int id = v.getId();
+            if (id == R.id.order){
+                context.sendBroadcast(new Intent("nineteenVibrate"));
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+            } else if (id == R.id.save) {
+                context.sendBroadcast(new Intent("nineteenVibrate"));
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenUpdateBlocks").putExtra("photoIDs", RadioService.gson.toJson(photo)).putExtra("textIDs", RadioService.gson.toJson(text)).putExtra("blockedIDs", RadioService.gson.toJson(radio)));
             }
+            dismiss();
         };
         save.setOnClickListener(listener);
         cancel.setOnClickListener(listener);
         outside.setOnClickListener(listener);
-        clear.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                radio.clear();
-                photo.clear();
-                text.clear();
-                ids.clear();
-                adapter.notifyDataSetChanged();
-                return false;
-            }
+        clear.setOnLongClickListener(v -> {
+            context.sendBroadcast(new Intent("nineteenVibrate"));
+            radio.clear();
+            photo.clear();
+            text.clear();
+            ids.clear();
+            adapter.notifyDataSetChanged();
+            return false;
         });
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
@@ -129,25 +119,22 @@ public class Blocked extends DialogFragment {
         public void onClick(View view) {
             context.sendBroadcast(new Intent("nineteenVibrate"));
             String id = (String) view.getTag();
-            switch (view.getId()) {
-                case R.id.photo:
-                    for (int i = 0; i < photo.size(); i++) {
-                        if (photo.get(i).getI().equals(id)) photo.remove(i);
-                        adapter.notifyItemChanged(ids.indexOf(id));
-                    }
-                    break;
-                case R.id.text:
-                    for (int i = 0; i < text.size(); i++) {
-                        if (text.get(i).getI().equals(id)) text.remove(i);
-                        adapter.notifyItemChanged(ids.indexOf(id));
-                    }
-                    break;
-                case R.id.radio:
-                    for (int i = 0; i < radio.size(); i++) {
-                        if (radio.get(i).getI().equals(id)) radio.remove(i);
-                        adapter.notifyItemChanged(ids.indexOf(id));
-                    }
-                    break;
+            int x = view.getId();
+            if (x == R.id.photo){
+                for (int i = 0; i < photo.size(); i++) {
+                    if (photo.get(i).getI().equals(id)) photo.remove(i);
+                    adapter.notifyItemChanged(ids.indexOf(id));
+                }
+            } else if (x == R.id.text) {
+                for (int i = 0; i < text.size(); i++) {
+                    if (text.get(i).getI().equals(id)) text.remove(i);
+                    adapter.notifyItemChanged(ids.indexOf(id));
+                }
+            } else if (x == R.id.radio) {
+                for (int i = 0; i < radio.size(); i++) {
+                    if (radio.get(i).getI().equals(id)) radio.remove(i);
+                    adapter.notifyItemChanged(ids.indexOf(id));
+                }
             }
             if (ids.contains(id) && !listContainsId(photo, id) && !listContainsId(text, id) && !listContainsId(radio, id)) {
                 int index = ids.indexOf(id);

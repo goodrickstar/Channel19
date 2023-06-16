@@ -32,19 +32,19 @@ class Blank : DialogFragment(), View.OnClickListener {
     }
 
     override fun onClick(v: View) {
-        context!!.sendBroadcast(Intent("nineteenVibrate"))
-        context!!.sendBroadcast(Intent("nineteenClickSound"))
-        if (title?.text.toString() == "Profile Picture") context!!.sendBroadcast(Intent("nineteenPickProfile"))
+        requireContext().sendBroadcast(Intent("nineteenVibrate"))
+        requireContext().sendBroadcast(Intent("nineteenClickSound"))
+        if (title?.text.toString() == "Profile Picture") requireContext().sendBroadcast(Intent("nineteenPickProfile"))
         if (title?.text.toString() == "Please Update") gotoPlayStore()
-        if (title?.text.toString() == ("Permissions Needed")) context!!.sendBroadcast(Intent("nineteenAllow"))
-        if (title?.text.toString().contains("Location")) context!!.sendBroadcast(Intent("requestGPS"))
-        if (title?.text.toString().contains("Camera")) context!!.sendBroadcast(Intent("nineteenCamera"))
+        if (title?.text.toString() == ("Permissions Needed")) requireContext().sendBroadcast(Intent("nineteenAllow"))
+        if (title?.text.toString().contains("Location")) requireContext().sendBroadcast(Intent("requestGPS"))
+        if (title?.text.toString().contains("Camera")) requireContext().sendBroadcast(Intent("nineteenCamera"))
         dismiss()
     }
 
     private fun gotoPlayStore() {
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + context!!.packageName)).addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + requireContext().packageName)).addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_MULTIPLE_TASK))
         } catch (e: ActivityNotFoundException) {
             startActivity(Intent(Intent.ACTION_VIEW,
                     Uri.parse("http://play.google.com/store/apps/details?id=com.cb3g.channel19")))

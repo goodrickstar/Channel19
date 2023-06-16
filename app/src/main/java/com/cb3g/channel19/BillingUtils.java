@@ -26,12 +26,8 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-//mServerice Developer payload  "bGoa+V7g/yqDXvKRqq+JTFn4uQZbPiQJo4pf9RzJ"
-
 public class BillingUtils implements BillingClientStateListener {
     public boolean isConnected = false;
-    public final String OLD_SUBSCRIPTION = "activate";
-    public final String NEW_SUBSCRIPTION = "fivedollars";
 
     public BillingClient billingClient;
 
