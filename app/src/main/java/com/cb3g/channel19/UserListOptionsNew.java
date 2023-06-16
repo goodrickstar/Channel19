@@ -72,12 +72,9 @@ public class UserListOptionsNew extends DialogFragment {
         RadioService.occupied.set(true);
         if (!getArguments().isEmpty())
             user = new Gson().fromJson(getArguments().getString("user"), UserListEntry.class);
-        View.OnClickListener dismisser = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                dismiss();
-            }
+        View.OnClickListener dismisser = v1 -> {
+            Utils.vibrate(v1);
+            dismiss();
         };
         binding.handle.setText(user.getRadio_hanlde());
         binding.handle.setOnClickListener(dismisser);
@@ -102,21 +99,18 @@ public class UserListOptionsNew extends DialogFragment {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(seekBar);
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(seekBar);
             }
         });
-        binding.largeProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenBoxSound"));
-                if (MI != null) MI.streamFile(user.getProfileLink());
-            }
+        binding.largeProfile.setOnClickListener(v12 -> {
+            Utils.vibrate(v12);
+            context.sendBroadcast(new Intent("nineteenBoxSound"));
+            if (MI != null) MI.streamFile(user.getProfileLink());
         });
         binding.optionMenu.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.optionMenu.setHasFixedSize(true);
@@ -304,7 +298,7 @@ public class UserListOptionsNew extends DialogFragment {
         private View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenBoxSound"));
                 if (MI == null) return;
                 UserOption option = (UserOption) v.getTag(v.getId());

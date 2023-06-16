@@ -54,7 +54,7 @@ public class Driver extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         if (!RadioService.operator.getDisableProfile()) {
             binding.profilePicture.setOnClickListener(v -> {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 if (SI != null) SI.launchPicker(null, false);
             });
@@ -66,7 +66,7 @@ public class Driver extends Fragment {
         binding.blocked.setOnLongClickListener(v -> {
             if (SI != null) {
                 context.sendBroadcast(new Intent("nineteenClickSound"));
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 SI.checkBlocked();
             }
             return true;
@@ -155,9 +155,9 @@ public class Driver extends Fragment {
                             if (handler != null) handler.post(() -> {
                                 if (donations > 4)
                                     binding.starIm.setOnClickListener(v -> {
-                                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                                        Utils.vibrate(v);
                                         context.sendBroadcast(new Intent("nineteenClickSound"));
-                                        context.sendBroadcast(new Intent("starSelection"));
+                                        Utils.vibrate(v);
                                     });
                                 else binding.starIm.setOnClickListener(null);
                                 setRankAndStamp();

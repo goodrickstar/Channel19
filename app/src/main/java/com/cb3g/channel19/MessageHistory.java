@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,7 +41,6 @@ import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
-
 public class MessageHistory extends DialogFragment {
     private final recycler_adapter adapter = new recycler_adapter();
     private Context context;
@@ -84,8 +82,8 @@ public class MessageHistory extends DialogFragment {
         final TextView close = view.findViewById(R.id.close);
         close.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+            public void onClick(View v) {
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 dismiss();
             }
@@ -212,43 +210,34 @@ public class MessageHistory extends DialogFragment {
     }
 
     private class recycler_adapter extends RecyclerView.Adapter<MessageHistory.recycler_adapter.MyViewHolder> {
-
         private View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Utils.vibrate(v);
                 History history = (History) v.getTag(v.getId());
-                switch (v.getId()) {
-                    case R.id.option_image_view:
+                int id = v.getId();
+                if (id == R.id.option_image_view) {
+                    context.sendBroadcast(new Intent("nineteenClickSound"));
+                    if (MI != null) MI.streamFile(history.getProfileLink());
+                } else if (id == R.id.menu) {
+                    final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
+                    popupMenu.getMenu().add(1, R.id.delete_chat, 1, "Delete");
+                    popupMenu.setOnMenuItemClickListener(item -> {
                         context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        if (MI != null) MI.streamFile(history.getProfileLink());
-                        break;
-                    case R.id.menu:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.RIGHT, 0, R.style.PopupMenu);
-                        popupMenu.getMenu().add(1, R.id.delete_chat, 1, "Delete");
-                        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem item) {
-                                context.sendBroadcast(new Intent("nineteenVibrate"));
-                                delete_chat(history.getFrom_id());
-                                return false;
-                            }
-                        });
-                        popupMenu.show();
-                        break;
-                    case R.id.clickPoint:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        UserListEntry user = new UserListEntry();
-                        user.setUser_id(history.getFrom_id());
-                        user.setRadio_hanlde(history.getF_handle());
-                        user.setProfileLink(history.getProfileLink());
-                        user.setRank(history.getProfileLink());
-                        if (MI != null)
-                            MI.displayChat(user, false, true);
-                        dismiss();
-                        break;
+                        delete_chat(history.getFrom_id());
+                        return false;
+                    });
+                    popupMenu.show();
+                } else if (id == R.id.clickPoint) {
+                    context.sendBroadcast(new Intent("nineteenClickSound"));
+                    UserListEntry user = new UserListEntry();
+                    user.setUser_id(history.getFrom_id());
+                    user.setRadio_hanlde(history.getF_handle());
+                    user.setProfileLink(history.getProfileLink());
+                    user.setRank(history.getProfileLink());
+                    if (MI != null)
+                        MI.displayChat(user, false, true);
+                    dismiss();
                 }
             }
         };

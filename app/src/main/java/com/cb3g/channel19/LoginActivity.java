@@ -622,8 +622,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         view.setBackgroundColor(ContextCompat.getColor(this, R.color.main_black));
         if (snack.getLength() == Snackbar.LENGTH_INDEFINITE) {
             snackbar.setActionTextColor(Color.WHITE);
-            snackbar.setAction("10 4", view1 -> {
-                sendBroadcast(new Intent("nineteenVibrate"));
+            snackbar.setAction("10 4", v -> {
+                Utils.vibrate(v);
                 snackbar.dismiss();
             });
         } else {

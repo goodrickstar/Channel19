@@ -48,7 +48,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenClickSound"));
     }
 
@@ -186,14 +186,14 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         Window window = getDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         binding.swiper.setOnRefreshListener(() -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             list_sidebands();
         });
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
         TextView close = v.findViewById(R.id.close);
         close.setOnClickListener(view -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             if (RadioService.operator.getChannel() != null) {
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 dismiss();
@@ -245,8 +245,8 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             switch (holder.getItemViewType()) {
                 case 0:
                     ChannelCreatorHolder channelCreatorHolder = (ChannelCreatorHolder) holder;
-                    channelCreatorHolder.itemView.setOnClickListener(view -> {
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                    channelCreatorHolder.itemView.setOnClickListener(v -> {
+                        Utils.vibrate(v);
                         context.sendBroadcast(new Intent("nineteenClickSound"));
                         if (MI != null) MI.createChannel();
                         dismiss();
@@ -276,9 +276,9 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         }
 
         @Override
-        public void onClick(View view) {
-            ChannelInfo channelInfo = (ChannelInfo) view.getTag();
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+        public void onClick(View v) {
+            ChannelInfo channelInfo = (ChannelInfo) v.getTag();
+            Utils.vibrate(v);
             if (channelInfo.channel.getPin() != 0) MI.enterPin(channelInfo.channel);
             else MI.launchChannel(channelInfo.channel);
             dismiss();

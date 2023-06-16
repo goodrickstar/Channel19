@@ -57,24 +57,16 @@ public class SendPhoto extends DialogFragment {
         final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                switch (v.getId()) {
-                    case R.id.send:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", image.getHeight()).putExtra("width", image.getWidth()));
-                        dismiss();
-                        break;
-                    case R.id.order:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        dismiss();
-                        break;
-                    case R.id.plus:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
-                        context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", captionTV.getText().toString()));
-                        break;
+                Utils.vibrate(v);
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                int id = v.getId();
+                if (id == R.id.send){
+                    context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", image.getHeight()).putExtra("width", image.getWidth()));
+                    dismiss();
+                }else if (id == R.id.order){
+                    dismiss();
+                }else if (id == R.id.plus){
+                    context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", captionTV.getText().toString()));
                 }
             }
         };

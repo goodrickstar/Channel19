@@ -1,5 +1,5 @@
 package com.cb3g.channel19;
-
+import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,13 +10,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.FillProfileBinding;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
@@ -37,34 +37,26 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static android.content.Context.MODE_PRIVATE;
-
 
 public class FillProfile extends DialogFragment {
     private Context context;
+    private FillProfileBinding binding;
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle bundle) {
-        return inflater.inflate(R.layout.fill_profile, container, false);
+        binding = FillProfileBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final EditText handleET = view.findViewById(R.id.handleET);
-        final EditText carrierET = view.findViewById(R.id.carrierET);
-        final EditText townET = view.findViewById(R.id.townET);
-        final TextView handletv = view.findViewById(R.id.handletv);
-        final TextView carriertv = view.findViewById(R.id.carriertv);
-        final TextView towntv = view.findViewById(R.id.towntv);
-        final TextView saveEntry = view.findViewById(R.id.save);
-        final TextView cancleEntry = view.findViewById(R.id.cancel);
         ImageView profile = view.findViewById(R.id.profile_photo);
         if (getArguments() != null) {
             String profileLink = getArguments().getString("profileLink");
@@ -73,97 +65,89 @@ public class FillProfile extends DialogFragment {
             String location = getArguments().getString("location");
             if (profileLink != null)
                 Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(profile);
-            if (handle != null) handleET.setText(handle);
-            if (carrier != null) carrierET.setText(carrier);
-            if (location != null) townET.setText(location);
+            if (handle != null) binding.handleET.setText(handle);
+            if (carrier != null) binding.carrierET.setText(carrier);
+            if (location != null) binding.townET.setText(location);
         }
-        final View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                final String newHandle = handleET.getText().toString().trim();
-                final String newCarrier = carrierET.getText().toString().trim();
-                final String newTown = townET.getText().toString().trim();
-                switch (v.getId()) {
-                    case R.id.save:
-                        String minimum = "Min of 4 char";
-                        String characters = "Use chars A-Z";
-                        if (preTest(newHandle) || preTest(newCarrier) || preTest(newTown)) {
-                            Toaster.toastlow(context, "Reserved");
-                            return;
-                        }
-                        if (newHandle.trim().isEmpty() || newHandle.trim().length() < 3) {
-                            Error(handleET, minimum);
-                            return;
-                        }
-                        if (newCarrier.trim().isEmpty() || newCarrier.trim().length() < 3) {
-                            Error(carrierET, minimum);
-                            return;
-                        }
-                        if (!newHandle.replaceAll("[^\\p{Alpha}\\s]", "").equals(newHandle)) {
-                            Error(handleET, characters);
-                            return;
-                        }
-                        if (RadioService.operator.getHandle().equals(newHandle) && RadioService.operator.getCarrier().equals(newCarrier) && RadioService.operator.getTown().equals(newTown)) {
-                            Toaster.toastlow(context, "No Change");
-                            return;
-                        }
-                        if (RadioService.operator.getHandle().equals(newHandle)) {
-                            updateProfile(newHandle, newCarrier, newTown);
-                        } else {
-                            SharedPreferences settings = context.getSharedPreferences("settings", MODE_PRIVATE);
-                            Map<String, Object> header = new HashMap<>();
-                            header.put("typ", Header.JWT_TYPE);
-                            final String compactJws = Jwts.builder()
-                                    .setHeader(header)
-                                    .claim("handle", newHandle)
-                                    .claim("handle", newHandle)
-                                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                    .signWith(SignatureAlgorithm.HS256, settings.getString("keychain", null))
-                                    .compact();
-                            final Request request = new Request.Builder()
-                                    .url(settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/") + "user_handle_match.php")
-                                    .post(new FormBody.Builder().add("data", compactJws).build())
-                                    .build();
-                            new OkHttpClient().newCall(request).enqueue(new Callback() {
-                                @Override
-                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                }
-
-                                @Override
-                                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                                    if (response.isSuccessful()) {
-                                        String data = response.body().string();
-                                        getActivity().runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    JSONObject object = new JSONObject(data);
-                                                    if (object.getBoolean("match"))
-                                                        handleET.setError("Already in use");
-                                                    else
-                                                        updateProfile(newHandle, newCarrier, newTown);
-                                                } catch (JSONException e) {
-                                                    Logger.INSTANCE.e("Fill Profile JSON error", e.getMessage());
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        }
-                        break;
-                    case R.id.cancel:
-                        dismiss();
-                        break;
+        final View.OnClickListener listener = v -> {
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
+            final String newHandle = binding.handleET.getText().toString().trim();
+            final String newCarrier = binding.carrierET.getText().toString().trim();
+            final String newTown = binding.townET.getText().toString().trim();
+            int id = v.getId();
+            if (id == R.id.save){
+                String minimum = "Min of 4 char";
+                String characters = "Use chars A-Z";
+                if (preTest(newHandle) || preTest(newCarrier) || preTest(newTown)) {
+                    Toaster.toastlow(context, "Reserved");
+                    return;
                 }
+                if (newHandle.trim().isEmpty() || newHandle.trim().length() < 3) {
+                    Error(binding.handleET, minimum);
+                    return;
+                }
+                if (newCarrier.trim().isEmpty() || newCarrier.trim().length() < 3) {
+                    Error(binding.carrierET, minimum);
+                    return;
+                }
+                if (!newHandle.replaceAll("[^\\p{Alpha}\\s]", "").equals(newHandle)) {
+                    Error(binding.handleET, characters);
+                    return;
+                }
+                if (RadioService.operator.getHandle().equals(newHandle) && RadioService.operator.getCarrier().equals(newCarrier) && RadioService.operator.getTown().equals(newTown)) {
+                    Toaster.toastlow(context, "No Change");
+                    return;
+                }
+                if (RadioService.operator.getHandle().equals(newHandle)) {
+                    updateProfile(newHandle, newCarrier, newTown);
+                } else {
+                    SharedPreferences settings = context.getSharedPreferences("settings", MODE_PRIVATE);
+                    Map<String, Object> header = new HashMap<>();
+                    header.put("typ", Header.JWT_TYPE);
+                    final String compactJws = Jwts.builder()
+                            .setHeader(header)
+                            .claim("handle", newHandle)
+                            .claim("handle", newHandle)
+                            .setIssuedAt(new Date(System.currentTimeMillis()))
+                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                            .signWith(SignatureAlgorithm.HS256, settings.getString("keychain", null))
+                            .compact();
+                    final Request request = new Request.Builder()
+                            .url(settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/") + "user_handle_match.php")
+                            .post(new FormBody.Builder().add("data", compactJws).build())
+                            .build();
+                    new OkHttpClient().newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        }
+
+                        @Override
+                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                String data = response.body().string();
+                                getActivity().runOnUiThread(() -> {
+                                    try {
+                                        JSONObject object = new JSONObject(data);
+                                        if (object.getBoolean("match"))
+                                            binding.handleET.setError("Already in use");
+                                        else
+                                            updateProfile(newHandle, newCarrier, newTown);
+                                    } catch (JSONException e) {
+                                        Logger.INSTANCE.e("Fill Profile JSON error", e.getMessage());
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }else if (id == R.id.cancel){
+                dismiss();
             }
         };
-        saveEntry.setOnClickListener(listener);
-        cancleEntry.setOnClickListener(listener);
-        Utils.showKeyboard(context, handleET);
+        binding.save.setOnClickListener(listener);
+        binding.cancel.setOnClickListener(listener);
+        Utils.showKeyboard(context, binding.handleET);
     }
 
     private void updateProfile(String newHandle, String newCarrier, String newTown) {

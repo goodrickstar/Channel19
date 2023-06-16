@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
-
 public class
 ShowMessage extends DialogFragment implements View.OnClickListener {
     private boolean replying = false;
@@ -26,7 +24,6 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
     private TextView left, right, inbound;
     private EditText outbound;
     private MI MI;
-
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -87,43 +84,40 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenClickSound"));
-        switch (v.getId()) {
-            case R.id.order:
-                if (!replying) {
-                    Utils.showKeyboard(context, outbound);
-                    replying = true;
-                    left.setText(R.string.cancel);
-                    right.setText(R.string.send);
-                    inbound.setVisibility(View.INVISIBLE);
-                    outbound.setVisibility(View.VISIBLE);
-                } else {
-                    Utils.hideKeyboard(context, outbound);
-                    replying = false;
-                    left.setText(R.string.reply);
-                    right.setText(R.string.close);
-                    inbound.setVisibility(View.VISIBLE);
-                    outbound.setVisibility(View.INVISIBLE);
-                }
-                break;
-            case R.id.send:
-                if (replying) {
-                    Utils.hideKeyboard(context, outbound);
-                    final String output = outbound.getText().toString().trim();
-                    if (!output.isEmpty())
-                        context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", message[0]).putExtra("text", output));
+        int id = v.getId();
+        if (id == R.id.order) {
+            if (!replying) {
+                Utils.showKeyboard(context, outbound);
+                replying = true;
+                left.setText(R.string.cancel);
+                right.setText(R.string.send);
+                inbound.setVisibility(View.INVISIBLE);
+                outbound.setVisibility(View.VISIBLE);
+            } else {
+                Utils.hideKeyboard(context, outbound);
+                replying = false;
+                left.setText(R.string.reply);
+                right.setText(R.string.close);
+                inbound.setVisibility(View.VISIBLE);
+                outbound.setVisibility(View.INVISIBLE);
+            }
+        } else if (id == R.id.send) {
+            if (replying) {
+                Utils.hideKeyboard(context, outbound);
+                final String output = outbound.getText().toString().trim();
+                if (!output.isEmpty())
+                    context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", message[0]).putExtra("text", output));
+                dismiss();
+            } else dismiss();
+        } else if (id == R.id.history) {
+            for (UserListEntry user : RadioService.users) {
+                if (user.getUser_id().equals(message[0]) && MI != null) {
+                    MI.displayChat(user, false, false);
                     dismiss();
-                } else dismiss();
-                break;
-            case R.id.history:
-                for (UserListEntry user : RadioService.users) {
-                    if (user.getUser_id().equals(message[0]) && MI != null) {
-                        MI.displayChat(user, false, false);
-                        dismiss();
-                    }
                 }
-                break;
+            }
         }
     }
 }

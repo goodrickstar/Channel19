@@ -1,6 +1,4 @@
 package com.cb3g.channel19;
-
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,8 +21,6 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
-
-
 public class ImagePicker extends DialogFragment implements View.OnClickListener {
     private Context context;
     private Gif gif = new Gif();
@@ -68,24 +64,20 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     }
 
     @Override
-    public void onClick(View view) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
-        switch (view.getId()) {
-            case R.id.accept:
-                MI.photoChosen(gif, upload);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                dismiss();
-                break;
-            case R.id.cancel:
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                dismiss();
-                break;
-            case R.id.fromDisk:
-                if (MI != null) MI.photo_picker(1111);
-                break;
-            case R.id.fromGiphy:
-                if (MI != null) MI.launchSearch(gif.getId());
-                break;
+    public void onClick(View v) {
+        Utils.vibrate(v);
+        int id = v.getId();
+        if (id == R.id.accept) {
+            MI.photoChosen(gif, upload);
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            dismiss();
+        } else if (id == R.id.cancel) {
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            dismiss();
+        } else if (id == R.id.fromDisk) {
+            MI.photo_picker(1111);
+        } else if (id == R.id.fromGiphy) {
+            MI.launchSearch(gif.getId());
         }
     }
 
@@ -109,7 +101,7 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
                     if (photo.getHeight() == 0 || photo.getWidth() == 0) {
                         gif.setHeight(resource.getIntrinsicHeight());
                         gif.setWidth(resource.getIntrinsicWidth());
-                    }else {
+                    } else {
                         gif.setHeight(photo.getHeight());
                         gif.setWidth(photo.getWidth());
                     }

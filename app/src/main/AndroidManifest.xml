@@ -98,7 +98,7 @@
             android:stateNotNeeded="true" />
 
         <service
-            android:name="com.cb3g.channel19.FCMreciever"
+            android:name="com.cb3g.channel19.FireBaseReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

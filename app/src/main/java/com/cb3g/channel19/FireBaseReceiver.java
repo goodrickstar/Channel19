@@ -13,9 +13,7 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class FCMreciever extends FirebaseMessagingService {
-
-    //TODO: OnTokenChanged()
+public class FireBaseReceiver extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
@@ -75,5 +73,11 @@ public class FCMreciever extends FirebaseMessagingService {
         } catch (JSONException e) {
             Logger.INSTANCE.e("FCM JSON Error", e.getMessage());
         }
+    }
+
+    @Override
+    public void onNewToken(@NonNull String token) {
+        super.onNewToken(token);
+        sendBroadcast(new Intent("token").putExtra("token", token).setPackage("com.cb3g.channel19"));
     }
 }

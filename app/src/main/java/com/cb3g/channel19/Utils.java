@@ -16,6 +16,7 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
@@ -208,6 +209,10 @@ class Utils {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
         return (int) (screenWidthDp / columnWidthDp + 0.5);
+    }
+
+    public static void vibrate(View view) {
+        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
     }
 
     public static int getScreenWidth(@NonNull Activity activity) {

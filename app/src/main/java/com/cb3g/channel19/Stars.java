@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.bumptech.glide.util.Util;
 import com.example.android.multidex.myapplication.R;
 
 import org.jetbrains.annotations.NotNull;
@@ -133,27 +134,21 @@ public class Stars extends DialogFragment {
         selection = v.findViewById(R.id.selection);
         selection.setAdapter(adapter);
         TextView close = v.findViewById(R.id.close);
-        close.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                dismiss();
-            }
+        close.setOnClickListener(v1 -> {
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v1);
+            dismiss();
         });
         adapter.notifyDataSetChanged();
-        selection.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                try {
-                    context.sendBroadcast(new Intent("setStar").putExtra("data", stars.getString(i)));
-                } catch (JSONException e) {
-                    Logger.INSTANCE.e(String.valueOf(e));
-                }
-                dismiss();
+        selection.setOnItemClickListener((adapterView, view, i, l) -> {
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
+            try {
+                context.sendBroadcast(new Intent("setStar").putExtra("data", stars.getString(i)));
+            } catch (JSONException e) {
+                Logger.INSTANCE.e(String.valueOf(e));
             }
+            dismiss();
         });
     }
 }

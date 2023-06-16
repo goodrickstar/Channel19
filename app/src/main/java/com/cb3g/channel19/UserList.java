@@ -54,12 +54,9 @@ public class UserList extends Fragment {
         binding.userlistview.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.userlistview.setHasFixedSize(true);
         binding.userlistview.setAdapter(adapter);
-        binding.swiper.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("fetch_users"));
-            }
+        binding.swiper.setOnRefreshListener(() -> {
+            Utils.vibrate(binding.swiper);
+            context.sendBroadcast(new Intent("fetch_users"));
         });
         binding.swiper.setRefreshing(true);
     }
@@ -122,31 +119,24 @@ public class UserList extends Fragment {
             @Override
             public void onClick(View v) {
                 if (MI == null) return;
+                Utils.vibrate(v);
+                context.sendBroadcast(new Intent("nineteenBoxSound"));
                 UserListEntry user = (UserListEntry) v.getTag(v.getId());
-                switch (v.getId()) {
-                    case R.id.mail:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        if (RadioService.operator.getSilenced()) {
-                            MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
-                            return;
-                        }
-                        context.sendBroadcast(new Intent("nineteenBoxSound"));
-                        MI.createPm(user);
-                        break;
-                    case R.id.clickPoint:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        if (RadioService.operator.getSilenced()) {
-                            MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
-                            return;
-                        }
-                        context.sendBroadcast(new Intent("nineteenBoxSound"));
-                        MI.showListOptions(user);
-                        break;
-                    case R.id.option_image_view:
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        context.sendBroadcast(new Intent("nineteenBoxSound"));
-                        MI.streamFile(user.getProfileLink());
-                        break;
+                int id = v.getId();
+                if (id ==  R.id.mail){
+                    if (RadioService.operator.getSilenced()) {
+                        MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
+                        return;
+                    }
+                    MI.createPm(user);
+                }else if (id ==  R.id.clickPoint){
+                    if (RadioService.operator.getSilenced()) {
+                        MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
+                        return;
+                    }
+                    MI.showListOptions(user);
+                }else if (id ==  R.id.option_image_view){
+                    MI.streamFile(user.getProfileLink());
                 }
             }
         };

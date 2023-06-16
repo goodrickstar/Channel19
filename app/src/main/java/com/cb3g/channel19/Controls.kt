@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,8 +25,11 @@ class Controls : Fragment() {
     private var gps: CheckBox? = null
     private var share: CheckBox? = null
     private var checkListener: CompoundButton.OnCheckedChangeListener? = null
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.controls, container, false)
     }
 
@@ -63,7 +65,7 @@ class Controls : Fragment() {
         val tempTwo = settings.getInt("ring", 1500)
         val pauseLimitInt = settings.getInt("pauseLimit", 150)
         checkListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            Utils.vibrate(buttonView)
             requireContext().sendBroadcast(Intent("nineteenBoxSound"))
             when (buttonView.id) {
                 R.id.photoenable -> settings.edit().putBoolean("photos", isChecked).apply()
@@ -75,31 +77,62 @@ class Controls : Fragment() {
                 R.id.share -> {
                     RadioService.operator.sharing = isChecked
                     settings.edit().putBoolean("sharing", isChecked).apply()
-                    requireContext().sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
+                    requireContext().sendBroadcast(
+                        Intent("sharingChange").putExtra(
+                            "data",
+                            isChecked
+                        )
+                    )
                 }
+
                 R.id.gps -> {
-                    if (ActivityCompat.checkSelfPermission(requireActivity().applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        requireContext().sendBroadcast(Intent("nineteenShowBlank").putExtra("title", resources.getString(R.string.gps_access_title)).putExtra("content", resources.getString(R.string.gps_access_info)))
+                    if (ActivityCompat.checkSelfPermission(
+                            requireActivity().applicationContext,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        requireContext().sendBroadcast(
+                            Intent("nineteenShowBlank").putExtra(
+                                "title",
+                                resources.getString(R.string.gps_access_title)
+                            ).putExtra("content", resources.getString(R.string.gps_access_info))
+                        )
                     } else {
                         RadioService.operator.locationEnabled.set(isChecked)
                         settings.edit().putBoolean("locationEnabled", isChecked).apply()
                     }
-                    requireContext().sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
+                    requireContext().sendBroadcast(
+                        Intent("sharingChange").putExtra(
+                            "data",
+                            isChecked
+                        )
+                    )
                     if (!isChecked) RadioService.operator.userLocationString = ""
                 }
             }
         }
         val radioListener = RadioGroup.OnCheckedChangeListener { group, checkedId ->
-            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            Utils.vibrate(v)
             requireContext().sendBroadcast(Intent("nineteenBoxSound"))
             when (group.id) {
-                R.id.group40 -> settings.edit().putBoolean("darkmap", checkedId == R.id.themeDark).apply()
-                R.id.backgroundswitch -> settings.edit().putBoolean("custom", checkedId == R.id.backgroundOn).apply()
-                R.id.btSW -> requireContext().sendBroadcast(Intent("nineteenBluetoothSettingChange").putExtra("data", checkedId == R.id.btOn))
-                R.id.behaviorswitch -> settings.edit().putBoolean("holdmic", checkedId == R.id.hold).apply()
-                R.id.vibrateswitch -> {
-                    requireContext().sendBroadcast(Intent("nineteenVibrateChange").putExtra("data", checkedId == R.id.vibrateon))
-                }
+                R.id.group40 -> settings.edit().putBoolean("darkmap", checkedId == R.id.themeDark)
+                    .apply()
+
+                R.id.backgroundswitch -> settings.edit()
+                    .putBoolean("custom", checkedId == R.id.backgroundOn).apply()
+
+                R.id.btSW -> requireContext().sendBroadcast(
+                    Intent("nineteenBluetoothSettingChange").putExtra(
+                        "data",
+                        checkedId == R.id.btOn
+                    )
+                )
+
+                R.id.behaviorswitch -> settings.edit().putBoolean("holdmic", checkedId == R.id.hold)
+                    .apply()
+
+                R.id.vibrateswitch ->
+                    settings.edit().putBoolean("vibrate", checkedId == R.id.vibrateswitch).apply()
             }
         }
         val seekbarListener = object : SeekBar.OnSeekBarChangeListener {
@@ -109,36 +142,53 @@ class Controls : Fragment() {
                         ringTV?.text = resources.getString(R.string.mic_animation_speed)
                     else
                         ringTV?.text = resources.getString(R.string.mic_animation_off)
+
                     R.id.boBar -> if (progress > 0)
                         boTV?.text = resources.getString(R.string.black_out_delay)
                     else
                         boTV?.text = resources.getString(R.string.black_out_off)
-                    R.id.pauseLimitBar -> pauseLimitTV?.text = resources.getString(R.string.pauseLimit) + String.format(Locale.getDefault(), "%,d", progress + 50)
+
+                    R.id.pauseLimitBar -> pauseLimitTV?.text =
+                        resources.getString(R.string.pauseLimit) + String.format(
+                            Locale.getDefault(),
+                            "%,d",
+                            progress + 50
+                        )
+
                     R.id.purgeLimit -> {
                         RadioService.operator.purgeLimit = progress
                         settings.edit().putInt("purgeLimit", progress).apply()
-                        if (progress > 0) purgeLimitTV?.text = resources.getString(R.string.purge_limit) + " " + progress
+                        if (progress > 0) purgeLimitTV?.text =
+                            resources.getString(R.string.purge_limit) + " " + progress
                         else purgeLimitTV?.text = resources.getString(R.string.unlimited)
                     }
+
                     R.id.nearbyLimit -> {
                         RadioService.operator.nearbyLimit = progress
                         settings.edit().putInt("nearbyLimit", progress).apply()
-                        if (progress > 0) nearbyLimitTV?.text = resources.getString(R.string.nearby_limit) + " " + progress + "m"
-                        else nearbyLimitTV?.text = resources.getString(R.string.nearby_limit) + " " + resources.getString(R.string.disabled_text)
+                        if (progress > 0) nearbyLimitTV?.text =
+                            resources.getString(R.string.nearby_limit) + " " + progress + "m"
+                        else nearbyLimitTV?.text =
+                            resources.getString(R.string.nearby_limit) + " " + resources.getString(R.string.disabled_text)
                     }
                 }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
-                requireContext().sendBroadcast(Intent("nineteenVibrate"))
+                Utils.vibrate(v)
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                requireContext().sendBroadcast(Intent("nineteenVibrate"))
+                Utils.vibrate(seekBar)
                 when (seekBar.id) {
                     R.id.ringDelay -> settings.edit().putInt("ring", seekBar.progress).apply()
                     R.id.boBar -> settings.edit().putInt("black", seekBar.progress).apply()
-                    R.id.pauseLimitBar -> requireContext().sendBroadcast(Intent("pauseLimitChange").putExtra("data", seekBar.progress))
+                    R.id.pauseLimitBar -> requireContext().sendBroadcast(
+                        Intent("pauseLimitChange").putExtra(
+                            "data",
+                            seekBar.progress
+                        )
+                    )
                 }
             }
         }
@@ -155,7 +205,7 @@ class Controls : Fragment() {
         boTV = v.findViewById(R.id.boTV)
         val browse = v.findViewById<TextView>(R.id.browse)
         browse.setOnClickListener {
-            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            Utils.vibrate(it)
             requireContext().sendBroadcast(Intent("nineteenClickSound"))
             requireContext().sendBroadcast(Intent("browseBackgrounds"))
         }
@@ -168,11 +218,18 @@ class Controls : Fragment() {
         blackout.progress = temp
         ring.progress = tempTwo
         pauseLimit.progress = pauseLimitInt
-        pauseLimitTV?.text = resources.getString(R.string.pauseLimit) + String.format(Locale.getDefault(), "%,d", pauseLimitInt + 50)
-        if (RadioService.operator.purgeLimit > 0) purgeLimitTV?.text = resources.getString(R.string.purge_limit) + " " + RadioService.operator.purgeLimit
+        pauseLimitTV?.text = resources.getString(R.string.pauseLimit) + String.format(
+            Locale.getDefault(),
+            "%,d",
+            pauseLimitInt + 50
+        )
+        if (RadioService.operator.purgeLimit > 0) purgeLimitTV?.text =
+            resources.getString(R.string.purge_limit) + " " + RadioService.operator.purgeLimit
         else purgeLimitTV?.text = resources.getString(R.string.unlimited)
-        if (RadioService.operator.nearbyLimit > 0) nearbyLimitTV?.text = resources.getString(R.string.nearby_limit) + " " + RadioService.operator.nearbyLimit + "m"
-        else nearbyLimitTV?.text = resources.getString(R.string.nearby_limit) + " " + resources.getString(R.string.disabled_text)
+        if (RadioService.operator.nearbyLimit > 0) nearbyLimitTV?.text =
+            resources.getString(R.string.nearby_limit) + " " + RadioService.operator.nearbyLimit + "m"
+        else nearbyLimitTV?.text =
+            resources.getString(R.string.nearby_limit) + " " + resources.getString(R.string.disabled_text)
         if (temp > 0)
             boTV?.text = resources.getString(R.string.black_out_delay)
         else
@@ -185,7 +242,11 @@ class Controls : Fragment() {
         welcome.isChecked = settings.getBoolean("welcomesound", true)
         pmenable.isChecked = settings.getBoolean("pmenabled", true)
         photoenable.isChecked = settings.getBoolean("photos", true)
-        gps?.isChecked = RadioService.operator.locationEnabled.get() && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        gps?.isChecked =
+            RadioService.operator.locationEnabled.get() && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
         share?.isChecked = RadioService.operator.sharing
         if (settings.getBoolean("custom", false))
             backgroundOn.isChecked = true

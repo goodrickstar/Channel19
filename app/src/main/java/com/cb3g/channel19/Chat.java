@@ -1,11 +1,9 @@
 package com.cb3g.channel19;
 import static android.content.Context.CLIPBOARD_SERVICE;
 
-import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -70,7 +68,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenClickSound"));
         if (MI != null) {
             if (binding.editBox.getText().length() != 0) reply();
@@ -140,6 +138,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
+        RadioService.chat.set(user.getUser_id());
     }
 
     @Override
@@ -147,18 +146,6 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         super.onResume();
         gather_history(false, false);
         Utils.hideKeyboard(context, binding.editBox);
-    }
-
-    @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
-        RadioService.chat.set("0");
-    }
-
-    @Override
-    public void onCancel(@NonNull DialogInterface dialog) {
-        super.onCancel(dialog);
-        RadioService.chat.set("0");
     }
 
     @Override
@@ -171,7 +158,6 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
         user = RadioService.gson.fromJson(getArguments().getString("data"), UserListEntry.class);
-        RadioService.chat.set(user.getUser_id());
         final TextView title = v.findViewById(R.id.handle);
         final ImageView profile = v.findViewById(R.id.option_image_view);
         loading = v.findViewById(R.id.loading);
@@ -246,16 +232,11 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         });
     }
 
-    @NonNull
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        return new Dialog(getActivity(), getTheme()) {
-            @Override
-            public void onBackPressed() {
-                if (MI != null && launchHistory) MI.display_message_history();
-                dismiss();
-            }
-        };
+    public void onDetach() {
+        super.onDetach();
+        RadioService.chat.set("0");
+        if (MI != null && launchHistory) MI.display_message_history();
     }
 
     private class recycle_adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -285,12 +266,12 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     ChatTextHolder textHolder = (ChatTextHolder) holder;
                     textHolder.text.setText(chatRow.getText());
                     textHolder.text.setOnLongClickListener(v -> {
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                        Utils.vibrate(v);
                         final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.CENTER, 0, R.style.PopupMenu);
                         popupMenu.getMenu().add(1, R.id.copy_text, 1, "Copy Text");
                         popupMenu.getMenu().add(1, R.id.delete_message, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
-                            context.sendBroadcast(new Intent("nineteenVibrate"));
+                            Utils.vibrate(v);
                             int id = item.getItemId();
                             if (id == R.id.delete_message){
                                 delete_message(chatRow.getMessage_id(), null);
@@ -326,17 +307,17 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     photoHolder.image.getLayoutParams().width = new_width;
                     new GlideImageLoader(context, photoHolder.image, photoHolder.loading).load(Uri.parse(chatRow.getUrl()).toString());
                     photoHolder.image.setOnClickListener(v -> {
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                        Utils.vibrate(v);
                         if (MI != null)
                             MI.streamFile(chatRow.getUrl());
                     });
                     photoHolder.image.setOnLongClickListener(v -> {
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                        Utils.vibrate(v);
                         final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
                         popupMenu.getMenu().add(1, R.id.save_photo, 1, "Save Image");
                         popupMenu.getMenu().add(1, R.id.delete_message, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
-                            context.sendBroadcast(new Intent("nineteenVibrate"));
+                            Utils.vibrate(v);
                             int id = item.getItemId();
                             if (id == R.id.delete_message){
                                 delete_message(chatRow.getMessage_id(), chatRow.getUrl());

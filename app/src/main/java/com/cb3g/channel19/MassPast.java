@@ -142,18 +142,16 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
         }
 
-        private View.OnClickListener listener = new View.OnClickListener() {
+        private final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 Photo photo = (Photo) v.getTag();
-                switch (v.getId()){
-                    case R.id.image:
-                        MI.streamFile(photo.getUrl());
-                        break;
-                    case R.id.save:
-                        context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
-                        break;
+                int id = v.getId();
+                if (id == R.id.image){
+                    MI.streamFile(photo.getUrl());
+                }else if (id == R.id.save){
+                    context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
                 }
             }
         };

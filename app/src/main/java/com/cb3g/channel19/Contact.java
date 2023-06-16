@@ -43,7 +43,7 @@ public class Contact extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenClickSound"));
         int id = v.getId();
         if (id == R.id.like) {

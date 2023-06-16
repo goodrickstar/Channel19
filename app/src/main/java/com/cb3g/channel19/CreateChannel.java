@@ -71,8 +71,8 @@ public class CreateChannel extends DialogFragment {
             else binding.pinEt.setVisibility(View.INVISIBLE
             );
         });
-        binding.close.setOnClickListener(view1 -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+        binding.close.setOnClickListener(v -> {
+            Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             String name = binding.titleEt.getText().toString().trim();
             if (name.length() < 5) {

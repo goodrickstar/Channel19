@@ -1,11 +1,8 @@
 package com.cb3g.channel19;
-
 import static com.cb3g.channel19.RadioService.databaseReference;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.RadioShopBinding;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -47,24 +43,12 @@ import okhttp3.Response;
 public class RadioShop extends DialogFragment implements View.OnClickListener, ValueEventListener {
     private Context context;
     private RadioShopBinding binding;
-    private RecyclerView recyclerView;
     private DatabaseReference tokenReference;
     private int tokens = 0;
 
-    private int getVersion() {
-        int version = 0;
-        try {
-            PackageInfo packageInfo = context.getPackageManager().getPackageInfo("com.cb3g.channel19", PackageManager.GET_META_DATA);
-            version = packageInfo.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        return version;
-    }
-
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenPause"));
         Utils.showRewardAd(context, RadioService.operator.getUser_id(), tokens, true);
     }
@@ -139,22 +123,17 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
     }
 
     class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.MyViewHolder> {
-        private ArrayList<ShopItem> items;
-        private int version = getVersion();
+        private final ArrayList<ShopItem> items;
 
         public ShopAdapter(ArrayList<ShopItem> items) {
             this.items = items;
         }
 
-        private View.OnClickListener listener = new View.OnClickListener() {
+        private final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 ShopItem item = (ShopItem) v.getTag();
-                if (version < item.getVersion()) {
-                    context.sendBroadcast(new Intent("wrong"));
-                    return;
-                }
                 if (tokens < item.getCost()) {
                     context.sendBroadcast(new Intent("wrong"));
                     return;
@@ -184,12 +163,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
                             return;
                         }
                         spent(item.getCost());
-                        databaseReference.child("ghost").child(RadioService.operator.getUser_id()).setValue(Instant.now().getEpochSecond()).addOnSuccessListener(new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(@NotNull Void aVoid) {
-                                context.sendBroadcast(new Intent("ghost"));
-                            }
-                        });
+                        databaseReference.child("ghost").child(RadioService.operator.getUser_id()).setValue(Instant.now().getEpochSecond()).addOnSuccessListener(aVoid -> context.sendBroadcast(new Intent("ghost")));
                         break;
                 }
             }

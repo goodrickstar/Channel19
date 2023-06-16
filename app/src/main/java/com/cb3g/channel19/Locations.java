@@ -150,7 +150,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
         trace.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(buttonView);
                 follow = isChecked;
                 if (isChecked) {
                     trace.getTrackDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);

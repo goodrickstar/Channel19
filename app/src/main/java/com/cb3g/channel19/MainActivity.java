@@ -502,8 +502,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (snack.getLength() == Snackbar.LENGTH_INDEFINITE) {
             RadioService.occupied.set(false);
             snackbar.setActionTextColor(Color.WHITE);
-            snackbar.setAction("10 4", view1 -> {
-                sendBroadcast(new Intent("nineteenVibrate"));
+            snackbar.setAction("10 4", v -> {
+                Utils.vibrate(v);
                 snackbar.dismiss();
             });
         } else {
@@ -909,7 +909,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             super.onBackPressed();
             //stopService(new Intent(this, RadioService.class));
         } else {
-            sendBroadcast(new Intent("nineteenVibrate").setPackage("com.cb3g.channel19"));
+            Utils.vibrate(locationButton);
             longPressed = true;
             executor.execute(() -> {
                 sleep(600);
@@ -991,7 +991,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         delay = true;
         int id = v.getId();
         if (id == R.id.cancel) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             if (transmitFragment.isAdded()) transmitFragment.stopRecorder(false);
         } else if (id == R.id.quecount) {
             if (RadioService.operator.getChannel() != null) {
@@ -1000,23 +1000,24 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                     else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 }
-                sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenPlayPause"));
             }
         } else if (id == R.id.history) {
             if (RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts())
                 return;
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             if (RadioService.operator.getSilenced()) {
                 showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
                 return;
             }
             sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
             display_message_history();
         } else if (id == R.id.massButton) {
             if (RadioService.operator.getChannel() == null || RadioService.operator.getHinderPhotos())
                 return;
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             if (RadioService.operator.getSilenced()) {
                 showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
                 return;
@@ -1024,18 +1025,18 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             sendBroadcast(new Intent("nineteenClickSound"));
             photo_picker(3737);
         } else if (id == R.id.channel_name) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             selectChannel(true);
         } else if (id == R.id.locationButton) {
             if (RadioService.operator.getChannel() == null) return;
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             this.startActivity(new Intent(MainActivity.this, Locations.class));
         } else if (id == R.id.sideband) {
             if (RadioService.operator.getChannel() != null) {
                 sendBroadcast(new Intent("nineteenClickSound"));
-                sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 startActivity(new Intent(MainActivity.this, ReservoirActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
             }
         } else if (id == R.id.auto) {
@@ -1050,17 +1051,17 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (RS != null) {
                 if (RS.getQueue() != 0) {
                     sendBroadcast(new Intent("nineteenSkip"));
-                    sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                 } else darkChange(false);
             }
         } else if (id == R.id.blackOut) {
             darkChange(false);
         } else if (id == R.id.skip) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             if (RadioService.operator.getChannel() == null) return;
             sendBroadcast(new Intent("nineteenSkip"));
         } else if (id == R.id.gear) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenTabSound"));
             startActivity(new Intent(this, SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         }
@@ -1072,13 +1073,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         delay = true;
         int id = v.getId();
         if (id == R.id.massButton){
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             MassPast massPast = new MassPast();
             massPast.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             massPast.show(fragmentManager, "massPast");
         } else if (id == R.id.gear) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenStaticSound"));
             showSnack(new Snack("Rewind Five", Snackbar.LENGTH_SHORT));
             RotateAnimation counterClockwise = new RotateAnimation(360, 0, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
@@ -1088,7 +1089,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         } else if (id == R.id.auto) {
             if (!isFinishing()) {
                 sendBroadcast(new Intent("nineteenClickSound"));
-                sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 QueueDialog qd = (QueueDialog) fragmentManager.findFragmentByTag("qd");
                 if (qd == null) {
                     qd = new QueueDialog();
@@ -1100,16 +1101,16 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (RS != null) {
                 if (RS.getQueue() != 0) {
                     sendBroadcast(new Intent("purgeNineTeen"));
-                    sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                 } else darkChange(false);
             }
         } else if (id == R.id.user) {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             darkChange(true);
         } else if (id == R.id.gear) {
             if (RS != null)
                 if (RS.getQueue() != 0) {
-                    sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                     sendBroadcast(new Intent("purgeNineTeen"));
                 }
         }
@@ -1338,7 +1339,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         showcaseView.setButtonPosition(tps);
         showcaseView.show();
         showcaseView.overrideButtonClick(v -> {
-            sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             tutorial_count++;
             settings.edit().putInt("tutorial", tutorial_count).apply();
             switch (tutorial_count) {
@@ -1419,14 +1420,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             profile.setVisibility(View.VISIBLE);
             new GlideImageLoader(this, profile).load(display[5], RadioService.profileOptions);
             profile.setOnClickListener(v -> {
-                sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenBoxSound"));
                 streamFile(display[5]);
             });
             profile.setOnLongClickListener(v -> {
                 UserListEntry user = returnTalkerEntry();
                 if (user != null) {
-                    sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                     sendBroadcast(new Intent("nineteenClickSound"));
                     showListOptions(user);
                     return true;
@@ -1447,7 +1448,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void display_message_history() {
         if (isFinishing()) return;
-        sendBroadcast(new Intent("nineteenVibrate"));
         sendBroadcast(new Intent("nineteenClickSound"));
         MessageHistory history = (MessageHistory) fragmentManager.findFragmentByTag("history");
         if (history == null) {
@@ -1468,7 +1468,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     public void flip(View v) {
-        sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         if (RadioService.operator.getChannel() == null) return;
         sendBroadcast(new Intent("nineteenClickSound"));
         FragmentTransaction transaction = fragmentManager.beginTransaction();

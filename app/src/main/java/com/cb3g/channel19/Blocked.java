@@ -79,10 +79,10 @@ public class Blocked extends DialogFragment {
         View.OnClickListener listener = v -> {
             int id = v.getId();
             if (id == R.id.order){
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
             } else if (id == R.id.save) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 context.sendBroadcast(new Intent("nineteenUpdateBlocks").putExtra("photoIDs", RadioService.gson.toJson(photo)).putExtra("textIDs", RadioService.gson.toJson(text)).putExtra("blockedIDs", RadioService.gson.toJson(radio)));
             }
@@ -92,7 +92,7 @@ public class Blocked extends DialogFragment {
         cancel.setOnClickListener(listener);
         outside.setOnClickListener(listener);
         clear.setOnLongClickListener(v -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             radio.clear();
             photo.clear();
             text.clear();
@@ -116,10 +116,10 @@ public class Blocked extends DialogFragment {
         }
 
         @Override
-        public void onClick(View view) {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
-            String id = (String) view.getTag();
-            int x = view.getId();
+        public void onClick(View v) {
+            Utils.vibrate(v);
+            String id = (String) v.getTag();
+            int x = v.getId();
             if (x == R.id.photo){
                 for (int i = 0; i < photo.size(); i++) {
                     if (photo.get(i).getI().equals(id)) photo.remove(i);

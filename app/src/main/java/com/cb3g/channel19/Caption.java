@@ -38,7 +38,7 @@ public class Caption extends DialogFragment {
             binding.captionET.setText(caption);
         binding.ok.setOnClickListener(v -> {
             caption = binding.captionET.getText().toString().trim();
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             context.sendBroadcast(new Intent("nineteenUpdateCaption").putExtra("data", caption));
             dismiss();

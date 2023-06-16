@@ -146,7 +146,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             showcaseView.overrideButtonClick(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                     tutorial_count++;
                     settings.edit().putInt("tutorial", tutorial_count).apply();
                     switch (tutorial_count) {
@@ -230,7 +230,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         }
         Log.i("test", "startRecorder() recordChange(true)");
         MI.recordChange(true);
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(ring);
     }
 
     public void transmitStart() {
@@ -297,7 +297,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
                 File file = new File(fileUrl);
                 long loggedTime = (Instant.now().getEpochSecond() - msgCount);
                 if (loggedTime >= 2) {
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(ring);
                     context.sendBroadcast(new Intent("nineteenMicSound"));
                     context.sendBroadcast(new Intent("nineteenTransmit").putExtra("data", fileUrl).putExtra("stamp", msgCount).putExtra("talkback", talkback.isChecked()).putExtra("duration", loggedTime));
 
@@ -322,8 +322,8 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public boolean onLongClick(View v) {
         UserListEntry user = MI.returnTalkerEntry();
         if (user != null) {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
             context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
             if (MI != null) MI.showListOptions(user);
             return true;
         }
@@ -336,7 +336,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             if (isChecked) MI.showSnack(new Snack("Talk-Back", Snackbar.LENGTH_SHORT));
             else MI.showSnack(new Snack("Talk-Back Off", Snackbar.LENGTH_SHORT));
         }
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(buttonView);
         context.sendBroadcast(new Intent("nineteenBoxSound"));
         settings.edit().putBoolean("talkback", isChecked).apply();
     }
@@ -374,7 +374,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             profile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                     context.sendBroadcast(new Intent("nineteenBoxSound"));
                     if (MI != null)
                         MI.streamFile(array[5]);
@@ -436,10 +436,10 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
+        Utils.vibrate(seekBar);
         ring.setEnabled(false);
         if (queue > queueMax) seekBar.setMax(queue);
         tracking = true;
-        context.sendBroadcast(new Intent("nineteenVibrate"));
         if (MI != null) MI.lockOthers(true);
     }
 
@@ -447,7 +447,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public void onStopTrackingTouch(SeekBar seekBar) {
         final int selection = seekBar.getProgress();
         if (queue != selection) {
-            if (queue != 0) context.sendBroadcast(new Intent("nineteenVibrate"));
+            if (queue != 0) Utils.vibrate(seekBar);
             context.sendBroadcast(new Intent("nineteenScroll").putExtra("data", selection));
         }
         seekBar.setMax(queueMax);
@@ -459,6 +459,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
+        view.performClick();
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (hold) {

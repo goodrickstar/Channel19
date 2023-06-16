@@ -75,9 +75,9 @@ public class SendMessage extends DialogFragment {
         final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                methodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+                Utils.hideKeyboard(context, v);
                 final String output = messageET.getText().toString().trim();
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 if (!output.isEmpty() && v.getId() == R.id.send)
                     context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", id).putExtra("text", output));

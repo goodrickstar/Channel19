@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,7 +41,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
-
 public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private final RecyclerViewAdapter adapter = new RecyclerViewAdapter();
     private Context context;
@@ -53,7 +51,6 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private TextView send;
     private ImageView preview;
     private RadioButton selector;
-
     private MI MI;
 
     @Override
@@ -98,39 +95,34 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     }
 
     @Override
-    public void onClick(View view) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+    public void onClick(View v) {
         context.sendBroadcast(new Intent("nineteenClickSound"));
-
-        switch (view.getId()) {
-            case R.id.close:
-                Set<String> set = new HashSet<>(savedIds);
-                context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putStringSet("massIds", set).apply();
-                final List<String> sendingIds = new ArrayList<>();
-                for (User user : working) {
-                    if (user.isChecked) sendingIds.add(user.id);
-                }
-                if (!sendingIds.isEmpty()){
-                    context.sendBroadcast(new Intent("upload").putExtra("uri", uri).putExtra("mode", 3737).putExtra("caption", "").putExtra("sendToId", RadioService.gson.toJson(sendingIds)).putExtra("sendToHandle", "").putExtra("height", preview.getHeight()).putExtra("width", preview.getWidth()));
-                    if (MI != null) MI.showSnack(new Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT));
-                    dismiss();
-                }
-                break;
-            case R.id.selector:
-                if (allChecked()) {
-                    for (int x = 0; x < working.size(); x++) {
-                        working.get(x).setChecked(false);
-                    }
-                } else {
-                    for (int x = 0; x < working.size(); x++) {
-                        working.get(x).setChecked(true);
-                    }
-                }
-                adapter.notifyDataSetChanged();
-                break;
-            default:
+        int id = v.getId();
+        if (id == R.id.close) {
+            Set<String> set = new HashSet<>(savedIds);
+            context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putStringSet("massIds", set).apply();
+            final List<String> sendingIds = new ArrayList<>();
+            for (User user : working) {
+                if (user.isChecked) sendingIds.add(user.id);
+            }
+            if (!sendingIds.isEmpty()) {
+                context.sendBroadcast(new Intent("upload").putExtra("uri", uri).putExtra("mode", 3737).putExtra("caption", "").putExtra("sendToId", RadioService.gson.toJson(sendingIds)).putExtra("sendToHandle", "").putExtra("height", preview.getHeight()).putExtra("width", preview.getWidth()));
+                if (MI != null)
+                    MI.showSnack(new Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT));
                 dismiss();
-        }
+            }
+        } else if (id == R.id.selector) {
+            if (allChecked()) {
+                for (int x = 0; x < working.size(); x++) {
+                    working.get(x).setChecked(false);
+                }
+            } else {
+                for (int x = 0; x < working.size(); x++) {
+                    working.get(x).setChecked(true);
+                }
+            }
+            adapter.notifyDataSetChanged();
+        } else dismiss();
     }
 
     @Override
@@ -214,8 +206,6 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     }
 
     private class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.Holder> {
-
-
         @NotNull
         @Override
         public Holder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -233,9 +223,9 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             }
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View view) {
+                public void onClick(View v) {
                     user.isChecked = !user.isChecked;
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
+                    Utils.vibrate(v);
                     if (user.isChecked) {
                         if (!savedIds.contains(user.id)) savedIds.add(user.id);
                     } else savedIds.remove(user.id);
@@ -273,7 +263,6 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             }
         }
     }
-
     private class User {
         private String id, handle, profileLink;
         private boolean isChecked;

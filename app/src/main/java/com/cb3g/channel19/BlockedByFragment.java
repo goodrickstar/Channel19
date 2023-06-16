@@ -40,7 +40,7 @@ public class BlockedByFragment extends DialogFragment {
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setAdapter(new recycler_adapter(data));
         binding.okay.setOnClickListener(v -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             dismiss();
         });

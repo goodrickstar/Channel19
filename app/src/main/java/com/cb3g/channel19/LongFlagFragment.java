@@ -16,6 +16,7 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
@@ -42,13 +43,13 @@ public class LongFlagFragment extends DialogFragment {
         super.onViewCreated(view, savedInstanceState);
         binding.close2.setVisibility(View.INVISIBLE);
         binding.captiontext.setText("Courtesy of " + getArguments().getString("data"));
-        binding.birdView.setImageDrawable(context.getDrawable(R.drawable.bird));
+        binding.birdView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.bird));
         flipCard(binding.birdView);
         binding.close2.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View v) {
+                Utils.vibrate(v);
                 context.getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("flagDue", false).apply();
-                context.sendBroadcast(new Intent("nineteenVibrate"));
                 dismiss();
             }
         });

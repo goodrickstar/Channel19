@@ -55,33 +55,26 @@ public class ShowPhoto extends DialogFragment {
             binding.photoCaption.setText(photo.getCaption());
         }
         binding.banner.setText(photo.getHandle());
-        final View.OnClickListener onClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                switch (v.getId()) {
-                    case R.id.ok:
+        final View.OnClickListener onClickListener = v -> {
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
+            int id = v.getId();
+            if (id == R.id.ok){
+                context.sendBroadcast(new Intent("nineteenShowMessages"));
+                dismiss();
+            }if (id == R.id.save){
+                if (saved) return;
+                saved = true;
+                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
+            }if (id == R.id.image){
+                if (MI != null)
+                    MI.streamFile(photo.getUrl());
+            }if (id == R.id.history){
+                for (UserListEntry user : RadioService.users) {
+                    if (user.getUser_id().equals(photo.getSenderId()) && MI != null) {
+                        MI.displayChat(user, false, false);
                         dismiss();
-                        context.sendBroadcast(new Intent("nineteenShowMessages"));
-                        break;
-                    case R.id.save:
-                        if (saved) return;
-                        saved = true;
-                        context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
-                        break;
-                    case R.id.image:
-                        if (MI != null)
-                            MI.streamFile(photo.getUrl());
-                        break;
-                    case R.id.history:
-                        for (UserListEntry user : RadioService.users) {
-                            if (user.getUser_id().equals(photo.getSenderId()) && MI != null) {
-                                MI.displayChat(user, false, false);
-                                dismiss();
-                            }
-                        }
-                        break;
+                    }
                 }
             }
         };

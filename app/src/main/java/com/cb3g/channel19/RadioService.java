@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -52,18 +51,12 @@ import androidx.databinding.ObservableField;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.example.android.multidex.myapplication.R;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -82,13 +75,11 @@ import org.json.JSONObject;
 import org.threeten.bp.Instant;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,9 +103,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+@SuppressWarnings("SpellCheckingInspection")
 public class RadioService extends Service implements ValueEventListener {
     static final OkHttpClient client = new OkHttpClient();
-    private List<String> nearby = new ArrayList<>();
+    private final List<String> nearby = new ArrayList<>();
     static String SITE_URL;
     static RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
     static RequestOptions largeProfileOptions = new RequestOptions().centerInside().error(R.drawable.error);
@@ -150,7 +142,7 @@ public class RadioService extends Service implements ValueEventListener {
     private SoundPool sp;
     private int glass, confirm, type, chain, click, clicktwo, newthree, clickthree, skip, purge, mic, talkie, pauseLimit, register, wrong, interrupt;
     private AudioManager audioManager;
-    private boolean playing = false, vibrate, bluetooth, poor = false;
+    private boolean playing = false, bluetooth, poor = false;
     private List<Inbound> inbounds = new ArrayList<>();
     static List<String> salutedIds = new ArrayList<>();
     static List<String> flaggedIds = new ArrayList<>();
@@ -170,6 +162,9 @@ public class RadioService extends Service implements ValueEventListener {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             switch (intent.getAction()) {
+                case "token"://TODO: update token on server
+
+                    break;
                 case "longFlag":
                     String flagSenderId = intent.getStringExtra("userId");
                     String flagSenderHandle = intent.getStringExtra("handle");
@@ -245,7 +240,7 @@ public class RadioService extends Service implements ValueEventListener {
                     break;
                 case "play":
                     if (recording || playing || paused || inbounds.isEmpty()) return;
-                    play(true);
+                    play();
                     break;
                 case "savePhotoToDisk":
                     try {
@@ -294,7 +289,6 @@ public class RadioService extends Service implements ValueEventListener {
                     break;
                 case "nineteenPlayPause":
                     sp.play(clicktwo, .1f, .1f, 1, 0, 1f);
-                    vibrate();
                     if (!paused) pause_playback();
                     else resumePlayback();
                     break;
@@ -308,7 +302,6 @@ public class RadioService extends Service implements ValueEventListener {
                         case 0: //private photo
                             if (settings.getBoolean("photos", true)) {
                                 if (chat.get().equals(photo.getSenderId())) {
-                                    vibrate();
                                     if (MI != null)
                                         MI.displayChat(null, true, false);
                                     else sendBroadcast(new Intent("nineteenChatSound"));
@@ -332,23 +325,11 @@ public class RadioService extends Service implements ValueEventListener {
                 case "nineteenSkip":
                     if (!recording) skip();
                     break;
-                case "nineteenSkipTwo":
-                    vibrate();
-                    if (!recording) skip();
-                    break;
                 case "purgeNineTeen":
-                    purge();
-                    break;
-                case "nineteenPurgeTwo":
-                    vibrate();
                     purge();
                     break;
                 case "nineteenEmptyPlayer":
                     emptyPlayer(false);
-                    break;
-                case "nineteenVibrateChange":
-                    vibrate = intent.getBooleanExtra("data", false);
-                    settings.edit().putBoolean("vibrate", vibrate).apply();
                     break;
                 case "nineteenClickSound":
                     sp.play(clicktwo, .1f, .1f, 1, 0, 1f);
@@ -368,12 +349,6 @@ public class RadioService extends Service implements ValueEventListener {
                 case "nineteenStaticSound":
                     sp.play(talkie, .1f, .1f, 1, 0, 1f);
                     break;
-                case "nineteenVibrate":
-                    vibrate();
-                    break;
-                case "nineteenLightVibrate":
-                    vibrateLight();
-                    break;
                 case "nineteenUpdateBlocks":
                     blockedIDs = returnBlockListObjectFromJson(intent.getStringExtra("blockedIDs"));
                     photoIDs = returnBlockListObjectFromJson(intent.getStringExtra("photoIDs"));
@@ -386,11 +361,9 @@ public class RadioService extends Service implements ValueEventListener {
                     user_info_lookup(intent.getStringExtra("data"));
                     break;
                 case "exitChannelNineTeen":
-                    vibrate();
                     stopSelf();
                     break;
                 case "muteChannelNineTeen":
-                    vibrate();
                     sp.play(clickthree, .1f, .1f, 1, 0, 1f);
                     mute = !mute;
                     mute();
@@ -403,7 +376,6 @@ public class RadioService extends Service implements ValueEventListener {
                     if (settings.getBoolean("pmenabled", true)) {
                         if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
                             if (chat.get().equals(message.getUser_id())) {
-                                vibrate();
                                 if (MI != null)
                                     MI.displayChat(null, true, false);
                                 else sendBroadcast(new Intent("nineteenChatSound"));
@@ -675,7 +647,6 @@ public class RadioService extends Service implements ValueEventListener {
             }
         });
         pauseLimit = settings.getInt("pauseLimit", 150);
-        vibrate = settings.getBoolean("vibrate", true);
         bluetooth = settings.getBoolean("bluetooth", true);
         onlineStatus = "Online";
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -759,30 +730,23 @@ public class RadioService extends Service implements ValueEventListener {
             playing = true;
             try {
                 player.setDataSource(RadioService.this, WELCOME_URI);
-                player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        Inbound inbound = new Inbound();
-                        inbound.setStamp(Instant.now().getEpochSecond());
-                        inbound.setUser_id(operator.getUser_id());
-                        inbounds.add(inbound);
-                        updateDisplay();
-                        mp.start();
-                    }
+                player.setOnPreparedListener(mp -> {
+                    Inbound inbound = new Inbound();
+                    inbound.setStamp(Instant.now().getEpochSecond());
+                    inbound.setUser_id(operator.getUser_id());
+                    inbounds.add(inbound);
+                    updateDisplay();
+                    mp.start();
                 });
-                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        //audioManager.abandonAudioFocus(null);
-                        mp.reset();
-                        playing = false;
-                        if (!inbounds.isEmpty()) inbounds.remove(0);
-                        if (inbounds.isEmpty()) {
-                            updateDisplay();
-                        } else {
-                            if (paused || recording) updateDisplay();
-                            else sendBroadcast(new Intent("play"));
-                        }
+                player.setOnCompletionListener(mp -> {
+                    mp.reset();
+                    playing = false;
+                    if (!inbounds.isEmpty()) inbounds.remove(0);
+                    if (inbounds.isEmpty()) {
+                        updateDisplay();
+                    } else {
+                        if (paused || recording) updateDisplay();
+                        else sendBroadcast(new Intent("play"));
                     }
                 });
                 player.prepare();
@@ -839,10 +803,7 @@ public class RadioService extends Service implements ValueEventListener {
         focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
                 .setAudioAttributes(focusAttributes)
                 .setAcceptsDelayedFocusGain(false)
-                .setOnAudioFocusChangeListener(new AudioManager.OnAudioFocusChangeListener() {
-                    @Override
-                    public void onAudioFocusChange(int i) {
-                    }
+                .setOnAudioFocusChangeListener(i -> {
                 })
                 .build();
     }
@@ -884,46 +845,38 @@ public class RadioService extends Service implements ValueEventListener {
         if (blockLists.contains(operator.getUser_id())) return;
         File file = new File(Utils.formatLocalAudioFileLocation(saveDirectory, inbound.getUser_id(), inbound.getStamp()));
         file.deleteOnExit();
-        temporaryStorage.getReferenceFromUrl(inbound.getDownloadUrl()).getFile(file).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(@NotNull FileDownloadTask.TaskSnapshot taskSnapshot) {
-                inbounds.add(inbound);
-                if (paused) {
-                    if (inbounds.size() > pauseLimit + 50 && !operator.getAdmin()) {
-                        removeZeros();
-                        return;
-                    }
-                    if (MI != null) {
-                        if (!playing) updateDisplay();
-                        MI.updateQueue(inbounds.size(), paused, poor);
-                        notification();
-                    }
+        temporaryStorage.getReferenceFromUrl(inbound.getDownloadUrl()).getFile(file).addOnSuccessListener(taskSnapshot -> {
+            inbounds.add(inbound);
+            if (paused) {
+                if (inbounds.size() > pauseLimit + 50 && !operator.getAdmin()) {
+                    removeZeros();
                     return;
                 }
-                if (playing || recording) {
-                    if (MI != null) MI.updateQueue(inbounds.size(), paused, poor);
-                } else sendBroadcast(new Intent("play"));
+                if (MI != null) {
+                    if (!playing) updateDisplay();
+                    MI.updateQueue(inbounds.size(), paused, poor);
+                    notification();
+                }
+                return;
             }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                Logger.INSTANCE.e("download task error", exception.getMessage());
-            }
-        });
+            if (playing || recording) {
+                if (MI != null) MI.updateQueue(inbounds.size(), paused, poor);
+            } else sendBroadcast(new Intent("play"));
+        }).addOnFailureListener(exception -> Logger.INSTANCE.e("download task error", exception.getMessage()));
     }
 
     public void rewind() {
         inbounds.clear();
         removeZeros();
         if (operator.getChannel() != null) {
-            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener((ChildEventListener) audioListener);
+            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
             enterStamp = Instant.now().getEpochSecond() - 300;
             databaseReference.child("audio").child(operator.getChannel().getChannel_name()).addChildEventListener(audioListener);
         }
         if (paused) resumePlayback();
     }
 
-    private void play(boolean fadeIn) {
+    private void play() {
         if (!inbounds.isEmpty() && !player.isPlaying()) {
             final Inbound inbound = inbounds.get(0);
             if (autoSkip.contains(inbound.getUser_id())) {
@@ -935,24 +888,16 @@ public class RadioService extends Service implements ValueEventListener {
                 try {
                     float volume = scaleVolume(returnUserVolume(inbound.getUser_id()));
                     player.setDataSource(Utils.formatLocalAudioFileLocation(saveDirectory, inbound.getUser_id(), inbound.getStamp()));
-                    player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mp) {
-                            updateDisplay();
-                            if (!mute) {
-                                mp.setVolume(volume, volume);
-                            }
-                            if (!recording) mp.start();
+                    player.setOnPreparedListener(mp -> {
+                        updateDisplay();
+                        if (!mute) {
+                            mp.setVolume(volume, volume);
                         }
+                        if (!recording) mp.start();
                     });
-                    player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mp) {
-                            removeZeros();
-                        }
-                    });
+                    player.setOnCompletionListener(mp -> removeZeros());
                     player.prepareAsync();
-                    if (fadeIn) startFadeIn(1);
+                    if (true) startFadeIn();
                 } catch (IOException | IllegalStateException e) {
                     Logger.INSTANCE.e("play()", e);
                     removeZeros();
@@ -964,15 +909,11 @@ public class RadioService extends Service implements ValueEventListener {
 
     float faderVolume = 0;
 
-    private void startFadeIn(int maxVolume) {
-        final int FADE_DURATION = 2000; //The duration of the fade
-        //The amount of time between volume changes. The smaller this is, the smoother the fade
-        final int FADE_INTERVAL = 250; //The volume will increase from 0 to 1
-        int numberOfSteps = FADE_DURATION / FADE_INTERVAL; //Calculate the number of fade steps
-        //Calculate by how much the volume changes each step
-        final float deltaVolume = maxVolume / (float) numberOfSteps;
-
-        //Create a new Timer and Timer task to run the fading outside the main UI thread
+    private void startFadeIn() {
+        final int FADE_DURATION = 2000;
+        final int FADE_INTERVAL = 250;
+        int numberOfSteps = FADE_DURATION / FADE_INTERVAL;
+        final float deltaVolume = 1 / (float) numberOfSteps;
         final Timer timer = new Timer(true);
         TimerTask timerTask = new TimerTask() {
             @Override
@@ -1028,86 +969,76 @@ public class RadioService extends Service implements ValueEventListener {
                     .setCustomMetadata("stamp", String.valueOf(stamp))
                     .build();
             UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
-            uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                        @NotNull
-                        @Override
-                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                            if (!task.isSuccessful()) {
+            uploadTask.continueWithTask(task -> {
+                if (!task.isSuccessful()) {
+                    if (MI != null)
+                        MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
+                    throw task.getException();
+                }
+                return reference.getDownloadUrl();
+            })
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            List<String> blockList = new ArrayList<>();
+                            for (Block block : blockedIDs) {
+                                blockList.add(block.getI());
+                            }
+                            final String downloadUri = task.getResult().toString();
+                            Inbound inbound = new Inbound();
+                            inbound.setDownloadUrl(downloadUri);
+                            inbound.setChannel(operator.getChannel().getChannel());
+                            inbound.setStamp(stamp);
+                            inbound.setDuration(duration);
+                            inbound.setTalkback(talkback);
+                            inbound.setAdmin(operator.getAdmin());
+                            inbound.setBlockList(gson.toJson(blockList));
+                            inbound.setUser_id(operator.getUser_id());
+                            inbound.setProfileLink(operator.getProfileLink());
+                            inbound.setHandle(operator.getHandle());
+                            inbound.setCarrier(operator.getCarrier());
+                            inbound.setRank(operator.getRank());
+                            if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
+                                inbound.setTown(operator.getUserLocationString());
+                            else inbound.setTown(operator.getTown());
+                            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
+                                if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
                                 if (MI != null)
-                                    MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
-                                throw task.getException();
-                            }
-                            return reference.getDownloadUrl();
-                        }
-                    })
-                    .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Uri> task) {
-                            if (task.isSuccessful()) {
-                                List<String> blockList = new ArrayList<>();
-                                for (Block block : blockedIDs) {
-                                    blockList.add(block.getI());
+                                    MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
+                            });
+                            file.delete();
+                            final String data = Jwts.builder()
+                                    .setHeader(header)
+                                    .claim("userId", operator.getUser_id())
+                                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                                    .signWith(SignatureAlgorithm.HS256, operator.getKey())
+                                    .compact();
+                            final Request request = new Request.Builder()
+                                    .url(SITE_URL + "user_key_count.php")
+                                    .post(new FormBody.Builder().add("data", data).build())
+                                    .build();
+                            client.newCall(request).enqueue(new Callback() {
+                                @Override
+                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
                                 }
-                                final String downloadUri = task.getResult().toString();
-                                Inbound inbound = new Inbound();
-                                inbound.setDownloadUrl(downloadUri);
-                                inbound.setChannel(operator.getChannel().getChannel());
-                                inbound.setStamp(stamp);
-                                inbound.setDuration(duration);
-                                inbound.setTalkback(talkback);
-                                inbound.setAdmin(operator.getAdmin());
-                                inbound.setBlockList(gson.toJson(blockList));
-                                inbound.setUser_id(operator.getUser_id());
-                                inbound.setProfileLink(operator.getProfileLink());
-                                inbound.setHandle(operator.getHandle());
-                                inbound.setCarrier(operator.getCarrier());
-                                inbound.setRank(operator.getRank());
-                                if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
-                                    inbound.setTown(operator.getUserLocationString());
-                                else inbound.setTown(operator.getTown());
-                                databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
-                                        if (MI != null)
-                                            MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
-                                    }
-                                });
-                                file.delete();
-                                final String data = Jwts.builder()
-                                        .setHeader(header)
-                                        .claim("userId", operator.getUser_id())
-                                        .setIssuedAt(new Date(System.currentTimeMillis()))
-                                        .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                        .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                                        .compact();
-                                final Request request = new Request.Builder()
-                                        .url(SITE_URL + "user_key_count.php")
-                                        .post(new FormBody.Builder().add("data", data).build())
-                                        .build();
-                                client.newCall(request).enqueue(new Callback() {
-                                    @Override
-                                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
-                                    }
-
-                                    @Override
-                                    public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                        try {
-                                            if (response.isSuccessful()) {
-                                                JSONObject data = new JSONObject(response.body().string());
-                                                operator.setCount(data.getInt("count"));
-                                                operator.setSalutes(data.getInt("salutes"));
-                                                operator.setRank(data.getString("rank"));
-                                            }
-                                        } catch (JSONException | IOException e) {
-                                            LOG.e(String.valueOf(e));
-                                        } finally {
-                                            response.close();
+                                @Override
+                                public void onResponse(@NotNull Call call, @NotNull Response response) {
+                                    try {
+                                        if (response.isSuccessful()) {
+                                            JSONObject data = new JSONObject(response.body().string());
+                                            operator.setCount(data.getInt("count"));
+                                            operator.setSalutes(data.getInt("salutes"));
+                                            operator.setRank(data.getString("rank"));
                                         }
+                                    } catch (JSONException | IOException e) {
+                                        LOG.e(String.valueOf(e));
+                                    } finally {
+                                        response.close();
                                     }
-                                });
-                            }
+                                }
+                            });
                         }
                     });
         }
@@ -1181,52 +1112,49 @@ public class RadioService extends Service implements ValueEventListener {
 
     public void locationUpdated(final Location inputLocation) {
         if (inputLocation != null) {
-            Callable<String> callable = new Callable<String>() {
-                @Override
-                public String call() {
-                    try {
-                        if (operator.getChannel() != null || operator.getNearbyLimit() != 0) {
-                            for (Coordinates otherUser : coordinates) {
-                                if (!otherUser.getUserId().equals(operator.getUser_id()) && !nearby.contains(otherUser.getUserId()) && isInChannel(otherUser.getUserId())) {
-                                    int distance = returnDistance(inputLocation, otherUser.getLatitude(), otherUser.getLongitude());
-                                    if (distance < operator.getNearbyLimit()) {
-                                        snacks.add(new Snack(otherUser.getHandle() + " is nearby " + "(" + distance + "m)", Snackbar.LENGTH_INDEFINITE));
-                                        nearby.add(otherUser.getUserId());
-                                    }
+            Callable<String> callable = () -> {
+                try {
+                    if (operator.getChannel() != null || operator.getNearbyLimit() != 0) {
+                        for (Coordinates otherUser : coordinates) {
+                            if (!otherUser.getUserId().equals(operator.getUser_id()) && !nearby.contains(otherUser.getUserId()) && isInChannel(otherUser.getUserId())) {
+                                int distance = returnDistance(inputLocation, otherUser.getLatitude(), otherUser.getLongitude());
+                                if (distance < operator.getNearbyLimit()) {
+                                    snacks.add(new Snack(otherUser.getHandle() + " is nearby " + "(" + distance + "m)", Snackbar.LENGTH_INDEFINITE));
+                                    nearby.add(otherUser.getUserId());
                                 }
                             }
                         }
-                        final Geocoder geoCoder = new Geocoder(RadioService.this, locale);
-                        for (Address address : geoCoder.getFromLocation(inputLocation.getLatitude(), inputLocation.getLongitude(), 1)) {
-                            final String city = address.getLocality();
-                            final String state = address.getAdminArea();
-                            String locationString = null;
-                            final String country_code = address.getCountryCode();
-                            if (country_code != null) {
-                                if (city != null && state != null) {
-                                    if (address.getCountryCode().equals("US"))
-                                        locationString = city.trim() + ", " + getAbbreviationFromUSState(state);
-                                    else
-                                        locationString = address.getLocality() + ", " + address.getCountryCode();
-                                }
-                                if (locationString != null) {
-                                    locationString = locationString.replaceAll("[0-9]", "").trim();
-                                    locationString = locationString.replace("New ", "").replace("North ", "N ").replace("South ", "S ").replace("East ", "E ").replace("Port ", "").replace("Bridge ", "").replace("West ", "W ").replace("Upper", "").replace("Lower", "").replace("Township", "").replace("Court House", "").replace("Charter", "").replace(" ,", ",").replace(".", "").replace(" ,", ",").trim();
-                                    if (locationString.length() > 19)
-                                        locationString = locationString.replace("N ", "").replace("S ", "").replace("E ", "").replace("W ", "").replace("St ", "").trim();
-                                    if (locationString.length() > 19 && country_code.equals("US"))
-                                        locationString = locationString.substring(0, locationString.length() - 4).trim();
-                                    locationString = locationString + EmojiParser.parseToUnicode(" :globe_with_meridians:");
-                                    if (!locationString.equals(operator.getUserLocationString()))
-                                        return locationString;
-                                }
-                            }
-                        }
-                    } catch (IOException e) {
-                        LOG.e("geoCoder EXCEPTION " + e);
                     }
-                    return null;
+                    final Geocoder geoCoder = new Geocoder(RadioService.this, locale);
+                    for (Address address : geoCoder.getFromLocation(inputLocation.getLatitude(), inputLocation.getLongitude(), 1)) {
+                        final String city = address.getLocality();
+                        final String state = address.getAdminArea();
+                        String locationString = null;
+                        final String country_code = address.getCountryCode();
+                        if (country_code != null) {
+                            if (city != null && state != null) {
+                                if (address.getCountryCode().equals("US"))
+                                    locationString = city.trim() + ", " + getAbbreviationFromUSState(state);
+                                else
+                                    locationString = address.getLocality() + ", " + address.getCountryCode();
+                            }
+                            if (locationString != null) {
+                                locationString = locationString.replaceAll("[0-9]", "").trim();
+                                locationString = locationString.replace("New ", "").replace("North ", "N ").replace("South ", "S ").replace("East ", "E ").replace("Port ", "").replace("Bridge ", "").replace("West ", "W ").replace("Upper", "").replace("Lower", "").replace("Township", "").replace("Court House", "").replace("Charter", "").replace(" ,", ",").replace(".", "").replace(" ,", ",").trim();
+                                if (locationString.length() > 19)
+                                    locationString = locationString.replace("N ", "").replace("S ", "").replace("E ", "").replace("W ", "").replace("St ", "").trim();
+                                if (locationString.length() > 19 && country_code.equals("US"))
+                                    locationString = locationString.substring(0, locationString.length() - 4).trim();
+                                locationString = locationString + EmojiParser.parseToUnicode(" :globe_with_meridians:");
+                                if (!locationString.equals(operator.getUserLocationString()))
+                                    return locationString;
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    LOG.e("geoCoder EXCEPTION " + e);
                 }
+                return null;
             };
             String locationString = ExecutorUtils.getFutureString(executor, callable);
             if (locationString != null) {
@@ -1277,12 +1205,9 @@ public class RadioService extends Service implements ValueEventListener {
                         if (response.isSuccessful()) {
                             try {
                                 users = itterateSilenced(returnFilteredList(returnUserListObjectFromJson(response.body().string())));
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (MI != null)
-                                            MI.updateUserList();
-                                    }
+                                handler.post(() -> {
+                                    if (MI != null)
+                                        MI.updateUserList();
                                 });
                             } catch (IOException e) {
                                 LOG.e("get_users_on_channel", e.getMessage());
@@ -1339,11 +1264,6 @@ public class RadioService extends Service implements ValueEventListener {
         updateDisplay();
     }
 
-    public int getSessionId() {
-        if (!inbounds.isEmpty()) return player.getAudioSessionId();
-        else return -1;
-    }
-
     private void updateDisplay() {
         if (MI == null) return;
         if (recording) {
@@ -1358,12 +1278,6 @@ public class RadioService extends Service implements ValueEventListener {
         if (!playing || paused) return new int[]{0, 0};
         else return new int[]{getDuration(), player.getCurrentPosition()};
     }
-
-    Inbound returnUserZero() {
-        if (!inbounds.isEmpty()) return inbounds.get(0);
-        return null;
-    }
-
     UserListEntry returnTalkerEntry() {
         if (!inbounds.isEmpty()) {
             Inbound inbound = inbounds.get(0);
@@ -1403,7 +1317,7 @@ public class RadioService extends Service implements ValueEventListener {
     public void entered(Channel channel) {
         enterStamp = Instant.now().getEpochSecond();
         if (operator.getChannel() != null)
-            databaseReference.child("audio").child(channel.getChannel_name()).removeEventListener((ChildEventListener) audioListener);
+            databaseReference.child("audio").child(channel.getChannel_name()).removeEventListener(audioListener);
         operator.setChannel(channel);
         databaseReference.child("audio").child(channel.getChannel_name()).addChildEventListener(audioListener);
         get_users_on_channel();
@@ -1533,16 +1447,13 @@ public class RadioService extends Service implements ValueEventListener {
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) {
                     if (response.isSuccessful()) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (MI != null) {
-                                    if (!chat.get().equals("0"))
-                                        MI.displayChat(null, false, false);
-                                    else {
-                                        snacks.add(new Snack("Giphy Sent", Snackbar.LENGTH_SHORT));
-                                        checkForMessages();
-                                    }
+                        handler.post(() -> {
+                            if (MI != null) {
+                                if (!chat.get().equals("0"))
+                                    MI.displayChat(null, false, false);
+                                else {
+                                    snacks.add(new Snack("Giphy Sent", Snackbar.LENGTH_SHORT));
+                                    checkForMessages();
                                 }
                             }
                         });
@@ -1569,23 +1480,16 @@ public class RadioService extends Service implements ValueEventListener {
                     if (ref != null) {
                         final StorageReference newRef = ref;
                         UploadTask uploadTask = newRef.putFile(Uri.fromFile(file));
-                        uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                                    @NotNull
-                                    @Override
-                                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                                        if (!task.isSuccessful()) {
-                                            throw task.getException();
-                                        }
-                                        return newRef.getDownloadUrl();
-                                    }
-                                })
-                                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Uri> task) {
-                                        if (task.isSuccessful()) {
-                                            final String downloadUri = task.getResult().toString();
-                                            shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
-                                        }
+                        uploadTask.continueWithTask(task -> {
+                            if (!task.isSuccessful()) {
+                                throw task.getException();
+                            }
+                            return newRef.getDownloadUrl();
+                        })
+                                .addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        final String downloadUri = task.getResult().toString();
+                                        shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
                                     }
                                 });
                     }
@@ -1614,77 +1518,66 @@ public class RadioService extends Service implements ValueEventListener {
                                     }
                                     final StorageReference newRef = ref;
                                     UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
-                                    uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                                        @NotNull
-                                        @Override
-                                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                                            if (!task.isSuccessful()) {
-                                                throw task.getException();
-                                            }
-                                            return newRef.getDownloadUrl();
+                                    uploadTask.continueWithTask(task -> {
+                                        if (!task.isSuccessful()) {
+                                            throw task.getException();
                                         }
-                                    }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<Uri> task) {
-                                            if (task.isSuccessful()) {
-                                                final String downloadUri = task.getResult().toString();
-                                                Request request = null;
-                                                String data;
-                                                shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
-                                                if (request != null) {
-                                                    RadioService.client.newCall(request).enqueue(new Callback() {
-                                                        @Override
-                                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                                            LOG.e("UPLOAD PHOTO DB FAILURE " + e);
-                                                        }
+                                        return newRef.getDownloadUrl();
+                                    }).addOnCompleteListener(task -> {
+                                        if (task.isSuccessful()) {
+                                            final String downloadUri = task.getResult().toString();
+                                            Request request = null;
+                                            shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
+                                            if (request != null) {
+                                                RadioService.client.newCall(request).enqueue(new Callback() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                                        LOG.e("UPLOAD PHOTO DB FAILURE " + e);
+                                                    }
 
-                                                        @Override
-                                                        public void onResponse(@NonNull Call call, @NonNull final Response response) {
-                                                            if (response.isSuccessful()) {
-                                                                handler.post(new Runnable() {
-                                                                    @Override
-                                                                    public void run() {
-                                                                        switch (mode) {
-                                                                            case 2345:
-                                                                                if (!chat.get().equals("0")) {
-                                                                                    if (MI != null)
-                                                                                        MI.displayChat(null, false, false);
-                                                                                } else {
-                                                                                    snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                                                                    checkForMessages();
-                                                                                }
-                                                                                break;
-                                                                            case 3456:
-                                                                                try {
-                                                                                    storage.getReferenceFromUrl(settings.getString("profileLink", "http://truckradiosystem.com/~channel1/drawables/default.png")).delete();
-                                                                                } catch (
-                                                                                        IllegalArgumentException e) {
-                                                                                    LOG.e("IllegalArgumentException", e.getMessage());
-                                                                                }
-                                                                                updateProfilePhotoInReservoir(operator.getProfileLink(), downloadUri);
-                                                                                operator.setProfileLink(downloadUri);
-                                                                                settings.edit().putString("profileLink", downloadUri).apply();
-                                                                                sendBroadcast(new Intent("updateProfilePicture").setPackage("com.cb3g.channel19"));
-                                                                                break;
-                                                                            case 3737:
-                                                                                if (MI != null) {
-                                                                                    if (!chat.get().equals("0"))
-                                                                                        MI.displayChat(null, false, false);
-                                                                                    else {
-                                                                                        snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                                                                        checkForMessages();
-                                                                                    }
-                                                                                }
-                                                                                break;
+                                                    @Override
+                                                    public void onResponse(@NonNull Call call, @NonNull final Response response) {
+                                                        if (response.isSuccessful()) {
+                                                            handler.post(() -> {
+                                                                switch (mode) {
+                                                                    case 2345:
+                                                                        if (!chat.get().equals("0")) {
+                                                                            if (MI != null)
+                                                                                MI.displayChat(null, false, false);
+                                                                        } else {
+                                                                            snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
+                                                                            checkForMessages();
                                                                         }
-                                                                    }
-                                                                });
-                                                            } else
-                                                                LOG.e("ONRESPONSE ERROR");
-                                                            response.close();
-                                                        }
-                                                    });
-                                                }
+                                                                        break;
+                                                                    case 3456:
+                                                                        try {
+                                                                            storage.getReferenceFromUrl(settings.getString("profileLink", "http://truckradiosystem.com/~channel1/drawables/default.png")).delete();
+                                                                        } catch (
+                                                                                IllegalArgumentException e) {
+                                                                            LOG.e("IllegalArgumentException", e.getMessage());
+                                                                        }
+                                                                        updateProfilePhotoInReservoir(operator.getProfileLink(), downloadUri);
+                                                                        operator.setProfileLink(downloadUri);
+                                                                        settings.edit().putString("profileLink", downloadUri).apply();
+                                                                        sendBroadcast(new Intent("updateProfilePicture").setPackage("com.cb3g.channel19"));
+                                                                        break;
+                                                                    case 3737:
+                                                                        if (MI != null) {
+                                                                            if (!chat.get().equals("0"))
+                                                                                MI.displayChat(null, false, false);
+                                                                            else {
+                                                                                snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
+                                                                                checkForMessages();
+                                                                            }
+                                                                        }
+                                                                        break;
+                                                                }
+                                                            });
+                                                        } else
+                                                            LOG.e("ONRESPONSE ERROR");
+                                                        response.close();
+                                                    }
+                                                });
                                             }
                                         }
                                     });
@@ -1764,33 +1657,30 @@ public class RadioService extends Service implements ValueEventListener {
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 if (response.isSuccessful()) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            switch (mode) {
-                                case 2345:
-                                case 3737:
-                                    if (MI != null) {
-                                        if (!chat.get().equals("0"))
-                                            MI.displayChat(null, false, false);
-                                        else {
-                                            snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                            checkForMessages();
-                                        }
+                    handler.post(() -> {
+                        switch (mode) {
+                            case 2345:
+                            case 3737:
+                                if (MI != null) {
+                                    if (!chat.get().equals("0"))
+                                        MI.displayChat(null, false, false);
+                                    else {
+                                        snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
+                                        checkForMessages();
                                     }
-                                    break;
-                                case 3456:
-                                    try {
-                                        storage.getReferenceFromUrl(operator.getProfileLink()).delete();
-                                    } catch (IllegalArgumentException e) {
-                                        LOG.e("IllegalArgumentException", e.getMessage());
-                                    }
-                                    updateProfilePhotoInReservoir(operator.getProfileLink(), url);
-                                    operator.setProfileLink(url);
-                                    settings.edit().putString("profileLink", url).apply();
-                                    sendBroadcast(new Intent("updateProfilePicture"));
-                                    break;
-                            }
+                                }
+                                break;
+                            case 3456:
+                                try {
+                                    storage.getReferenceFromUrl(operator.getProfileLink()).delete();
+                                } catch (IllegalArgumentException e) {
+                                    LOG.e("IllegalArgumentException", e.getMessage());
+                                }
+                                updateProfilePhotoInReservoir(operator.getProfileLink(), url);
+                                operator.setProfileLink(url);
+                                settings.edit().putString("profileLink", url).apply();
+                                sendBroadcast(new Intent("updateProfilePicture"));
+                                break;
                         }
                     });
                 }
@@ -1892,29 +1782,16 @@ public class RadioService extends Service implements ValueEventListener {
         });
     }
 
-    public void stopSharingLocation() {
-        uploadLocation(operator.getTown());
-        listenForCoordinates(false);
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         File directory = new File(saveDirectory);
-        File[] files = directory.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File file) {
-                return (file.getPath().endsWith(".m4a"));
+        File[] files = directory.listFiles(file -> (file.getPath().endsWith(".m4a")));
+        executor.execute(() -> {
+            for (File file : files) {
+                file.delete();
             }
-        });
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                for (File file : files) {
-                    file.delete();
-                }
-                ExecutorUtils.shutdown(executor);
-            }
+            ExecutorUtils.shutdown(executor);
         });
         logOut();
     }
@@ -1945,13 +1822,9 @@ public class RadioService extends Service implements ValueEventListener {
             try {
                 player.setDataSource(context, KICK_URI);
                 player.setOnPreparedListener(MediaPlayer::start);
-                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mp) {
-                        mp.reset();
-                        mp.release();
-                        //audioManager.abandonAudioFocus(null);
-                    }
+                player.setOnCompletionListener(mp -> {
+                    mp.reset();
+                    mp.release();
                 });
                 player.prepare();
             } catch (IOException e) {
@@ -1981,14 +1854,14 @@ public class RadioService extends Service implements ValueEventListener {
 
     private void removeListeners() {
         if (operator.getChannel() != null)
-            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener((ChildEventListener) audioListener);
-        databaseReference.child("blocking").removeEventListener((ValueEventListener) this);
-        databaseReference.child("ghostModeAvailible").removeEventListener((ValueEventListener) this);
-        databaseReference.child("flagsEnabled").removeEventListener((ValueEventListener) this);
-        databaseReference.child("radioShopOpen").removeEventListener((ValueEventListener) this);
-        databaseReference.child("silencing").removeEventListener((ValueEventListener) this);
-        databaseReference.child("keychain").removeEventListener((ValueEventListener) this);
-        databaseReference.child("siteUrl").removeEventListener((ValueEventListener) this);
+            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener( audioListener);
+        databaseReference.child("blocking").removeEventListener( this);
+        databaseReference.child("ghostModeAvailible").removeEventListener(this);
+        databaseReference.child("flagsEnabled").removeEventListener( this);
+        databaseReference.child("radioShopOpen").removeEventListener( this);
+        databaseReference.child("silencing").removeEventListener(this);
+        databaseReference.child("keychain").removeEventListener(this);
+        databaseReference.child("siteUrl").removeEventListener(this);
         databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
         listenForCoordinates(false);
@@ -2040,8 +1913,7 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private String getAbbreviationFromUSState(String state) {
-        if (STATE_MAP.containsKey(state)) return STATE_MAP.get(state);
-        else return state;
+        return STATE_MAP.getOrDefault(state, state);
     }
 
     private void user_info_lookup(final String id) {
@@ -2107,9 +1979,6 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private float scaleVolume(int sliderValue) {
-        /*double logSliderValue = Math.log10((double) sliderValue / 10);
-        double logMaxSliderValue = Math.log10(10);
-        return (float) (logSliderValue / logMaxSliderValue);*/
         return (float) (1 - (Math.log(100 - sliderValue) / Math.log(100)));
     }
 
@@ -2146,6 +2015,7 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        filter.addAction("token");
         filter.addAction("confirmInterrupt");
         filter.addAction("longFlag");
         filter.addAction("wrong");
@@ -2176,7 +2046,6 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction("nineteenPause");
         filter.addAction("nineteenMessage");
         filter.addAction("nineteenPhotoReceive");
-        filter.addAction("nineteenLightVibrate");
         filter.addAction("exitChannelNineTeen");
         filter.addAction("purgeNineTeen");
         filter.addAction("muteChannelNineTeen");
@@ -2191,8 +2060,6 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction("nineteenMicSound");
         filter.addAction("nineteenChatSound");
         filter.addAction("nineteenStaticSound");
-        filter.addAction("nineteenVibrate");
-        filter.addAction("nineteenVibrateChange");
         filter.addAction("nineteenEmptyPlayer");
         filter.addAction("nineteenBluetoothSettingChange");
         filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
@@ -2205,11 +2072,6 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction("android.intent.action.PHONE_STATE");
         return filter;
     }
-
-    private int logrithmic_slider(final int x) {
-        return (int) (((x * x) / 200) * Math.log10(x));
-    }
-
     void makePoor(final boolean poor) {
         this.poor = poor;
         if (!poor) {// good signal
@@ -2239,9 +2101,6 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void updateNotification(final Inbound inbound) {
-        //String url;
-        //if (inbound != null) url = inbound.getProfileLink();
-        //else url = "https://firebasestorage.googleapis.com/v0/b/channel-19.appspot.com/o/system%2Fapp_icon.png?alt=media&token=a12720cc-f1ce-4c8b-9249-4bf5c68678dc";
         String handle, carrier;
         if (inbound != null) {
             handle = inbound.getHandle();
@@ -2263,26 +2122,10 @@ public class RadioService extends Service implements ValueEventListener {
             color = Color.parseColor("#990000");
         int led = 0;
         mBuilder.setLights(color, led, 0);
-        //notifyview.setImageViewBitmap(R.id.profile, bitmap);
         notifyview.setTextViewText(R.id.handle, handle);
         notifyview.setTextViewText(R.id.carrier, carrier);
         mBuilder.setNumber(inbounds.size());
-        //if (MI != null) mBuilder.setPriority(Notification.CATEGORY_REMINDER);
-        //else mBuilder.setPriority(Notification.PRIORITY_DEFAULT);
         startForeground(19, mBuilder.build());
-      /*
-        Glide.with(this)
-                .asBitmap()
-                .load(url)
-                .apply(profileOptions)
-                .thumbnail(0.1f)
-                .into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap bitmap, @Nullable Transition<? super Bitmap> transition) {
-
-                    }
-                });
-       */
     }
 
     private void updateWidget(Inbound object) {
@@ -2308,7 +2151,7 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void buildNotification() {
-        PendingIntent skipping = PendingIntent.getBroadcast(this, 0, new Intent("nineteenSkipTwo"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent skipping = PendingIntent.getBroadcast(this, 0, new Intent("nineteenSkip"), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent pausing = PendingIntent.getBroadcast(this, 0, new Intent("nineteenPlayPause"), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent opench19 = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
         notifyview.setOnClickPendingIntent(R.id.skipping, skipping);
@@ -2780,46 +2623,38 @@ public class RadioService extends Service implements ValueEventListener {
     @SuppressLint("StaticFieldLeak")
     private void removeAllOf(final String id, final boolean toast, final int limit) {
         if (inbounds.isEmpty()) return;
-        Boolean isOperator = inbounds.get(0).getUser_id().equals(id);
-        Callable<Boolean> callable = new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-                if (isOperator && !paused) player.pause();
-                int size = inbounds.size();
-                if (size > 1) {
-                    List<Inbound> indexList = new ArrayList<>();
-                    for (int i = size - 1; i >= 1; i--) {
-                        final Inbound entry = inbounds.get(i);
-                        if (entry.getUser_id().equals(id)) {
-                            indexList.add(entry);
-                        }
-                    }
-                    Collections.sort(indexList, new Comparator<Inbound>() {
-                        @Override
-                        public int compare(Inbound one, Inbound two) {
-                            return Long.compare(one.getStamp(), two.getStamp());
-                        }
-                    });
-                    if (indexList.size() > 0) {
-                        List<Inbound> deletionArray = new ArrayList<>();
-                        if (indexList.size() > limit - 1 && limit != 0) {
-                            for (int i = 0; i <= limit - 1; i++) {
-                                deletionArray.add(indexList.get(i));
-                            }
-                        } else deletionArray.addAll(indexList);
-                        int x = deletionArray.size();
-                        if (x > 1 && toast) {
-                            snacks.add(new Snack("Purged " + x, Snackbar.LENGTH_SHORT));
-                            checkForMessages();
-                        }
-                        for (Inbound inboud : deletionArray) {
-                            new File(Utils.formatLocalAudioFileLocation(saveDirectory, inboud.getUser_id(), inboud.getStamp())).delete();
-                            inbounds.remove(inboud);
-                        }
+        boolean isOperator = inbounds.get(0).getUser_id().equals(id);
+        Callable<Boolean> callable = () -> {
+            if (isOperator && !paused) player.pause();
+            int size = inbounds.size();
+            if (size > 1) {
+                List<Inbound> indexList = new ArrayList<>();
+                for (int i = size - 1; i >= 1; i--) {
+                    final Inbound entry = inbounds.get(i);
+                    if (entry.getUser_id().equals(id)) {
+                        indexList.add(entry);
                     }
                 }
-                return isOperator;
+                indexList.sort(Comparator.comparingLong(Inbound::getStamp));
+                if (indexList.size() > 0) {
+                    List<Inbound> deletionArray = new ArrayList<>();
+                    if (indexList.size() > limit - 1 && limit != 0) {
+                        for (int i = 0; i <= limit - 1; i++) {
+                            deletionArray.add(indexList.get(i));
+                        }
+                    } else deletionArray.addAll(indexList);
+                    int x = deletionArray.size();
+                    if (x > 1 && toast) {
+                        snacks.add(new Snack("Purged " + x, Snackbar.LENGTH_SHORT));
+                        checkForMessages();
+                    }
+                    for (Inbound inboud : deletionArray) {
+                        new File(Utils.formatLocalAudioFileLocation(saveDirectory, inboud.getUser_id(), inboud.getStamp())).delete();
+                        inbounds.remove(inboud);
+                    }
+                }
             }
+            return isOperator;
         };
         if (ExecutorUtils.getFutureBoolean(executor, callable)) removeZeros();
         else updateDisplay();
@@ -2829,16 +2664,6 @@ public class RadioService extends Service implements ValueEventListener {
         if (inbounds.isEmpty()) return;
         sp.play(purge, .1f, .1f, 1, 0, 1f);
         removeAllOf(inbounds.get(0).getUser_id(), true, operator.getPurgeLimit());
-    }
-
-    private void vibrateLight() {
-        if (vibrate)
-            Rumble.once(2);
-    }
-
-    private void vibrate() {
-        if (vibrate)
-            Rumble.once(10);
     }
 
     private void emptyPlayer(boolean shutdown) {
@@ -2870,15 +2695,12 @@ public class RadioService extends Service implements ValueEventListener {
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         if (response.isSuccessful()) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (MI != null) {
-                                        if (chat.get().equals("0")) {
-                                            snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
-                                            checkForMessages();
-                                        } else MI.displayChat(null, false, false);
-                                    }
+                            handler.post(() -> {
+                                if (MI != null) {
+                                    if (chat.get().equals("0")) {
+                                        snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
+                                        checkForMessages();
+                                    } else MI.displayChat(null, false, false);
                                 }
                             });
                         }
@@ -2983,7 +2805,7 @@ public class RadioService extends Service implements ValueEventListener {
         }
 
         class CustomTelephonyCallback extends TelephonyCallback implements TelephonyCallback.CallStateListener {
-            private CallBack mCallBack;
+            private final CallBack mCallBack;
 
             public CustomTelephonyCallback(CallBack callBack) {
                 mCallBack = callBack;
@@ -2999,30 +2821,27 @@ public class RadioService extends Service implements ValueEventListener {
 
         public void registerCustomTelephonyCallback(Context context) {
             TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            telephony.registerTelephonyCallback(context.getMainExecutor(), new CustomTelephonyCallback(new CallBack() {
-                @Override
-                public void callStateChanged(int state) {
-                    switch (state) {
-                        case TelephonyManager.CALL_STATE_IDLE:
-                            phoneIdle = true;
-                            updateDisplay();
-                            if (prePaused) {
-                                prePaused = false;
-                                resumePlayback();
-                            }
-                            break;
-                        case TelephonyManager.CALL_STATE_OFFHOOK:
-                        case TelephonyManager.CALL_STATE_RINGING:
-                            phoneIdle = false;
-                            if (MI != null && recording) MI.stopRecorder(false);
-                            if (!paused) {
-                                prePaused = true;
-                                pause_playback();
-                            }
-                            break;
-                    }
-
+            telephony.registerTelephonyCallback(context.getMainExecutor(), new CustomTelephonyCallback(state -> {
+                switch (state) {
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        phoneIdle = true;
+                        updateDisplay();
+                        if (prePaused) {
+                            prePaused = false;
+                            resumePlayback();
+                        }
+                        break;
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                    case TelephonyManager.CALL_STATE_RINGING:
+                        phoneIdle = false;
+                        if (MI != null && recording) MI.stopRecorder(false);
+                        if (!paused) {
+                            prePaused = true;
+                            pause_playback();
+                        }
+                        break;
                 }
+
             }));
 
 

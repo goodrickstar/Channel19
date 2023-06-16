@@ -50,8 +50,8 @@ public class EnterPassword extends DialogFragment {
         RadioService.occupied.set(true);
         final Channel channel = RadioService.gson.fromJson(getArguments().getString("data"), Channel.class);
         binding.top.setText(channel.getChannel_name());
-        binding.accept.setOnClickListener(view1 -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+        binding.accept.setOnClickListener(v -> {
+            Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             if (binding.pinEt.getText().length() > 0){
                 if (Integer.parseInt(binding.pinEt.getText().toString().trim().replace(" ", "")) - channel.getPin() == 0) {
@@ -67,7 +67,7 @@ public class EnterPassword extends DialogFragment {
             }else binding.pinEt.setError("enter pin");
         });
         binding.cancel.setOnClickListener(v -> {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             if (MI != null) MI.selectChannel(false);
             dismiss();

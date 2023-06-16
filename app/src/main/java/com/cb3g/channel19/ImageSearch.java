@@ -103,7 +103,7 @@ public class ImageSearch extends DialogFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
     }
@@ -123,22 +123,19 @@ public class ImageSearch extends DialogFragment {
         recyclerView.setAdapter(recycleAdapter);
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        columnWidth = (int) ((displaymetrics.widthPixels) / 2) - 10;
+        columnWidth = ((displaymetrics.widthPixels) / 2) - 10;
         SearchView gifSearch = view.findViewById(R.id.gif_search);
-        ImageView closeButton = (ImageView) gifSearch.findViewById(R.id.search_close_btn);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                Utils.hideKeyboard(context, gifSearch);
-                giphySearch("");
-                gifSearch.setQuery("", false);
-            }
+        ImageView closeButton = gifSearch.findViewById(R.id.search_close_btn);
+        closeButton.setOnClickListener(v -> {
+            Utils.vibrate(v);
+            Utils.hideKeyboard(context, gifSearch);
+            giphySearch("");
+            gifSearch.setQuery("", false);
         });
         gifSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(gifSearch);
                 giphySearch(query.trim());
                 return false;
             }
@@ -237,9 +234,9 @@ public class ImageSearch extends DialogFragment {
         }
 
         @Override
-        public void onClick(View view) {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
-            Giph giph = (Giph) view.getTag();
+        public void onClick(View v) {
+            Utils.vibrate(v);
+            Giph giph = (Giph) v.getTag();
             Gif gif = giph.getDownsized();
             gif.setId(giph.getId());
             context.sendBroadcast(new Intent("nineteenGifChosen").putExtra("data", RadioService.gson.toJson(gif)));
@@ -247,9 +244,9 @@ public class ImageSearch extends DialogFragment {
         }
 
         @Override
-        public boolean onLongClick(View view) {
-            context.sendBroadcast(new Intent("nineteenVibrate"));
-            Giph giph = (Giph) view.getTag();
+        public boolean onLongClick(View v) {
+            Utils.vibrate(v);
+            Giph giph = (Giph) v.getTag();
             Gif gif = giph.getDownsized();
             GifShowCase showCase = new GifShowCase();
             Bundle bundle = new Bundle();

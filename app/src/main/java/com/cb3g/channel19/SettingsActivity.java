@@ -58,6 +58,7 @@ import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
 
+@SuppressWarnings("ALL")
 public class SettingsActivity extends FragmentActivity implements SI, PurchasesUpdatedListener {
     private final Controls confrag = new Controls();
     private final Account accfrag = new Account();
@@ -107,7 +108,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     });
                     break;
                 case "starSelection":
-                    sendBroadcast(new Intent("nineteenVibrate"));
                     Stars starSelectionDialog;
                     starSelectionDialog = (Stars) manager.findFragmentByTag("ssd");
                     if (starSelectionDialog == null) {
@@ -359,7 +359,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     public void buy(View v) {
         sendBroadcast(new Intent("nineteenClickSound"));
-        sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         if (!settings.getBoolean("active", false)) {
             if (billingUtils.isConnected()) {
                 billingUtils.querySubscriptionDetails(NEW_SUBSCRIPTION, new ProductDetailsResponseListener() {
@@ -633,7 +633,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     public void touch(View v) {
-        vibrate();
+        Utils.vibrate(v);
         switch (v.getId()) {
             case R.id.ghost:
                 clickSound();
@@ -779,7 +779,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     public void help(View v) {
-        vibrate();
+        Utils.vibrate(v);
         clickSound();
         switch (v.getId()) {
             case R.id.help41:
@@ -825,7 +825,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     public void displayTerms(View v) {
-        vibrate();
+        Utils.vibrate(v);
         clickSound();
         TermsOfUse tdd = (TermsOfUse) manager.findFragmentByTag("tdd");
         if (tdd == null) {
@@ -839,13 +839,8 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     private void clickSound() {
         sendBroadcast(new Intent("nineteenClickSound"));
     }
-
-    private void vibrate() {
-        sendBroadcast(new Intent("nineteenVibrate"));
-    }
-
     public void accountTouch(View v) {
-        vibrate();
+        Utils.vibrate(v);
         clickSound();
         switch (v.getId()) {
             case R.id.contact:

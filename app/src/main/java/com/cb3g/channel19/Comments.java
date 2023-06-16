@@ -398,6 +398,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     text_holder.content.setText(comment.getContent());
                     new GlideImageLoader(context, text_holder.profile).load(comment.getProfileLink(), RadioService.profileOptions);
                     text_holder.profile.setOnClickListener(v -> {
+                        Utils.vibrate(v);
                         if (RI != null) RI.action_view(comment.getProfileLink());
                     });
                     text_holder.name.setText(comment.getHandle());
@@ -434,9 +435,11 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     photo_holder.content.getLayoutParams().width = (int) (ReservoirActivity.screen_width * 0.8);
                     new GlideImageLoader(context, photo_holder.content, photo_holder.loading).load(comment.getContent());
                     photo_holder.content.setOnClickListener(v -> {
+                        Utils.vibrate(v);
                         if (RI != null) RI.action_view(comment.getContent());
                     });
                     photo_holder.profile.setOnClickListener(v -> {
+                        Utils.vibrate(v);
                         if (RI != null)
                             RI.action_view(comment.getProfileLink());
                     });

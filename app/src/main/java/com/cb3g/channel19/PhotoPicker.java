@@ -64,23 +64,19 @@ public class PhotoPicker extends DialogFragment implements View.OnClickListener 
     }
 
     @Override
-    public void onClick(View view) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
-        switch (view.getId()) {
-            case R.id.accept:
-                if (!gif.getUrl().equals(RadioService.operator.getProfileLink()) && SI != null)
-                    SI.photoChosen(gif, upload);
-                dismiss();
-                break;
-            case R.id.cancel:
-                dismiss();
-                break;
-            case R.id.fromDisk:
-                if (SI != null) SI.selectFromDisk();
-                break;
-            case R.id.fromGiphy:
-                if (SI != null) SI.launchSearch(gif.getId());
-                break;
+    public void onClick(View v) {
+        Utils.vibrate(v);
+        int id = v.getId();
+        if (id == R.id.accept){
+            if (!gif.getUrl().equals(RadioService.operator.getProfileLink()) && SI != null)
+                SI.photoChosen(gif, upload);
+            dismiss();
+        }else if (id == R.id.cancel){
+            dismiss();
+        }else if (id == R.id.fromDisk){
+            if (SI != null) SI.selectFromDisk();
+        }else if (id == R.id.fromGiphy){
+            if (SI != null) SI.launchSearch(gif.getId());
         }
     }
 

@@ -32,7 +32,7 @@ class Blank : DialogFragment(), View.OnClickListener {
     }
 
     override fun onClick(v: View) {
-        requireContext().sendBroadcast(Intent("nineteenVibrate"))
+        Utils.vibrate(v)
         requireContext().sendBroadcast(Intent("nineteenClickSound"))
         if (title?.text.toString() == "Profile Picture") requireContext().sendBroadcast(Intent("nineteenPickProfile"))
         if (title?.text.toString() == "Please Update") gotoPlayStore()

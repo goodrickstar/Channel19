@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -11,8 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Vibrator;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -49,7 +46,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.gson.Gson;
 import com.kedia.ogparser.OpenGraphCacheProvider;
 import com.kedia.ogparser.OpenGraphCallback;
 import com.kedia.ogparser.OpenGraphParser;
@@ -57,9 +53,6 @@ import com.kedia.ogparser.OpenGraphResult;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,30 +68,24 @@ import java.util.regex.Pattern;
 
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnCompressListener;
-
+@SuppressWarnings("ALL")
 public class ReservoirActivity extends AppCompatActivity implements ChildEventListener, RI {
     static int screen_width;
     private Comments comments = new Comments();
     private CreatePost entry_fragment = new CreatePost();
-    private recycler_adapter containerAdapter = new recycler_adapter();
+    private final recycler_adapter containerAdapter = new recycler_adapter();
     private TextView emptyView;
-    private List<Post> posts = new ArrayList<>();
-    private Vibrator vibrator;
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private final List<Post> posts = new ArrayList<>();
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case "vibrate":
-                    vibrate();
-                    break;
-                case "nineteenGifChosen":
-                    Gif gif = RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class);
-                    if (gif != null) {
-                        if (entry_fragment.isAdded())
-                            entry_fragment.setPhoto(gif, false);
-                        if (comments.isAdded()) comments.giphy_remark(gif);
-                    }
-                    break;
+            if ("nineteenGifChosen".equals(intent.getAction())) {
+                Gif gif = RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class);
+                if (gif != null) {
+                    if (entry_fragment.isAdded())
+                        entry_fragment.setPhoto(gif, false);
+                    if (comments.isAdded()) comments.giphy_remark(gif);
+                }
             }
         }
     };
@@ -106,7 +93,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     private String CACHE_DIRECTORY;
     static DatabaseReference channelReservoirReference;
     private StorageReference storageReference;
-    private List<String> editing = new ArrayList<>();
+    private final List<String> editing = new ArrayList<>();
     private RecyclerView recyclerView;
 
     private void snapToPosition(int position) {
@@ -237,11 +224,11 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         View view = snackbar.getView();
         TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
         tv.setTextColor(ContextCompat.getColor(this, R.color.main_white));
-        view.setBackgroundColor(getResources().getColor(R.color.main_black));
+        view.setBackgroundColor(ContextCompat.getColor(this, R.color.main_black));
         if (snack.getLength() == Snackbar.LENGTH_INDEFINITE) {
             snackbar.setActionTextColor(Color.WHITE);
-            snackbar.setAction("10 4", view1 -> {
-                sendBroadcast(new Intent("nineteenVibrate"));
+            snackbar.setAction("10 4", v -> {
+                Utils.vibrate(v);
                 snackbar.dismiss();
             });
         } else {
@@ -268,17 +255,14 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         }
     }
 
-    @SuppressLint("HardwareIds")
+    @SuppressLint({"HardwareIds", "UseCompatLoadingForDrawables"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         CACHE_DIRECTORY = getCacheDir() + "/";
         setContentView(R.layout.reservoir_activity);
-        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         fragmentManager = getSupportFragmentManager();
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        screen_width = displayMetrics.widthPixels;
+        screen_width = Utils.getScreenWidth(this);
         recyclerView = findViewById(R.id.container);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setHasFixedSize(true);
@@ -300,21 +284,15 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             post.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
             poll.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
         } else {
-            post.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    vibrate();
-                    create_new_entry();
-                }
+            post.setOnClickListener(v -> {
+                Utils.vibrate(v);
+                create_new_entry();
             });
-            poll.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    vibrate();
-                    CreatePoll createPoll = new CreatePoll();
-                    createPoll.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
-                    createPoll.show(fragmentManager, "createPoll");
-                }
+            poll.setOnClickListener(v -> {
+                Utils.vibrate(v);
+                CreatePoll createPoll = new CreatePoll();
+                createPoll.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
+                createPoll.show(fragmentManager, "createPoll");
             });
         }
         channelReservoirReference.child("posts").addChildEventListener(this);
@@ -338,7 +316,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         channelReservoirReference.child("posts").removeEventListener(this);
     }
 
@@ -363,7 +340,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         return containedUrls;
     }
 
-
     @Override
     public void simple_post(final Gif gif, String content, boolean upload) {
         if (gif == null && content.trim().length() == 0) return;
@@ -386,38 +362,26 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     post.setWebDescription(openGraphResult.getTitle());
                     if (post.getCaption().isEmpty())
                         post.setCaption(openGraphResult.getDescription());
-                    ExecutorUtils.newSingleThreadExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            Bitmap image = Utils.fetchImage(imageLink);
-                            if (image != null) {
-                                post.setImage_height(image.getHeight());
-                                post.setImage_width(image.getWidth());
-                                Log.i("image", "Image height: " + image.getHeight());
-                                Log.i("image", "Image width: " + image.getWidth());
-                                image.recycle();
-                            } else Log.i("image", "Image was null");
-                            finish_simple_post(post, gif, false);
-                        }
+                    ExecutorUtils.newSingleThreadExecutor().execute(() -> {
+                        Bitmap image = Utils.fetchImage(imageLink);
+                        if (image != null) {
+                            post.setImage_height(image.getHeight());
+                            post.setImage_width(image.getWidth());
+                            Log.i("image", "Image height: " + image.getHeight());
+                            Log.i("image", "Image width: " + image.getWidth());
+                            image.recycle();
+                        } else Log.i("image", "Image was null");
+                        finish_simple_post(post, gif, false);
                     });
                 }
 
                 @Override
                 public void onError(@NonNull String s) {
                     Log.e("image", "OGP " + s);
-
                 }
             }, true, new OpenGraphCacheProvider(ReservoirActivity.this));
             og.parse(post.getWebLink());
         } else finish_simple_post(post, gif, upload);
-    }
-
-    private String selectImageUrl(Link link) {
-        if (link.getImageUrl().isEmpty()) {
-            if (link.getImageAltUrl().isEmpty()) {
-                return "none";
-            } else return link.getImageAltUrl();
-        } else return link.getImageUrl();
     }
 
     private void finish_simple_post(final Post post, Gif gif, boolean upload) {
@@ -548,18 +512,12 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
 
     private IntentFilter returnFilter() {
         IntentFilter filter = new IntentFilter();
-        filter.addAction("vibrate");
         filter.addAction("nineteenGifChosen");
         return filter;
     }
 
-    private void vibrate() {
-        if (vibrator != null) vibrator.vibrate(10);
-    }
-
     @Override
     public void open_remarks(final Post post) {
-        vibrate();
         if (RadioService.operator.getSilenced()) {
             showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
             return;
@@ -576,7 +534,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
 
     @Override
     public void action_view(final String imageLink) {
-        vibrate();
         FullScreen fullScreen = (FullScreen) fragmentManager.findFragmentByTag("fsf");
         if (fullScreen == null) {
             fullScreen = new FullScreen();
@@ -631,7 +588,10 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 case 1: //TODO links
                     PostHolder simple_post = (PostHolder) holder;
                     new GlideImageLoader(ReservoirActivity.this, simple_post.poster_profile_pic).load(post.getProfileLink(), RadioService.profileOptions);
-                    simple_post.poster_profile_pic.setOnClickListener(v -> action_view(post.getProfileLink()));
+                    simple_post.poster_profile_pic.setOnClickListener(v -> {
+                        Utils.vibrate(v);
+                        action_view(post.getProfileLink());
+                    });
                     simple_post.poster_profile_name.setText(post.getHandle());
                     simple_post.posting_stamp.setText(Utils.showElapsed(post.getStamp(), true));
                     String caption = post.getCaption();
@@ -645,9 +605,8 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     if (!post.getWebLink().equals("none")) {
                         simple_post.webLink.setVisibility(View.VISIBLE);
                         simple_post.webDescription.setText(post.getWebDescription());
-                        simple_post.webLink.setOnClickListener(view -> {
-                            Log.i("image", "launch link");
-                            vibrate();
+                        simple_post.webLink.setOnClickListener(v -> {
+                            Utils.vibrate(v);
                             sendBroadcast(new Intent("nineteenPause"));
                             Utils.launchUrl(ReservoirActivity.this, post.getWebLink());
                         });
@@ -665,12 +624,12 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             new GlideImageLoader(ReservoirActivity.this, simple_post.image, simple_post.loading).load(post.getImageLink());
                             if (post.getWebLink().equals("none")) {
                                 simple_post.image.setOnClickListener(v -> {
-                                    vibrate();
+                                    Utils.vibrate(v);
                                     action_view(post.getImageLink());
                                 });
                             } else {
-                                simple_post.image.setOnClickListener(view -> {
-                                    vibrate();
+                                simple_post.image.setOnClickListener(v -> {
+                                    Utils.vibrate(v);
                                     sendBroadcast(new Intent("nineteenPause"));
                                     Utils.launchUrl(ReservoirActivity.this, post.getWebLink());
                                 });
@@ -694,16 +653,19 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     simple_post.remarks.setText(data);
                     simple_post.likes.setText(NumberFormat.getNumberInstance(Locale.US).format(post.getLikes()));
                     simple_post.dislikes.setText(NumberFormat.getNumberInstance(Locale.US).format(post.getDislikes()));
-                    simple_post.remarks.setOnClickListener(v -> open_remarks(post));
+                    simple_post.remarks.setOnClickListener(v -> {
+                        Utils.vibrate(v);
+                        open_remarks(post);
+                    });
                     if (!ownerOfPost) {
                         simple_post.like.setOnClickListener(v -> {
                             //like post
-                            vibrate();
+                            Utils.vibrate(v);
                             channelReservoirReference.child("posts").child(post.getPostId()).child("likes").setValue(post.getLikes() + 1);
                         });
                         simple_post.dislike.setOnClickListener(v -> {
                             //dislike post
-                            vibrate();
+                            Utils.vibrate(v);
                             channelReservoirReference.child("posts").child(post.getPostId()).child("dislikes").setValue(post.getDislikes() + 1);
                         });
                     }
@@ -714,9 +676,18 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                         new GlideImageLoader(ReservoirActivity.this, simple_post.remarker_profile_pic).load(post.getLatest_profileLink(), RadioService.profileOptions);
                         simple_post.remarker_name.setText(post.getLatest_handle());
                         simple_post.remarker_text.setText(StringUtils.abbreviate(post.getLatest_remark(), 60));
-                        simple_post.remarker_profile_pic.setOnClickListener(v -> open_remarks(post));
-                        simple_post.remarker_name.setOnClickListener(v -> open_remarks(post));
-                        simple_post.remarker_text.setOnClickListener(v -> open_remarks(post));
+                        simple_post.remarker_profile_pic.setOnClickListener(v -> {
+                            Utils.vibrate(v);
+                            open_remarks(post);
+                        });
+                        simple_post.remarker_name.setOnClickListener(v -> {
+                            Utils.vibrate(v);
+                            open_remarks(post);
+                        });
+                        simple_post.remarker_text.setOnClickListener(v -> {
+                            Utils.vibrate(v);
+                            open_remarks(post);
+                        });
                     } else {
                         simple_post.remarker_profile_pic.setVisibility(View.GONE);
                         simple_post.remarker_name.setVisibility(View.GONE);
@@ -727,7 +698,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     else
                         simple_post.menu.setImageDrawable(ContextCompat.getDrawable(ReservoirActivity.this, R.drawable.menu));
                     simple_post.menu.setOnClickListener(v -> {
-                        vibrate();
+                        Utils.vibrate(v);
                         PopupMenu popupMenu = new PopupMenu(ReservoirActivity.this, v, Gravity.END, 0, R.style.PopupMenu);
                         if (!post.getLocked() && !post.getImageLink().equals("none"))
                             popupMenu.getMenu().add(1, R.id.save_post, 1, "Save Image");
@@ -747,34 +718,26 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             }
                         }
                         popupMenu.setOnMenuItemClickListener(item -> {
-                            vibrate();
-                            switch (item.getItemId()) {
-                                case R.id.delete_all_post:
-                                    removeAllPosts(post.getFacebookId());
-                                    break;
-                                case R.id.bann_user:
-                                    RadioService.databaseReference.child("blockedFromReservoir").child(post.getFacebookId()).setValue(post.getHandle());
-                                    break;
-                                case R.id.add_text:
-                                    edit_post(getString(R.string.add_post_text), post.getPostId(), "default", post.getCaption());
-                                    return true;
-                                case R.id.edit_text:
-                                    edit_post(getString(R.string.edit_post_text), post.getPostId(), "default", post.getCaption());
-                                    return true;
-                                case R.id.delete_post:
-                                    delete_post(post);
-                                    return true;
-                                case R.id.lock_post:
-                                    channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(true);
-                                    return true;
-                                case R.id.unlock_post:
-                                    channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(false);
-                                    return true;
-                                case R.id.save_post:
-                                    sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", post.getImageLink()));
-                                    return true;
+                            Utils.vibrate(item.getActionView());
+                            int id = item.getItemId();
+                            if (id == R.id.delete_all_post) {
+                                removeAllPosts(post.getFacebookId());
+                            } else if (id == R.id.bann_user) {
+                                RadioService.databaseReference.child("blockedFromReservoir").child(post.getFacebookId()).setValue(post.getHandle());
+                            } else if (id == R.id.add_text) {
+                                edit_post(getString(R.string.add_post_text), post.getPostId(), "default", post.getCaption());
+                            } else if (id == R.id.edit_text) {
+                                edit_post(getString(R.string.edit_post_text), post.getPostId(), "default", post.getCaption());
+                            } else if (id == R.id.delete_post) {
+                                delete_post(post);
+                            } else if (id == R.id.lock_post) {
+                                channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(true);
+                            } else if (id == R.id.unlock_post) {
+                                channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(false);
+                            } else if (id == R.id.save_post) {
+                                sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", post.getImageLink()));
                             }
-                            return false;
+                            return true;
                         });
                         popupMenu.show();
                     });
@@ -782,14 +745,17 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 case 2:
                     PollHolder pollHolder = (PollHolder) holder;
                     new GlideImageLoader(ReservoirActivity.this, pollHolder.poster_profile_pic).load(post.getProfileLink(), RadioService.profileOptions);
-                    pollHolder.poster_profile_pic.setOnClickListener(v -> action_view(post.getProfileLink()));
+                    pollHolder.poster_profile_pic.setOnClickListener(v -> {
+                        Utils.vibrate(v);
+                        action_view(post.getProfileLink());
+                    });
                     pollHolder.poster_profile_name.setText(post.getHandle());
                     pollHolder.posting_stamp.setText(Utils.showElapsed(post.getStamp(), true));
                     pollHolder.caption.setText(post.getCaption());
                     if (ownerOfPost) {
                         pollHolder.menu.setVisibility(View.VISIBLE);
                         pollHolder.menu.setOnClickListener(v -> {
-                            vibrate();
+                            Utils.vibrate(v);
                             PopupMenu popupMenu = new PopupMenu(ReservoirActivity.this, v, Gravity.END, 0, R.style.PopupMenu);
                             if (ownerOfPost || RadioService.operator.getAdmin()) {
                                 popupMenu.getMenu().add(1, R.id.delete_post, 4, "Delete");
@@ -799,17 +765,14 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                                     popupMenu.getMenu().add(1, R.id.unlock_post, 3, "Unlock Options");
                             }
                             popupMenu.setOnMenuItemClickListener(item -> {
-                                vibrate();
-                                switch (item.getItemId()) {
-                                    case R.id.delete_post:
-                                        delete_post(post);
-                                        break;
-                                    case R.id.lock_post:
-                                        channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(true);
-                                        break;
-                                    case R.id.unlock_post:
-                                        channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(false);
-                                        break;
+                                Utils.vibrate(v);
+                                int id = item.getItemId();
+                                if (id == R.id.delete_post) {
+                                    delete_post(post);
+                                } else if (id == R.id.lock_post) {
+                                    channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(true);
+                                } else if (id == R.id.unlock_post) {
+                                    channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(false);
                                 }
                                 return true;
                             });
@@ -835,26 +798,23 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             pollOptionHolder.count.setText(String.valueOf(option.getVotes().size()));
                             pollOptionHolder.progressBar.setMax(max);
                             pollOptionHolder.progressBar.setProgress(option.getVotes().size());
-                            pollOptionHolder.like.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    for (String vote : option.getVotes()) {
-                                        if (vote.equals(RadioService.operator.getUser_id())) return;
-                                    }
-                                    vibrate();
-                                    if (alreadyVoted) {
-                                        for (int i = 0; i < post.getOptions().size(); i++) {
-                                            for (int x = post.getOptions().get(i).getVotes().size() - 1; x >= 0; x--) {
-                                                if (post.getOptions().get(i).getVotes().get(x).equals(RadioService.operator.getUser_id())) {
-                                                    post.getOptions().get(i).getVotes().remove(x);
-                                                }
+                            pollOptionHolder.like.setOnClickListener(v -> {
+                                for (String vote : option.getVotes()) {
+                                    if (vote.equals(RadioService.operator.getUser_id())) return;
+                                }
+                                Utils.vibrate(v);
+                                if (alreadyVoted) {
+                                    for (int i1 = 0; i1 < post.getOptions().size(); i1++) {
+                                        for (int x = post.getOptions().get(i1).getVotes().size() - 1; x >= 0; x--) {
+                                            if (post.getOptions().get(i1).getVotes().get(x).equals(RadioService.operator.getUser_id())) {
+                                                post.getOptions().get(i1).getVotes().remove(x);
                                             }
                                         }
                                     }
-                                    post.getOptions().get(viewHolder.getAdapterPosition()).getVotes().add(RadioService.operator.getUser_id());
-                                    channelReservoirReference.child("posts/").child(post.getPostId()).setValue(post);
-                                    showSnack(new Snack("Voted " + option.getLabel(), Snackbar.LENGTH_SHORT));
                                 }
+                                post.getOptions().get(viewHolder.getAdapterPosition()).getVotes().add(RadioService.operator.getUser_id());
+                                channelReservoirReference.child("posts/").child(post.getPostId()).setValue(post);
+                                showSnack(new Snack("Voted " + option.getLabel(), Snackbar.LENGTH_SHORT));
                             });
                         }
 
@@ -881,33 +841,27 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             pollHolder.add_option.setTextColor(Color.WHITE);
                             pollHolder.add_option.setText(getString(R.string.add_poll_option));
                         }
-                        pollHolder.add_option.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                vibrate();
-                                if (editing.contains(post.getPostId())) {
-                                    editing.remove(post.getPostId());
-                                    Utils.hideKeyboard(ReservoirActivity.this, pollHolder.optionET);
-                                } else editing.add(post.getPostId());
-                                containerAdapter.notifyDataSetChanged();
-                            }
+                        pollHolder.add_option.setOnClickListener(v -> {
+                            Utils.vibrate(v);
+                            if (editing.contains(post.getPostId())) {
+                                editing.remove(post.getPostId());
+                                Utils.hideKeyboard(ReservoirActivity.this, pollHolder.optionET);
+                            } else editing.add(post.getPostId());
+                            containerAdapter.notifyDataSetChanged();
                         });
-                        pollHolder.add.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                vibrate();
-                                if (pollHolder.optionET.getText().toString().isEmpty())
-                                    pollHolder.optionET.setError("empty");
-                                else {
-                                    ArrayList<String> votes = new ArrayList<>();
-                                    if (!RadioService.operator.getUser_id().equals(post.getFacebookId()))
-                                        votes.add(RadioService.operator.getUser_id());
-                                    post.getOptions().add(new PollOption(pollHolder.optionET.getText().toString().trim(), votes));
-                                    editing.remove(post.getPostId());
-                                    channelReservoirReference.child("posts").child(post.getPostId()).setValue(post);
-                                    Utils.hideKeyboard(ReservoirActivity.this, pollHolder.optionET);
-                                    pollHolder.optionET.setText("");
-                                }
+                        pollHolder.add.setOnClickListener(v -> {
+                            Utils.vibrate(v);
+                            if (pollHolder.optionET.getText().toString().isEmpty())
+                                pollHolder.optionET.setError("empty");
+                            else {
+                                ArrayList<String> votes = new ArrayList<>();
+                                if (!RadioService.operator.getUser_id().equals(post.getFacebookId()))
+                                    votes.add(RadioService.operator.getUser_id());
+                                post.getOptions().add(new PollOption(pollHolder.optionET.getText().toString().trim(), votes));
+                                editing.remove(post.getPostId());
+                                channelReservoirReference.child("posts").child(post.getPostId()).setValue(post);
+                                Utils.hideKeyboard(ReservoirActivity.this, pollHolder.optionET);
+                                pollHolder.optionET.setText("");
                             }
                         });
                     }
@@ -974,7 +928,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 loading = v.findViewById(R.id.loading);
             }
         }
-
         class PollHolder extends RecyclerView.ViewHolder {
             TextView caption, poster_profile_name, posting_stamp, add_option;
             ImageView poster_profile_pic, menu;
@@ -997,7 +950,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 add = v.findViewById(R.id.add_button);
             }
         }
-
         class PollOptionHolder extends RecyclerView.ViewHolder {
             TextView label, count;
             ImageView like;

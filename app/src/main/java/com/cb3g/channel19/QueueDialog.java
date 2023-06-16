@@ -71,7 +71,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenVibrate"));
+        Utils.vibrate(v);
         context.sendBroadcast(new Intent("nineteenClickSound"));
         dismiss();
     }
@@ -219,7 +219,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
         public void onGroupExpanded(int groupPosition) {
             super.onGroupExpanded(groupPosition);
             if (!auto) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
+                Utils.vibrate(listView);
             } else auto = false;
             settings.edit().putInt("lastOpen", groupPosition).apply();
         }
@@ -227,7 +227,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
         @Override
         public void onGroupCollapsed(int groupPosition) {
             super.onGroupCollapsed(groupPosition);
-            context.sendBroadcast(new Intent("nineteenVibrate"));
+            Utils.vibrate(listView);
         }
 
         @Override
