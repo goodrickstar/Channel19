@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,7 +12,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -31,9 +29,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.example.android.multidex.myapplication.databinding.CommentsDialogBinding;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -58,16 +54,14 @@ import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
-
-
 public class Comments extends DialogFragment implements ChildEventListener, View.OnClickListener {
-    private RecyclerView commentRecycler;
     private final CommentAdapter commentAdapter = new CommentAdapter();
-    private List<Comment> comments = new ArrayList<>();
+    private final List<Comment> comments = new ArrayList<>();
     private EditText editBox;
     private com.cb3g.channel19.RI RI;
     private Context context;
     private Post post;
+    private CommentsDialogBinding binding;
 
     private void snapToPosition(int position) {
         RecyclerView.SmoothScroller smoothScroller = new
@@ -78,25 +72,22 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     }
                 };
         smoothScroller.setTargetPosition(position);
-        commentRecycler.getLayoutManager().startSmoothScroll(smoothScroller);
+        binding.commentsListView.getLayoutManager().startSmoothScroll(smoothScroller);
     }
 
     @Override
     public void onClick(View v) {
         context.sendBroadcast(new Intent("vibrate"));
-        switch (v.getId()) {
-            case R.id.imageBox:
-                if (editBox.length() > 0) {
-                    text_remark(editBox.getText().toString().trim());
-                    editBox.setText("");
-                } else if (RI != null) RI.choose_photo_remark();
-                break;
-            case R.id.giphyBox:
-                if (RI != null) RI.launchSearch();
-                break;
+        int id = v.getId();
+        if (id == R.id.imageBox) {
+            if (editBox.length() > 0) {
+                text_remark(editBox.getText().toString().trim());
+                editBox.setText("");
+            } else if (RI != null) RI.choose_photo_remark();
+        } else if (id == R.id.giphyBox) {
+            if (RI != null) RI.launchSearch();
         }
     }
-
 
     @Override
     public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -146,7 +137,8 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final Window window = getDialog().getWindow();
         if (window != null) window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        return inflater.inflate(R.layout.comments_dialog, container, false);
+        binding = CommentsDialogBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
@@ -156,19 +148,14 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         final ImageView back = view.findViewById(R.id.back);
         title.setText(R.string.comments);
         back.setImageResource(R.drawable.upbutton);
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                context.sendBroadcast(new Intent("vibrate"));
-                dismiss();
-            }
+        back.setOnClickListener(v -> {
+            context.sendBroadcast(new Intent("vibrate"));
+            dismiss();
         });
         post = RadioService.gson.fromJson(getArguments().getString("post"), Post.class);
-        commentRecycler = view.findViewById(R.id.commentsListView);
-        commentRecycler.setHasFixedSize(true);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        commentRecycler.setLayoutManager(linearLayoutManager);
-        commentRecycler.setAdapter(commentAdapter);
+        binding.commentsListView.setHasFixedSize(true);
+        binding.commentsListView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        binding.commentsListView.setAdapter(commentAdapter);
         editBox = view.findViewById(R.id.editBox);
         if (!RadioService.operator.getBlockedFromReservoir()) {
             final ImageView image_selector = view.findViewById(R.id.imageBox);
@@ -194,7 +181,6 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         }
         RI.databaseReference().child("remarks").child(post.getPostId()).addChildEventListener(this);
     }
-
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
@@ -288,49 +274,37 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                         public void onSuccess(final File file) {
                             final StorageReference ref = RI.storageReference().child(file.getName());
                             UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
-                            uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                                @Override
-                                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                                    if (!task.isSuccessful()) {
-                                        throw task.getException();
-                                    }
-                                    return ref.getDownloadUrl();
+                            uploadTask.continueWithTask(task -> {
+                                if (!task.isSuccessful()) {
+                                    throw task.getException();
                                 }
-                            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                                @Override
-                                public void onComplete(@NonNull Task<Uri> task) {
-                                    if (task.isSuccessful()) {
-                                        Uri downloadUri = task.getResult();
-                                        comment.setContent(downloadUri.toString());
-                                        update_latest_comment("Commented with a photo.");
-                                        editBox.setText("");
-                                        ExecutorService executor = ExecutorUtils.newSingleThreadExecutor();
-                                        executor.execute(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    Bitmap bitmap = BitmapFactory.decodeStream(new URL(downloadUri.toString()).openConnection().getInputStream());
-                                                    if (bitmap != null) {
-                                                        getActivity().runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                comment.setImage_height(bitmap.getHeight());
-                                                                comment.setImage_width(bitmap.getWidth());
-                                                                bitmap.recycle();
-                                                                RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).setValue(comment);
-                                                            }
-                                                        });
-                                                    }
-                                                } catch (IOException e) {
-                                                    Logger.INSTANCE.e("IOException", e.getMessage());
-                                                    Logger.INSTANCE.e("MalformedURLException", e.getMessage());
-                                                    comment.setImage_height(500);
-                                                    comment.setImage_width(500);
+                                return ref.getDownloadUrl();
+                            }).addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Uri downloadUri = task.getResult();
+                                    comment.setContent(downloadUri.toString());
+                                    update_latest_comment("Commented with a photo.");
+                                    editBox.setText("");
+                                    ExecutorService executor = ExecutorUtils.newSingleThreadExecutor();
+                                    executor.execute(() -> {
+                                        try {
+                                            Bitmap bitmap = BitmapFactory.decodeStream(new URL(downloadUri.toString()).openConnection().getInputStream());
+                                            if (bitmap != null) {
+                                                getActivity().runOnUiThread(() -> {
+                                                    comment.setImage_height(bitmap.getHeight());
+                                                    comment.setImage_width(bitmap.getWidth());
+                                                    bitmap.recycle();
                                                     RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).setValue(comment);
-                                                }
+                                                });
                                             }
-                                        });
-                                    }
+                                        } catch (IOException e) {
+                                            Logger.INSTANCE.e("IOException", e.getMessage());
+                                            Logger.INSTANCE.e("MalformedURLException", e.getMessage());
+                                            comment.setImage_height(500);
+                                            comment.setImage_width(500);
+                                            RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).setValue(comment);
+                                        }
+                                    });
                                 }
                             });
                         }
@@ -402,7 +376,6 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     }
 
     private class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -424,41 +397,30 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     TextHolder text_holder = (TextHolder) holder;
                     text_holder.content.setText(comment.getContent());
                     new GlideImageLoader(context, text_holder.profile).load(comment.getProfileLink(), RadioService.profileOptions);
-                    text_holder.profile.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (RI != null) RI.action_view(comment.getProfileLink());
-                        }
+                    text_holder.profile.setOnClickListener(v -> {
+                        if (RI != null) RI.action_view(comment.getProfileLink());
                     });
                     text_holder.name.setText(comment.getHandle());
                     text_holder.stamp.setText(Utils.showElapsed(comment.getStamp()));
-                    text_holder.menu.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
+                    text_holder.menu.setOnClickListener(v -> {
+                        context.sendBroadcast(new Intent("vibrate"));
+                        PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
+                        if (comment.getUserId().equals(RadioService.operator.getUser_id()))
+                            popupMenu.getMenu().add(1, R.id.edit_remark, 2, "Edit");
+                        if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
+                            popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
+                        popupMenu.setOnMenuItemClickListener(item -> {
                             context.sendBroadcast(new Intent("vibrate"));
-                            PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
-                            if (comment.getUserId().equals(RadioService.operator.getUser_id()))
-                                popupMenu.getMenu().add(1, R.id.edit_remark, 2, "Edit");
-                            if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
-                                popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
-                            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                                @Override
-                                public boolean onMenuItemClick(MenuItem item) {
-                                    context.sendBroadcast(new Intent("vibrate"));
-                                    switch (item.getItemId()) {
-                                        case R.id.delete_remark:
-                                            delete_remark(comment);
-                                            return true;
-                                        case R.id.edit_remark:
-                                            if (RI != null)
-                                                RI.edit_post(getString(R.string.edit_comment_text), comment.getPostId(), comment.getRemarkId(), comment.getContent());
-                                            return true;
-                                    }
-                                    return false;
-                                }
-                            });
-                            popupMenu.show();
-                        }
+                            int id = v.getId();
+                            if (id == R.id.delete_remark) {
+                                delete_remark(comment);
+                            } else if (id == R.id.edit_remark) {
+                                if (RI != null)
+                                    RI.edit_post(getString(R.string.edit_comment_text), comment.getPostId(), comment.getRemarkId(), comment.getContent());
+                            }
+                            return true;
+                        });
+                        popupMenu.show();
                     });
                     break;
                 case 1:
@@ -471,49 +433,31 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     photo_holder.content.getLayoutParams().height = (int) (((comment.getImage_height() * ReservoirActivity.screen_width) / comment.getImage_width()) * 0.8);
                     photo_holder.content.getLayoutParams().width = (int) (ReservoirActivity.screen_width * 0.8);
                     new GlideImageLoader(context, photo_holder.content, photo_holder.loading).load(comment.getContent());
-                    photo_holder.content.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (RI != null) RI.action_view(comment.getContent());
-                        }
+                    photo_holder.content.setOnClickListener(v -> {
+                        if (RI != null) RI.action_view(comment.getContent());
                     });
-                    photo_holder.profile.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (RI != null)
-                                RI.action_view(comment.getProfileLink());
-                        }
+                    photo_holder.profile.setOnClickListener(v -> {
+                        if (RI != null)
+                            RI.action_view(comment.getProfileLink());
                     });
-                    photo_holder.menu.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
+                    photo_holder.menu.setOnClickListener(v -> {
+                        context.sendBroadcast(new Intent("vibrate"));
+                        PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
+                        popupMenu.getMenu().add(1, R.id.save_remark, 1, "Save Image");
+                        if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
+                            popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
+                        popupMenu.setOnMenuItemClickListener(item -> {
                             context.sendBroadcast(new Intent("vibrate"));
-                            PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
-                            popupMenu.getMenu().add(1, R.id.save_remark, 1, "Save Image");
-                            //if (comment.getUserId().equals(RadioService.user.getUser_id()))
-                            //popupMenu.getMenu().add(1, R.id.edit_remark, 2, "Edit");
-                            if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
-                                popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
-                            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                                @Override
-                                public boolean onMenuItemClick(MenuItem item) {
-                                    context.sendBroadcast(new Intent("vibrate"));
-                                    switch (item.getItemId()) {
-                                        case R.id.save_remark:
-                                            context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", comment.getContent()));
-                                            return true;
-                                        case R.id.delete_remark:
-                                            delete_remark(comment);
-                                            return true;
-                                        case R.id.edit_remark:
-                                            //edit comment
-                                            return true;
-                                    }
-                                    return false;
-                                }
-                            });
-                            popupMenu.show();
-                        }
+                            context.sendBroadcast(new Intent("vibrate"));
+                            int id = v.getId();
+                            if (id == R.id.save_remark) {
+                                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", comment.getContent()));
+                            } else if (id == R.id.delete_remark) {
+                                delete_remark(comment);
+                            }
+                            return true;
+                        });
+                        popupMenu.show();
                     });
                     break;
             }
@@ -542,7 +486,6 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                 menu = v.findViewById(R.id.profile_menu);
             }
         }
-
         private class PhotoHolder extends RecyclerView.ViewHolder {
             TextView name, stamp;
             ImageView profile, menu, content;

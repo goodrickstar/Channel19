@@ -1,8 +1,6 @@
 package com.cb3g.channel19;
-
 import java.util.ArrayList;
 import java.util.List;
-
 public class ChannelInfo {
     Channel channel;
     List<String> profiles = new ArrayList<>();
@@ -30,16 +28,8 @@ public class ChannelInfo {
         return profiles;
     }
 
-    public void setProfiles(List<String> profiles) {
-        this.profiles = profiles;
-    }
-
     public int getType() {
         return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
     }
 
     public boolean isUnlocked() {

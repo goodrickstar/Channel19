@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Insets;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -16,6 +17,8 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
@@ -207,7 +210,14 @@ class Utils {
         return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
 
-    static void showKeyboard(Context context, EditText view) {
+    public static int getScreenWidth(@NonNull Activity activity) {
+        WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
+        Insets insets = windowMetrics.getWindowInsets()
+                .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+        return windowMetrics.getBounds().width() - insets.left - insets.right;
+    }
+
+    static void showKeyboard(Context context, View view) {
         InputMethodManager methodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         view.requestFocus();
         view.postDelayed(() -> methodManager.showSoftInput(view, 0), 200);

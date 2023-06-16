@@ -1,5 +1,4 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,14 +13,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.SidebandsBinding;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +41,10 @@ import okhttp3.Response;
 
 public class Channels extends DialogFragment implements View.OnClickListener {
     boolean owned = false;
-    private RecyclerView recyclerView;
     private Context context;
     private MI MI;
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private TextView newChannel;
+
+    private SidebandsBinding binding;
 
     @Override
     public void onClick(View v) {
@@ -56,7 +53,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
     }
 
     private void list_sidebands() {
-        swipeRefreshLayout.setRefreshing(true);
+        binding.swiper.setRefreshing(true);
         final String data = Jwts.builder()
                 .setHeader(RadioService.header)
                 .claim("userId", RadioService.operator.getUser_id())
@@ -70,12 +67,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         RadioService.client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                swipeRefreshLayout.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
-                });
+                binding.swiper.post(() -> binding.swiper.setRefreshing(false));
             }
 
             @Override
@@ -83,15 +75,10 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                 if (response.isSuccessful() && isAdded()) {
                     try {
                         JSONObject result = new JSONObject(response.body().string());
-                        final List<ChannelInfo> responseChannelInfos = groupIntoSidebands(returnDataList(result.getString("users")), returnChannelList(result.getString("channels")));
-                        if (responseChannelInfos.isEmpty() || (!owned && !RadioService.operator.getSilenced() && RadioService.operator.getChannel() != null))
-                            responseChannelInfos.add(0, new ChannelInfo(0));
-                        recyclerView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                recyclerView.setAdapter(new SideBandAdapter(responseChannelInfos));
-                            }
-                        });
+                        final List<ChannelInfo> responseChannelInfo = groupIntoSidebands(returnDataList(result.getString("users")), returnChannelList(result.getString("channels")));
+                        if (responseChannelInfo.isEmpty() || (!owned && !RadioService.operator.getSilenced() && RadioService.operator.getChannel() != null))
+                            responseChannelInfo.add(0, new ChannelInfo(0));
+                        binding.recyclerView.post(() -> binding.recyclerView.setAdapter(new SideBandAdapter(responseChannelInfo)));
                     } catch (JSONException e) {
                         LOG.e("list_sidebands", e.getMessage());
                     }
@@ -99,12 +86,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                     Logger.INSTANCE.e("Error", response.message());
                     Logger.INSTANCE.e("Error", response.body().string());
                 }
-                swipeRefreshLayout.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        swipeRefreshLayout.setRefreshing(false);
-                    }
-                });
+                binding.swiper.post(() -> binding.swiper.setRefreshing(false));
             }
         });
     }
@@ -194,7 +176,8 @@ public class Channels extends DialogFragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.sidebands, container, false);
+        binding = SidebandsBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
@@ -202,35 +185,26 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         super.onViewCreated(v, savedInstanceState);
         Window window = getDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
-        recyclerView = v.findViewById(R.id.recyclerView);
-        swipeRefreshLayout = v.findViewById(R.id.swiper);
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                list_sidebands();
-            }
+        binding.swiper.setOnRefreshListener(() -> {
+            context.sendBroadcast(new Intent("nineteenVibrate"));
+            list_sidebands();
         });
-        recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-        recyclerView.setHasFixedSize(true);
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        binding.recyclerView.setHasFixedSize(true);
         TextView close = v.findViewById(R.id.close);
-        close.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                if (RadioService.operator.getChannel() != null) {
-                    context.sendBroadcast(new Intent("nineteenClickSound"));
-                    dismiss();
-                } else Toaster.toastlow(context, "Join a channel or create a new one");
-            }
+        close.setOnClickListener(view -> {
+            context.sendBroadcast(new Intent("nineteenVibrate"));
+            if (RadioService.operator.getChannel() != null) {
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                dismiss();
+            } else Toaster.toastlow(context, "Join a channel or create a new one");
         });
     }
 
     public int calculateNoOfColumns(int columnWidthDp) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
-        int noOfColumns = (int) (screenWidthDp / columnWidthDp + 0.5); // +0.5 for correct rounding to int.
-        return noOfColumns;
+        return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
 
     @Override
@@ -271,14 +245,11 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             switch (holder.getItemViewType()) {
                 case 0:
                     ChannelCreatorHolder channelCreatorHolder = (ChannelCreatorHolder) holder;
-                    channelCreatorHolder.itemView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            context.sendBroadcast(new Intent("nineteenVibrate"));
-                            context.sendBroadcast(new Intent("nineteenClickSound"));
-                            if (MI != null) MI.createChannel();
-                            dismiss();
-                        }
+                    channelCreatorHolder.itemView.setOnClickListener(view -> {
+                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                        context.sendBroadcast(new Intent("nineteenClickSound"));
+                        if (MI != null) MI.createChannel();
+                        dismiss();
                     });
                     break;
                 case 1:
@@ -317,8 +288,6 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             TextView name, count;
             RecyclerView profileRecyclerView;
             ImageView lock;
-            ConstraintLayout container;
-
             public ChannelViewHolder(@NonNull View itemView) {
                 super(itemView);
                 name = itemView.findViewById(R.id.sideband_name);
@@ -342,18 +311,18 @@ public class Channels extends DialogFragment implements View.OnClickListener {
 
             private profile_recycle_adapter(ChannelInfo channelInfo) {
                 this.channelInfo = channelInfo;
-                List<String> newlist = new ArrayList<>();
+                List<String> newline = new ArrayList<>();
                 for (String profile : channelInfo.getProfiles()) {
                     if (!profile.equals("http://truckradiosystem.com/~channel1/drawables/default.png")) {
-                        newlist.add(profile);
+                        newline.add(profile);
                     }
                 }
                 int columns = calculateNoOfColumns(76);
                 int maxRows = channelInfo.getProfiles().size() / columns;
-                while (newlist.size() < maxRows * columns) {
-                    newlist.add("http://truckradiosystem.com/~channel1/drawables/default.png");
+                while (newline.size() < maxRows * columns) {
+                    newline.add("http://truckradiosystem.com/~channel1/drawables/default.png");
                 }
-                channelInfo.profiles = newlist;
+                channelInfo.profiles = newline;
             }
 
             @NonNull

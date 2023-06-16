@@ -1,7 +1,5 @@
 package com.cb3g.channel19;
-
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -10,15 +8,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.CreateChannelBinding;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -40,72 +35,69 @@ import okhttp3.Response;
 public class CreateChannel extends DialogFragment {
     private Context context;
     private MI MI;
-    private TextView close;
+    private CreateChannelBinding binding;
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
+        RadioService.occupied.set(true);
     }
 
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        RadioService.occupied.set(false);
+        context.sendBroadcast(new Intent("checkForMessages"));
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final Window window = getDialog().getWindow();
-        if (window != null) window.setGravity(Gravity.CENTER);
-        return inflater.inflate(R.layout.create_channel, container, false);
+        if (window != null) {
+            window.setGravity(Gravity.CENTER);
+            window.getAttributes().windowAnimations = R.style.photoAnimation;
+        }
+        binding = CreateChannelBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final Window window = getDialog().getWindow();
-        if (window != null)
-            window.getAttributes().windowAnimations = R.style.photoAnimation;
-        RadioService.occupied.set(true);
-        final EditText titleET = view.findViewById(R.id.title_et);
-        final EditText pinET = view.findViewById(R.id.pin_et);
-        final CheckBox lockCB = view.findViewById(R.id.lock_option);
-        lockCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) pinET.setVisibility(View.VISIBLE);
-                else pinET.setVisibility(View.INVISIBLE
-                );
-            }
+        binding.lockOption.setOnCheckedChangeListener((compoundButton, b) -> {
+            if (b) binding.pinEt.setVisibility(View.VISIBLE);
+            else binding.pinEt.setVisibility(View.INVISIBLE
+            );
         });
-        close = view.findViewById(R.id.close);
-        close.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                context.sendBroadcast(new Intent("nineteenVibrate"));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                String name = titleET.getText().toString().trim();
-                if (name.length() < 5) {
-                    titleET.setError("5 char min");
-                    return;
-                }
-                if (!name.replaceAll("[^\\p{Alpha}\\s]", "").equals(name)) {
-                    titleET.setError("Use chars A-Z");
-                    return;
-                }
-                int pin = 0;
-                if (lockCB.isChecked()) {
-                    String work = pinET.getText().toString().trim();
-                    if (work.length() < 4) {
-                        pinET.setError("4-digit");
-                        return;
-                    }
-                    pin = Integer.parseInt(work);
-                }
-                create_channel(name, pin);
+        binding.close.setOnClickListener(view1 -> {
+            context.sendBroadcast(new Intent("nineteenVibrate"));
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            String name = binding.titleEt.getText().toString().trim();
+            if (name.length() < 5) {
+                binding.titleEt.setError("5 char min");
+                return;
             }
+            if (!name.replaceAll("[^\\p{Alpha}\\s]", "").equals(name)) {
+                binding.titleEt.setError("Use chars A-Z");
+                return;
+            }
+            int pin = 0;
+            if (binding.lockOption.isChecked()) {
+                String work = binding.pinEt.getText().toString().trim();
+                if (work.length() < 4) {
+                    binding.pinEt.setError("4-digit");
+                    return;
+                }
+                pin = Integer.parseInt(work);
+            }
+            create_channel(name, pin);
         });
     }
 
     private void create_channel(final String channelName, final int pin) {
-        close.setEnabled(false);
+        binding.close.setEnabled(false);
         final String data = Jwts.builder()
                 .setHeader(RadioService.header)
                 .claim("userId", RadioService.operator.getUser_id())
@@ -127,31 +119,28 @@ public class CreateChannel extends DialogFragment {
                 if (response.isSuccessful() && isAdded()) {
                     try {
                         final JSONObject data = new JSONObject(response.body().string());
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    if (data.getBoolean("success")) {
-                                        SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);
-                                        List<Integer> channels = RadioService.gson.fromJson(saved.getString("channels", "[]"), new TypeToken<List<Integer>>() {
-                                        }.getType());
-                                        if (channels == null) channels = new ArrayList<>();
-                                        channels.add(data.getInt("channel"));
-                                        saved.edit().putString("channels", RadioService.gson.toJson(channels)).apply();
-                                        if (MI != null) {
-                                            Channel channel = new Channel();
-                                            channel.setChannel(data.getInt("channel"));
-                                            channel.setChannel_name(channelName);
-                                            channel.setPin(pin);
-                                            MI.launchChannel(channel);
-                                        }
-                                        dismiss();
-                                    } else {
-                                        LOG.i("FAIL", data.getString("channel"));
+                        getActivity().runOnUiThread(() -> {
+                            try {
+                                if (data.getBoolean("success")) {
+                                    SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);
+                                    List<Integer> channels = RadioService.gson.fromJson(saved.getString("channels", "[]"), new TypeToken<List<Integer>>() {
+                                    }.getType());
+                                    if (channels == null) channels = new ArrayList<>();
+                                    channels.add(data.getInt("channel"));
+                                    saved.edit().putString("channels", RadioService.gson.toJson(channels)).apply();
+                                    if (MI != null) {
+                                        Channel channel = new Channel();
+                                        channel.setChannel(data.getInt("channel"));
+                                        channel.setChannel_name(channelName);
+                                        channel.setPin(pin);
+                                        MI.launchChannel(channel);
                                     }
-                                } catch (JSONException e) {
-                                    LOG.e("create_channel", e.getMessage());
+                                    dismiss();
+                                } else {
+                                    LOG.i("FAIL", data.getString("channel"));
                                 }
+                            } catch (JSONException e) {
+                                LOG.e("create_channel", e.getMessage());
                             }
                         });
                     } catch (JSONException e) {
@@ -160,20 +149,6 @@ public class CreateChannel extends DialogFragment {
                 }
             }
         });
-    }
-
-    @Override
-    public void onDismiss(DialogInterface dialog) {
-        super.onDismiss(dialog);
-        RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
-    }
-
-    @Override
-    public void onCancel(DialogInterface dialog) {
-        super.onCancel(dialog);
-        RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
     }
 }
 

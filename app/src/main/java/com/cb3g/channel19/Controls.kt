@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import com.example.android.multidex.myapplication.R
 import java.util.*
 
+@Suppress("SpellCheckingInspection")
 class Controls : Fragment() {
     private var boTV: TextView? = null
     private var ringTV: TextView? = null
@@ -30,18 +31,9 @@ class Controls : Fragment() {
         return inflater.inflate(R.layout.controls, container, false)
     }
 
-    fun gpsGranted(granted: Boolean) {
-        gps?.setOnCheckedChangeListener(null)
-        gps?.isChecked = granted
-        gps?.setOnCheckedChangeListener(checkListener)
-        RadioService.operator.sharing = granted
-        context!!.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("locationEnabled", granted).apply()
-        context?.sendBroadcast(Intent("sharingChange").putExtra("data", granted))
-    }
-
     override fun onViewCreated(v: View, savedInstanceState: Bundle?) {
         super.onViewCreated(v, savedInstanceState)
-        val settings = context!!.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val settings = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
         val backgroundOn = v.findViewById<RadioButton>(R.id.backgroundOn)
         val backgroundOff = v.findViewById<RadioButton>(R.id.backgroundOff)
         val btOn = v.findViewById<RadioButton>(R.id.btOn)
@@ -71,8 +63,8 @@ class Controls : Fragment() {
         val tempTwo = settings.getInt("ring", 1500)
         val pauseLimitInt = settings.getInt("pauseLimit", 150)
         checkListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            context?.sendBroadcast(Intent("nineteenVibrate"))
-            context?.sendBroadcast(Intent("nineteenBoxSound"))
+            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            requireContext().sendBroadcast(Intent("nineteenBoxSound"))
             when (buttonView.id) {
                 R.id.photoenable -> settings.edit().putBoolean("photos", isChecked).apply()
                 R.id.pmenable -> settings.edit().putBoolean("pmenabled", isChecked).apply()
@@ -83,30 +75,30 @@ class Controls : Fragment() {
                 R.id.share -> {
                     RadioService.operator.sharing = isChecked
                     settings.edit().putBoolean("sharing", isChecked).apply()
-                    context?.sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
+                    requireContext().sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
                 }
                 R.id.gps -> {
-                    if (ActivityCompat.checkSelfPermission(activity!!.applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        context?.sendBroadcast(Intent("nineteenShowBlank").putExtra("title", resources.getString(R.string.gps_access_title)).putExtra("content", resources.getString(R.string.gps_access_info)))
+                    if (ActivityCompat.checkSelfPermission(requireActivity().applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        requireContext().sendBroadcast(Intent("nineteenShowBlank").putExtra("title", resources.getString(R.string.gps_access_title)).putExtra("content", resources.getString(R.string.gps_access_info)))
                     } else {
                         RadioService.operator.locationEnabled.set(isChecked)
                         settings.edit().putBoolean("locationEnabled", isChecked).apply()
                     }
-                    context?.sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
+                    requireContext().sendBroadcast(Intent("sharingChange").putExtra("data", isChecked))
                     if (!isChecked) RadioService.operator.userLocationString = ""
                 }
             }
         }
         val radioListener = RadioGroup.OnCheckedChangeListener { group, checkedId ->
-            context?.sendBroadcast(Intent("nineteenVibrate"))
-            context?.sendBroadcast(Intent("nineteenBoxSound"))
+            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            requireContext().sendBroadcast(Intent("nineteenBoxSound"))
             when (group.id) {
                 R.id.group40 -> settings.edit().putBoolean("darkmap", checkedId == R.id.themeDark).apply()
                 R.id.backgroundswitch -> settings.edit().putBoolean("custom", checkedId == R.id.backgroundOn).apply()
-                R.id.btSW -> context?.sendBroadcast(Intent("nineteenBluetoothSettingChange").putExtra("data", checkedId == R.id.btOn))
+                R.id.btSW -> requireContext().sendBroadcast(Intent("nineteenBluetoothSettingChange").putExtra("data", checkedId == R.id.btOn))
                 R.id.behaviorswitch -> settings.edit().putBoolean("holdmic", checkedId == R.id.hold).apply()
                 R.id.vibrateswitch -> {
-                    context?.sendBroadcast(Intent("nineteenVibrateChange").putExtra("data", checkedId == R.id.vibrateon))
+                    requireContext().sendBroadcast(Intent("nineteenVibrateChange").putExtra("data", checkedId == R.id.vibrateon))
                 }
             }
         }
@@ -138,15 +130,15 @@ class Controls : Fragment() {
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
-                context?.sendBroadcast(Intent("nineteenVibrate"))
+                requireContext().sendBroadcast(Intent("nineteenVibrate"))
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                context?.sendBroadcast(Intent("nineteenVibrate"))
+                requireContext().sendBroadcast(Intent("nineteenVibrate"))
                 when (seekBar.id) {
                     R.id.ringDelay -> settings.edit().putInt("ring", seekBar.progress).apply()
                     R.id.boBar -> settings.edit().putInt("black", seekBar.progress).apply()
-                    R.id.pauseLimitBar -> context?.sendBroadcast(Intent("pauseLimitChange").putExtra("data", seekBar.progress))
+                    R.id.pauseLimitBar -> requireContext().sendBroadcast(Intent("pauseLimitChange").putExtra("data", seekBar.progress))
                 }
             }
         }
@@ -163,9 +155,9 @@ class Controls : Fragment() {
         boTV = v.findViewById(R.id.boTV)
         val browse = v.findViewById<TextView>(R.id.browse)
         browse.setOnClickListener {
-            context?.sendBroadcast(Intent("nineteenVibrate"))
-            context?.sendBroadcast(Intent("nineteenClickSound"))
-            context?.sendBroadcast(Intent("browseBackgrounds"))
+            requireContext().sendBroadcast(Intent("nineteenVibrate"))
+            requireContext().sendBroadcast(Intent("nineteenClickSound"))
+            requireContext().sendBroadcast(Intent("browseBackgrounds"))
         }
         ringTV = v.findViewById(R.id.delayTV)
         purgeLimitTV = v.findViewById(R.id.purgeLimitTV)
@@ -193,7 +185,7 @@ class Controls : Fragment() {
         welcome.isChecked = settings.getBoolean("welcomesound", true)
         pmenable.isChecked = settings.getBoolean("pmenabled", true)
         photoenable.isChecked = settings.getBoolean("photos", true)
-        gps?.isChecked = RadioService.operator.locationEnabled.get() && ActivityCompat.checkSelfPermission(context!!, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        gps?.isChecked = RadioService.operator.locationEnabled.get() && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         share?.isChecked = RadioService.operator.sharing
         if (settings.getBoolean("custom", false))
             backgroundOn.isChecked = true
@@ -239,11 +231,5 @@ class Controls : Fragment() {
         pauseLimit.setOnSeekBarChangeListener(seekbarListener)
         purgeLimit.setOnSeekBarChangeListener(seekbarListener)
         nearbyLimit.setOnSeekBarChangeListener(seekbarListener)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ActivityCompat.checkSelfPermission(activity!!.applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && context!!.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("location", false))
-            share?.isChecked = true
     }
 }

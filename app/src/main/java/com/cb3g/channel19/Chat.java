@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+import static android.content.Context.CLIPBOARD_SERVICE;
 
 import android.app.Dialog;
 import android.content.ClipData;
@@ -10,14 +11,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -33,6 +30,7 @@ import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.ChatBinding;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -54,13 +52,9 @@ import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static android.content.Context.CLIPBOARD_SERVICE;
-
 public class Chat extends DialogFragment implements View.OnClickListener {
     private final recycle_adapter adapter = new recycle_adapter();
-    private InputMethodManager methodManager;
-    private EditText editBox;
-    private List<ChatRow> list = new ArrayList<>();
+    private final List<ChatRow> list = new ArrayList<>();
     private Context context;
     private RecyclerView chat_view;
     private TextView stamp;
@@ -71,13 +65,15 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private UserListEntry user;
     private ProgressBar loading;
 
+    private ChatBinding binding;
+
 
     @Override
     public void onClick(View v) {
         context.sendBroadcast(new Intent("nineteenVibrate"));
         context.sendBroadcast(new Intent("nineteenClickSound"));
         if (MI != null) {
-            if (editBox.getText().length() != 0) reply();
+            if (binding.editBox.getText().length() != 0) reply();
             else MI.sendPhoto(user.getUser_id(), user.getRadio_hanlde());
         }
     }
@@ -96,12 +92,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         RadioService.client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                chat_view.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        loading.setVisibility(View.GONE);
-                    }
-                });
+                chat_view.post(() -> loading.setVisibility(View.GONE));
             }
 
             @Override
@@ -145,7 +136,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
@@ -155,31 +146,25 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     public void onResume() {
         super.onResume();
         gather_history(false, false);
-        methodManager.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+        Utils.hideKeyboard(context, binding.editBox);
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
+    public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.chat.set("0");
     }
 
     @Override
-    public void onCancel(DialogInterface dialog) {
+    public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.chat.set("0");
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Window window = getDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.chat, container, false);
+        binding = ChatBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
@@ -200,12 +185,10 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         chat_view.setHasFixedSize(true);
         chat_view.setAdapter(adapter);
         launchHistory = getArguments().getBoolean("launch");
-        methodManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
         title.setText(user.getRadio_hanlde());
-        editBox = v.findViewById(R.id.editBox);
         final ImageView image_selector = v.findViewById(R.id.imageBox);
         image_selector.setOnClickListener(this);
-        editBox.addTextChangedListener(new TextWatcher() {
+        binding.editBox.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -220,15 +203,13 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                 else image_selector.setImageResource(R.drawable.gallery);
             }
         });
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        screenWidth = displaymetrics.widthPixels;
+        screenWidth = Utils.getScreenWidth(getActivity());
     }
 
     private void reply() {
-        final String text = editBox.getText().toString().trim();
+        final String text = binding.editBox.getText().toString().trim();
         if (text.isEmpty()) return;
-        editBox.setText("");
+        binding.editBox.setText("");
         context.sendBroadcast(new Intent("nineteenSendPM").putExtra("text", text).putExtra("id", user.getUser_id()));
     }
 
@@ -259,12 +240,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     } catch (IllegalArgumentException e) {
                         Logger.INSTANCE.e("delete_message() IllegalArgumentException " + e);
                     }
-                    chat_view.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            gather_history(false, false);
-                        }
-                    });
+                    chat_view.post(() -> gather_history(false, false));
                 }
             }
         });
@@ -315,18 +291,16 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         popupMenu.getMenu().add(1, R.id.delete_message, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
                             context.sendBroadcast(new Intent("nineteenVibrate"));
-                            switch (item.getItemId()) {
-                                case R.id.delete_message:
-                                    delete_message(chatRow.getMessage_id(), null);
-                                    return true;
-                                case R.id.copy_text:
-                                    final String handle = chatRow.getF_handle();
-                                    ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
-                                    ClipData clip = ClipData.newPlainText(handle, chatRow.getText());
-                                    clipboard.setPrimaryClip(clip);
-                                    return true;
+                            int id = item.getItemId();
+                            if (id == R.id.delete_message){
+                                delete_message(chatRow.getMessage_id(), null);
+                            } else if (id == R.id.copy_text) {
+                                final String handle = chatRow.getF_handle();
+                                ClipboardManager clipboard = (ClipboardManager) context.getSystemService(CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText(handle, chatRow.getText());
+                                clipboard.setPrimaryClip(clip);
                             }
-                            return false;
+                            return true;
                         });
                         popupMenu.show();
                         return false;
@@ -363,15 +337,13 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         popupMenu.getMenu().add(1, R.id.delete_message, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
                             context.sendBroadcast(new Intent("nineteenVibrate"));
-                            switch (item.getItemId()) {
-                                case R.id.delete_message:
-                                    delete_message(chatRow.getMessage_id(), chatRow.getUrl());
-                                    return true;
-                                case R.id.save_photo:
-                                    context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", chatRow.getUrl()));
-                                    return true;
+                            int id = item.getItemId();
+                            if (id == R.id.delete_message){
+                                delete_message(chatRow.getMessage_id(), chatRow.getUrl());
+                            } else if (id == R.id.copy_text) {
+                                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", chatRow.getUrl()));
                             }
-                            return false;
+                            return true;
                         });
                         popupMenu.show();
                         return false;
@@ -419,7 +391,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         }
     }
 
-    public class MyDiffCallback extends DiffUtil.Callback {
+    public static class MyDiffCallback extends DiffUtil.Callback {
 
         List<ChatRow> oldMessages;
         List<ChatRow> newMessages;
