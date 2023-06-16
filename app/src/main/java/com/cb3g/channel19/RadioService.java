@@ -895,13 +895,13 @@ public class RadioService extends Service implements ValueEventListener {
                     }
                     if (MI != null) {
                         if (!playing) updateDisplay();
-                        MI.updateQueu(inbounds.size(), paused, poor);
+                        MI.updateQueue(inbounds.size(), paused, poor);
                         notification();
                     }
                     return;
                 }
                 if (playing || recording) {
-                    if (MI != null) MI.updateQueu(inbounds.size(), paused, poor);
+                    if (MI != null) MI.updateQueue(inbounds.size(), paused, poor);
                 } else sendBroadcast(new Intent("play"));
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -1347,7 +1347,7 @@ public class RadioService extends Service implements ValueEventListener {
     private void updateDisplay() {
         if (MI == null) return;
         if (recording) {
-            MI.updateQueu(inbounds.size(), paused, poor);
+            MI.updateQueue(inbounds.size(), paused, poor);
         } else {
             MI.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
             notification();

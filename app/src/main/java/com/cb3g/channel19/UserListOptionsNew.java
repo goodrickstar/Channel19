@@ -386,7 +386,7 @@ public class UserListOptionsNew extends DialogFragment {
                         dismiss();
                         break;
                     case pauseOrplay:
-                        MI.pauseOrplay(user);
+                        MI.pauseOrPlay(user);
                         dismiss();
                         break;
                     case kickUser:
@@ -394,7 +394,7 @@ public class UserListOptionsNew extends DialogFragment {
                         dismiss();
                         break;
                     case bann:
-                        MI.bannUser(user.getUser_id());
+                        MI.banUser(user.getUser_id());
                         dismiss();
                         break;
                 }

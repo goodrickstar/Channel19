@@ -56,7 +56,7 @@ interface MI {
 
     void recordChange(boolean recording);
 
-    void updateQueu(int count, boolean paused, boolean poor);
+    void updateQueue(int count, boolean paused, boolean poor);
 
     void updateDisplay(String[] display, int count, int duration, boolean paused, boolean poor, long stamp);
 
@@ -78,13 +78,13 @@ interface MI {
 
     void kickUser(UserListEntry user);
 
-    void pauseOrplay(UserListEntry user);
+    void pauseOrPlay(UserListEntry user);
 
     void adjustColors(boolean poor);
 
     void flagOut(String id);
 
-    void bannUser(String id);
+    void banUser(String id);
 
     void saluteThisUser(UserListEntry user);
 
