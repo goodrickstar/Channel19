@@ -1,0 +1,115 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/topLevel"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_black_transparent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/info_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/black_box_white_outline"
+        android:padding="@dimen/default_padding"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="8dp">
+
+        <TextView
+            android:id="@+id/timeOnline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time Online"
+            android:textAppearance="@style/small_font" />
+
+        <TextView
+            android:id="@+id/deviceName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:text="Device Name"
+            android:textAppearance="@style/small_font" />
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/largeProfile"
+        android:layout_width="0dp"
+        android:layout_height="285dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/info_bar" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/volumeShelf"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/black_box_white_outline"
+        android:padding="@dimen/default_padding"
+        app:layout_constraintTop_toBottomOf="@+id/largeProfile">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/volume_down_w"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <SeekBar
+            android:id="@+id/nearbyLimitBar"
+            style="@android:style/Widget.DeviceDefault.Light.SeekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:max="50"
+            app:layout_constraintEnd_toStartOf="@+id/imageView5"
+            app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imageView5"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/volume_up_w"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/handle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:gravity="center_horizontal"
+        android:textSize="@dimen/large_text"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/optionMenu"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:fadeScrollbars="true"
+        android:scrollbarStyle="outsideInset"
+        android:scrollbars="vertical"
+        android:verticalScrollbarPosition="left"
+        app:fastScrollEnabled="false"
+        app:layout_constraintBottom_toTopOf="@+id/handle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/volumeShelf" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

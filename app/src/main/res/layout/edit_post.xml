@@ -1,0 +1,56 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/black_box_white_outline_slight_transparent">
+
+        <TextView
+            android:id="@+id/edit_post_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/blue_box_white_outline_transparent"
+            android:gravity="center"
+            android:padding="@dimen/default_padding"
+            android:textAppearance="@style/title_font" />
+
+        <EditText
+            android:id="@+id/question"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/edit_post_title"
+            android:background="@null"
+            android:gravity="top"
+            android:inputType="textMultiLine|textAutoComplete|textCapSentences|textAutoCorrect"
+            android:minLines="5"
+            android:padding="@dimen/default_padding"
+            android:textAppearance="@style/medium_font"
+            android:textColor="@color/main_white"
+            android:textColorLink="@color/main_white" />
+
+        <TextView
+            android:id="@+id/cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/question"
+            android:background="@drawable/dialog_button"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textAppearance="@style/title_font" />
+
+        <TextView
+            android:id="@+id/finish"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/question"
+            android:background="@drawable/dialog_button"
+            android:gravity="center"
+            android:text="@string/update"
+            android:textAppearance="@style/title_font" />
+    </RelativeLayout>
+</RelativeLayout>

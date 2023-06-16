@@ -1,0 +1,157 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="1dp"
+        android:background="@drawable/black_box_white_outline"
+        android:gravity="top"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:background="@drawable/blue_box_white_outline_transparent"
+            android:padding="@dimen/default_padding">
+
+            <ImageView
+                android:id="@+id/option_image_view"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_marginEnd="@dimen/default_padding"
+                android:background="@null"
+                android:scaleType="centerCrop" />
+
+            <TextView
+                android:id="@+id/handle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/option_image_view"
+                android:background="@null"
+                android:textAppearance="@style/title_font" />
+
+            <ImageView
+                android:id="@+id/starIV"
+                android:layout_width="@dimen/star_width"
+                android:layout_height="@dimen/star_height"
+                android:layout_below="@+id/handle"
+                android:layout_marginStart="@dimen/star_margin_left"
+                android:layout_marginTop="@dimen/star_margin_top"
+                android:layout_toEndOf="@+id/option_image_view"
+                android:scaleType="fitStart" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:background="@null">
+
+            <EditText
+                android:id="@+id/messagebox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoLink="all"
+                android:background="@null"
+                android:gravity="top"
+                android:hint="@string/hintmessage"
+                android:inputType="textCapSentences|textMultiLine"
+                android:minHeight="150dp"
+                android:padding="@dimen/default_padding"
+                android:textAppearance="@style/medium_font"
+                android:textColor="@color/main_white"
+                android:textColorLink="@color/main_blue"
+                android:textCursorDrawable="@drawable/cursor"
+                android:visibility="invisible"
+                android:importantForAutofill="no" />
+
+            <TextView
+                android:id="@+id/inboundBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoLink="all"
+                android:background="@null"
+                android:linksClickable="true"
+                android:minHeight="150dp"
+                android:padding="@dimen/default_padding"
+                android:textAppearance="@style/medium_font"
+                android:textColor="@color/main_white"
+                android:textColorLink="@color/main_white"
+                android:textCursorDrawable="@drawable/cursor"
+                android:textIsSelectable="true"
+                android:visibility="visible" />
+        </RelativeLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:background="@null"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/order"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dialog_button"
+                android:gravity="center"
+                android:text="@string/reply"
+                android:textAppearance="@style/title_font"
+                android:textColor="@drawable/whitetoblue"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline4"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/history"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_centerInParent="true"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="8dp"
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:src="@drawable/history"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/guideline6"
+                app:layout_constraintStart_toStartOf="@+id/guideline4"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/send"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/dialog_button"
+                android:gravity="center"
+                android:text="@string/close"
+                android:textAppearance="@style/title_font"
+                android:textColor="@drawable/whitetoblue"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/guideline6"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent=".35" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.65" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,52 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="45dp"
+                android:paddingLeft="45dp"
+                android:paddingRight="45dp"
+                android:paddingTop="@dimen/default_padding">
+	
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_centerInParent="true"
+		android:background="@drawable/black_box_white_outline_slight_transparent"
+		android:orientation="vertical">
+		
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_weight="0"
+			android:background="@drawable/blue_box_white_outline"
+			android:gravity="center"
+			android:padding="@dimen/default_padding"
+			android:text="@string/star_set"
+			android:textAppearance="@style/title_font"/>
+		
+		<ListView
+			android:id="@+id/selection"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_weight="1"
+			android:background="@null"
+			android:divider="@null"
+			android:listSelector="@null"
+			android:padding="@dimen/default_padding"
+			android:scrollbarSize="1dp"
+			android:scrollbarStyle="outsideOverlay"
+			android:scrollbarThumbVertical="@drawable/scrollbar"
+			android:scrollbars="vertical"
+			android:verticalScrollbarPosition="left"/>
+		
+		<TextView
+			android:id="@+id/close"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="right"
+			android:layout_weight="0"
+			android:background="@drawable/dialog_button"
+			android:gravity="center"
+			android:text="@string/close"
+			android:textAppearance="@style/title_font"/>
+	</LinearLayout>
+</RelativeLayout>

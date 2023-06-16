@@ -1,0 +1,79 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:background="@drawable/black_box_white_outline_transparent"
+    android:padding="@dimen/default_padding"
+    android:id="@+id/wBox">
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:id="@+id/muting"
+        android:layout_centerVertical="true"
+        android:src="@drawable/logo"
+        android:layout_alignTop="@+id/wmain"
+        android:layout_alignBottom="@+id/wchannel" />
+
+    <TextView android:id="@+id/wmain" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:textColor="#ffffff" android:textSize="19dp" android:textStyle="bold"
+        android:layout_toRightOf="@+id/muting"
+        android:layout_marginLeft="2dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/wcarrier"
+        android:layout_below="@+id/wmain"
+        android:layout_alignLeft="@+id/wmain"
+        android:layout_marginLeft="12dp"
+        android:textColor="#fff"
+        android:textSize="17dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/wtitle"
+        android:layout_below="@+id/wmain"
+        android:layout_marginLeft="12dp"
+        android:textColor="#fff"
+        android:textSize="17dp"
+        android:layout_alignParentRight="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="16dp"
+        android:id="@+id/starIV"
+        android:scaleType="fitStart"
+        android:layout_alignLeft="@+id/wcarrier"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:layout_alignTop="@+id/wchannel"
+        android:layout_alignBottom="@+id/wchannel" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/wstatus"
+        android:textColor="#007aff"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="false"
+        android:textSize="16dp"
+        android:layout_marginRight="1dp"
+        android:layout_alignTop="@+id/wmain"
+        android:layout_marginTop="1dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/wchannel"
+        android:textColor="#fff"
+        android:textSize="16dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="false"
+        android:layout_marginRight="1dp"
+        android:layout_below="@+id/wcarrier"
+        android:text="@string/app_name" />
+
+</RelativeLayout>

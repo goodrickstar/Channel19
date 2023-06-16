@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:orientation="horizontal">
+
+	<ImageView
+		android:id="@+id/muting"
+		android:layout_width="50dp"
+		android:layout_height="50dp"
+		android:clickable="true"
+		android:focusable="true"
+		android:scaleType="fitCenter"
+		android:src="@drawable/app_icon"
+		android:visibility="visible"
+		tools:ignore="SpeakableTextPresentCheck" />
+
+	<ImageView
+		android:id="@+id/starIV"
+		android:layout_width="0dp"
+		android:layout_height="26dp"
+		android:layout_alignBottom="@id/muting"
+		android:layout_toRightOf="@id/muting"
+		android:paddingTop="5dp"
+		android:paddingBottom="5dp"
+		android:scaleType="fitStart" />
+
+	<TextView
+		android:id="@+id/banner"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:layout_alignTop="@id/muting"
+		android:layout_marginStart="8dp"
+		android:layout_marginEnd="8dp"
+		android:layout_toRightOf="@id/muting"
+		android:textColor="#fff"
+		android:textSize="16dp"
+		android:textStyle="bold" />
+
+	<TextView
+		android:id="@+id/skipping"
+		android:layout_width="50dp"
+		android:layout_height="50dp"
+		android:layout_centerInParent="true"
+		android:layout_marginRight="8dp"
+		android:layout_toLeftOf="@id/exitstrategy"
+		android:gravity="center|center_vertical"
+		android:text=">>"
+		android:textColor="@drawable/whitetoblue"
+		android:textSize="38dp" />
+
+	<TextView
+		android:id="@+id/exitstrategy"
+		android:layout_width="50dp"
+		android:layout_height="50dp"
+		android:layout_alignParentTop="false"
+		android:layout_alignParentEnd="true"
+		android:layout_alignParentBottom="false"
+		android:layout_centerInParent="true"
+		android:gravity="center"
+		android:text="II"
+		android:textColor="@drawable/whitetored"
+		android:textSize="38dp" />
+
+</RelativeLayout>

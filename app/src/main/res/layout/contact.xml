@@ -1,0 +1,74 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:gravity="top"
+                android:padding="15dp">
+	
+	<TextView
+		android:id="@+id/banner"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:layout_centerHorizontal="true"
+		android:background="@drawable/blue_box_white_outline"
+		android:gravity="center"
+		android:padding="@dimen/default_padding"
+		android:text="@string/contact"
+		android:textAppearance="@style/title_font"/>
+	
+	<ImageView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignBottom="@+id/titleLayout"
+		android:layout_alignStart="@+id/titleLayout"
+		android:layout_alignEnd="@+id/titleLayout"
+		android:layout_below="@+id/banner"
+		android:layout_marginLeft="35dp"
+		android:layout_marginRight="35dp"
+		android:background="@color/main_blue"/>
+	
+	<LinearLayout
+		android:id="@+id/titleLayout"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_below="@+id/banner"
+		android:layout_marginLeft="35dp"
+		android:layout_marginRight="35dp"
+		android:orientation="vertical">
+		
+		<TextView
+			android:id="@+id/like"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="12dp"
+			android:background="@drawable/black_to_white_button"
+			android:gravity="center"
+			android:padding="@dimen/default_padding"
+			android:text="@string/truck_radio_on_fb"
+			android:textAppearance="@style/medium_font"/>
+		
+		<TextView
+			android:id="@+id/com"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="12dp"
+			android:layout_marginTop="12dp"
+			android:background="@drawable/black_to_white_button"
+			android:gravity="center"
+			android:padding="@dimen/default_padding"
+			android:text="@string/rate_us_on_google_play"
+			android:textAppearance="@style/medium_font"/>
+		
+		<TextView
+			android:id="@+id/emailus"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="12dp"
+			android:background="@drawable/black_to_white_button"
+			android:gravity="center"
+			android:padding="@dimen/default_padding"
+			android:text="@string/questions_or_comments"
+			android:textAppearance="@style/medium_font"/>
+	</LinearLayout>
+</RelativeLayout>

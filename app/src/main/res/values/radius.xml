@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="showcase_radius">46dp</dimen>
+    <dimen name="showcase_radius_inner">47dp</dimen>
+    <dimen name="showcase_radius_outer">64dp</dimen>
+    <dimen name="showcase_radius_material">46dp</dimen>
+</resources>

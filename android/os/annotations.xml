@@ -1,0 +1,5 @@
+<root>
+  <item name='android.os.PowerManager SCREEN_BRIGHT_WAKE_LOCK'>
+    <annotation name='java.lang.annotation.Deprecated' />
+  </item>
+</root>

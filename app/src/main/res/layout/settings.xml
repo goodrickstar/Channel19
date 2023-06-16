@@ -1,0 +1,142 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/bottom"
+        android:background="@drawable/black_box_white_outline_slight_transparent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <RelativeLayout
+                android:id="@+id/tab1"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:minHeight="75dp">
+
+                <ImageView
+                    android:id="@+id/control"
+                    android:layout_width="fill_parent"
+                    android:layout_height="50dp"
+                    android:layout_centerHorizontal="true"
+                    android:onClick="touch"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/controls"
+                    tools:ignore="SpeakableTextPresentCheck" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/tab2"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/empty_box_white_outline"
+                android:gravity="center"
+                android:minHeight="75dp">
+
+                <ImageView
+                    android:id="@+id/driver"
+                    android:layout_width="fill_parent"
+                    android:layout_height="50dp"
+                    android:layout_centerHorizontal="true"
+                    android:onClick="touch"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/wheel"
+                    tools:ignore="SpeakableTextPresentCheck" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/tab3"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/empty_box_white_outline"
+                android:gravity="center"
+                android:minHeight="75dp">
+
+                <ImageView
+                    android:id="@+id/account"
+                    android:layout_width="fill_parent"
+                    android:layout_height="50dp"
+                    android:layout_centerHorizontal="true"
+                    android:onClick="touch"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/cash"
+                    tools:ignore="SpeakableTextPresentCheck" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/setswap"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_margin="@dimen/default_padding"
+            android:background="@drawable/empty_box_white_outline"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bottom"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:background="@drawable/black_box_white_outline_slight_transparent"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/menu"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:layout_weight="0"
+            android:cropToPadding="false"
+            android:onClick="touch"
+            android:scaleType="fitCenter"
+            android:src="@drawable/gearer"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <TextView
+            android:layout_weight="1"
+            android:id="@+id/tubular"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textColor="#fff"
+            android:textIsSelectable="false"
+            android:textSize="30dp"/>
+
+        <ImageView
+            android:id="@+id/info"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="0"
+            android:cropToPadding="false"
+            android:onClick="shareNineteen"
+            android:scaleType="fitCenter"
+            android:src="@drawable/infoer"
+            android:visibility="invisible" />
+    </LinearLayout>
+</RelativeLayout>

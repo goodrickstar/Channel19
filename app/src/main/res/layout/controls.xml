@@ -1,0 +1,783 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/default_padding"
+    android:scrollbarSize="@dimen/scroll_bar_width"
+    android:scrollbarStyle="outsideOverlay"
+    android:scrollbarThumbVertical="@drawable/scrollbar"
+    android:scrollbars="vertical"
+    android:verticalScrollbarPosition="left">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/imageView15"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbart" />
+
+        <TextView
+            android:id="@+id/headsetTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView15"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/headset"
+            android:textAppearance="@style/title_font" />
+
+        <RadioGroup
+            android:id="@+id/btSW"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/headsetTV"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/btOn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/margin_and_a_half"
+                android:button="@drawable/rad"
+                android:text="@string/enabled"
+                android:textAppearance="@style/small_italic" />
+
+            <RadioButton
+                android:id="@+id/btOff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/rad"
+                android:text="@string/disabled_text"
+                android:textAppearance="@style/small_italic" />
+        </RadioGroup>
+
+        <ImageView
+            android:id="@+id/help13"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView40"
+            android:layout_below="@+id/imageView15"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView40"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btSW"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/textView40"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView40"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/map_theme"
+            android:textAppearance="@style/title_font" />
+
+        <RadioGroup
+            android:id="@+id/group40"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView40"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/themeDark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/margin_and_a_half"
+                android:button="@drawable/rad"
+                android:text="@string/dark"
+                android:textAppearance="@style/small_italic" />
+
+            <RadioButton
+                android:id="@+id/themeLight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/rad"
+                android:text="@string/light"
+                android:textAppearance="@style/small_italic" />
+        </RadioGroup>
+
+        <ImageView
+            android:id="@+id/help40"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView16"
+            android:layout_below="@+id/imageView40"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView16"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/group40"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/textView38"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView16"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/share_location"
+            android:textAppearance="@style/title_font" />
+
+        <CheckBox
+            android:id="@+id/gps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView38"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/margin_and_a_half"
+            android:button="@drawable/rad"
+            android:text="@string/enabled"
+            android:textAppearance="@style/small_italic" />
+
+        <CheckBox
+            android:id="@+id/share"
+            android:layout_toRightOf="@id/gps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView38"
+            android:button="@drawable/rad"
+            android:text="@string/shared"
+            android:textAppearance="@style/small_italic" />
+
+        <ImageView
+            android:id="@+id/help38"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView39"
+            android:layout_below="@+id/imageView16"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView39"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/gps"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/mkbtv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView39"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/mickeybehavior"
+            android:textAppearance="@style/title_font" />
+
+        <RadioGroup
+            android:id="@+id/behaviorswitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/mkbtv"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/hold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/margin_and_a_half"
+                android:button="@drawable/rad"
+                android:text="@string/hold"
+                android:textAppearance="@style/small_italic" />
+
+            <RadioButton
+                android:id="@+id/toggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/rad"
+                android:text="@string/toggle"
+                android:textAppearance="@style/small_italic" />
+        </RadioGroup>
+
+        <ImageView
+            android:id="@+id/help2"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView18"
+            android:layout_below="@+id/imageView39"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView18"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/behaviorswitch"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/nearbyLimitTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView18"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/nearby_limit"
+            android:textAppearance="@style/title_font" />
+
+        <SeekBar
+            android:id="@+id/nearbyLimit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/nearbyLimitTV"
+            android:layout_alignStart="@+id/nearbyLimitTV"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/triple_padding"
+            android:layout_toStartOf="@+id/helpNearby"
+            android:max="250"
+            android:paddingTop="@dimen/half_margin"
+            android:paddingBottom="@dimen/half_margin" />
+
+        <ImageView
+            android:id="@+id/helpNearby"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView19"
+            android:layout_below="@+id/imageView18"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView19"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/nearbyLimit"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/purgeLimitTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView19"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/purge_limit"
+            android:textAppearance="@style/title_font" />
+
+        <SeekBar
+            android:id="@+id/purgeLimit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/purgeLimitTV"
+            android:layout_alignStart="@+id/purgeLimitTV"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/triple_padding"
+            android:layout_toStartOf="@+id/helpAS"
+            android:max="30"
+            android:paddingTop="@dimen/half_margin"
+            android:paddingBottom="@dimen/half_margin" />
+
+        <ImageView
+            android:id="@+id/helpPurge"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView50"
+            android:layout_below="@+id/imageView19"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView50"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/purgeLimit"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/delayTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView50"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/mic_animation_speed"
+            android:textAppearance="@style/title_font" />
+
+        <SeekBar
+            android:id="@+id/ringDelay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/delayTV"
+            android:layout_alignStart="@+id/delayTV"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/triple_padding"
+            android:layout_toStartOf="@+id/helpAS"
+            android:max="1500"
+            android:paddingTop="@dimen/half_margin"
+            android:paddingBottom="@dimen/half_margin" />
+
+        <ImageView
+            android:id="@+id/helpAS"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView20"
+            android:layout_below="@+id/imageView50"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView20"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ringDelay"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/boTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView20"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/black_out_delay"
+            android:textAppearance="@style/title_font" />
+
+        <SeekBar
+            android:id="@+id/boBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/boTV"
+            android:layout_alignStart="@+id/boTV"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/triple_padding"
+            android:layout_toStartOf="@+id/help20"
+            android:max="20"
+            android:paddingTop="@dimen/half_margin"
+            android:paddingBottom="@dimen/half_margin" />
+
+        <ImageView
+            android:id="@+id/help20"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView21"
+            android:layout_below="@+id/imageView20"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView21"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/boBar"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/pauseLimit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView21"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:textAppearance="@style/title_font" />
+
+        <SeekBar
+            android:id="@+id/pauseLimitBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pauseLimit"
+            android:layout_alignStart="@+id/pauseLimit"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/triple_padding"
+            android:layout_toStartOf="@+id/help41"
+            android:max="950"
+            android:paddingTop="@dimen/half_margin"
+            android:paddingBottom="@dimen/half_margin" />
+
+        <ImageView
+            android:id="@+id/help41"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView38"
+            android:layout_below="@+id/imageView21"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView38"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pauseLimitBar"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/ovktv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView38"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/override_volume_keys"
+            android:textAppearance="@style/title_font" />
+
+        <CheckBox
+            android:id="@+id/up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ovktv"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/margin_and_a_half"
+            android:button="@drawable/rad"
+            android:text="@string/up"
+            android:textAppearance="@style/small_italic" />
+
+        <CheckBox
+            android:id="@+id/down"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ovktv"
+            android:layout_toEndOf="@+id/up"
+            android:button="@drawable/rad"
+            android:text="@string/down"
+            android:textAppearance="@style/small_italic" />
+
+        <ImageView
+            android:id="@+id/help3"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView22"
+            android:layout_below="@+id/imageView38"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView22"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/up"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/moictv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView22"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/vibration"
+            android:textAppearance="@style/title_font" />
+
+        <RadioGroup
+            android:id="@+id/vibrateswitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/moictv"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/vibrateon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/margin_and_a_half"
+                android:button="@drawable/rad"
+                android:checked="false"
+                android:text="@string/on"
+                android:textAppearance="@style/small_italic" />
+
+            <RadioButton
+                android:id="@+id/vibrateoff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/rad"
+                android:text="@string/off"
+                android:textAppearance="@style/small_italic" />
+        </RadioGroup>
+
+        <ImageView
+            android:id="@+id/help7"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView23"
+            android:layout_below="@+id/imageView22"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView23"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/vibrateswitch"
+            android:layout_marginTop="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/extraTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView23"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/extra"
+            android:textAppearance="@style/title_font" />
+
+        <CheckBox
+            android:id="@+id/welcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/extraTV"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/margin_and_a_half"
+            android:button="@drawable/rad"
+            android:checked="false"
+            android:text="@string/login"
+            android:textAppearance="@style/small_italic" />
+
+        <CheckBox
+            android:id="@+id/kick"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/extraTV"
+            android:layout_toEndOf="@+id/welcome"
+            android:button="@drawable/rad"
+            android:checked="false"
+            android:text="@string/logout"
+            android:textAppearance="@style/small_italic" />
+
+        <ImageView
+            android:id="@+id/help8"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView25"
+            android:layout_below="@+id/imageView23"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <ImageView
+            android:id="@+id/imageView25"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/welcome"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/messageTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView25"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/recieve_options"
+            android:textAppearance="@style/title_font" />
+
+        <ImageView
+            android:id="@+id/help10"
+            android:layout_width="@dimen/help_button_width"
+            android:layout_height="@dimen/help_button_height"
+            android:layout_above="@+id/imageView27"
+            android:layout_below="@+id/imageView25"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:onClick="help"
+            android:scaleType="fitXY"
+            android:src="@drawable/info" />
+
+        <CheckBox
+            android:id="@+id/pmenable"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/messageTv"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_marginEnd="@dimen/margin_and_a_half"
+            android:button="@drawable/rad"
+            android:text="@string/messages"
+            android:textAppearance="@style/small_italic" />
+
+        <CheckBox
+            android:id="@+id/photoenable"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/messageTv"
+            android:layout_toEndOf="@+id/pmenable"
+            android:button="@drawable/rad"
+            android:checked="false"
+            android:text="@string/photos"
+            android:textAppearance="@style/small_italic" />
+
+        <ImageView
+            android:id="@+id/imageView27"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/pmenable"
+            android:layout_marginTop="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbar" />
+
+        <TextView
+            android:id="@+id/background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/imageView27"
+            android:layout_gravity="start|end"
+            android:layout_marginBottom="@dimen/half_margin"
+            android:text="@string/custom_background"
+            android:textAppearance="@style/title_font" />
+
+        <RadioGroup
+            android:id="@+id/backgroundswitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/background"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/backgroundOn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/half_margin"
+                android:layout_marginEnd="@dimen/margin_and_a_half"
+                android:button="@drawable/rad"
+                android:text="@string/on"
+                android:textAppearance="@style/small_italic" />
+
+            <RadioButton
+                android:id="@+id/backgroundOff"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:button="@drawable/rad"
+                android:text="@string/off"
+                android:textAppearance="@style/small_italic" />
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/browse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/imageView37"
+            android:layout_below="@+id/imageView27"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="@dimen/default_margin"
+            android:layout_marginEnd="@dimen/half_margin"
+            android:layout_marginBottom="@dimen/default_margin"
+            android:background="@drawable/black_to_white_transparent_button"
+            android:gravity="center"
+            android:paddingLeft="@dimen/double_margin"
+            android:paddingTop="@dimen/default_padding"
+            android:paddingRight="@dimen/double_margin"
+            android:paddingBottom="@dimen/default_padding"
+            android:text="@string/browse"
+            android:textAppearance="@style/small_italic"
+            android:textColor="@drawable/white_to_black_text" />
+
+        <ImageView
+            android:id="@+id/imageView37"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/backgroundswitch"
+            android:layout_marginTop="@dimen/half_margin"
+            android:scaleType="fitXY"
+            android:src="@drawable/dividerbarb" />
+    </RelativeLayout>
+</ScrollView>

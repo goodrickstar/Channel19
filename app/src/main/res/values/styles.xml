@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="mytheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:navigationBarColor">@color/main_black</item>
+        <item name="android:colorBackground">@null</item>
+        <item name="android:windowBackground">@color/main_black</item>
+        <item name="android:textColor">@color/main_white</item>
+        <item name="android:animateLayoutChanges">false</item>
+        <item name="editTextStyle">@style/edit_text_style</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <style name="edit_text_style" parent="@android:style/Widget.EditText">
+        <item name="background">@drawable/change</item>
+        <item name="android:textSize">20dp</item>
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textCursorDrawable">@drawable/cursor</item>
+    </style>
+
+    <style name="AppTheme.Toolbar" parent="ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:editTextColor">@color/main_white</item>
+    </style>
+
+    <style name="mydialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="background">@android:color/transparent</item>
+        <item name="android:soundEffectsEnabled">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:windowEnterAnimation">@anim/zoom_in</item>
+        <item name="android:windowExitAnimation">@anim/zoom_out</item>
+    </style>
+
+
+    <style name="PopupMenu" parent="@android:style/Widget.PopupMenu">
+        <item name="android:popupBackground">@drawable/black_box_white_outline_solid</item>
+    </style>
+
+    <style name="photoAnimation">
+        <item name="android:windowEnterAnimation">@anim/zoom_in</item>
+        <item name="android:windowExitAnimation">@anim/zoom_out</item>
+    </style>
+
+    <style name="pmAnimation">
+        <item name="android:windowEnterAnimation">@anim/anim_in</item>
+        <item name="android:windowExitAnimation">@anim/anim_out</item>
+    </style>
+
+    <style name="CustomShowcaseTheme" parent="ShowcaseView.Light">
+        <item name="sv_backgroundColor">#D000</item>
+        <item name="sv_showcaseColor">@color/light_blue</item>
+        <item name="sv_buttonText">10-4</item>
+        <item name="sv_tintButtonColor">false</item>
+        <item name="sv_titleTextAppearance">@style/title_text</item>
+        <item name="sv_detailTextAppearance">@style/detail_text</item>
+    </style>
+
+    <style name="ShowcaseButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingRight">20dp</item>
+        <item name="android:textColor">#ffffff</item>
+        <item name="background">@color/light_blue</item>
+    </style>
+
+    <style name="title_text" parent="TextAppearance.ShowcaseView.Title">
+        <item name="android:textColor">@color/light_blue</item>
+        <item name="android:textSize">24dp</item>
+    </style>
+
+    <style name="detail_text" parent="TextAppearance.ShowcaseView.Detail">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">19dp</item>
+    </style>
+
+    <style name="commentAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_top</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_top</item>
+    </style>
+
+    <style name="DialogTheme" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="windowActionBar">true</item>
+    </style>
+
+    <style name="title_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">20dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/main_white</item>
+    </style>
+
+    <style name="time_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16dp</item>
+        <item name="android:textStyle">italic</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="large_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">22dp</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="medium_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">18dp</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="small_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">15dp</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="tiny_font" parent="@android:style/TextAppearance">
+        <item name="android:textSize">11dp</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="small_italic" parent="@android:style/TextAppearance">
+        <item name="android:textSize">14dp</item>
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textStyle">italic</item>
+    </style>
+
+    <style name="full_screen" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:textColor">@color/main_white</item>
+        <item name="android:navigationBarColor">@color/main_black</item>
+        <item name="android:statusBarColor">@color/main_black</item>
+    </style>
+
+    <style name="Widget.mytheme.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style>
+
+</resources>

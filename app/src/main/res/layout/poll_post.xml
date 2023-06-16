@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/default_padding"
+    android:layout_marginBottom="@dimen/default_padding"
+    android:background="@drawable/black_box_white_outline"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding">
+
+        <ImageView
+            android:id="@+id/profile_pic"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="@dimen/default_padding"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/profile_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toStartOf="@+id/post_menu"
+            android:layout_toEndOf="@+id/profile_pic"
+            android:textAppearance="@style/title_font" />
+
+        <TextView
+            android:id="@+id/posting_stamp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/profile_name"
+            android:layout_alignStart="@id/profile_name"
+            android:layout_marginStart="@dimen/default_padding"
+            android:layout_toStartOf="@+id/post_menu"
+            android:textAppearance="@style/time_font" />
+
+        <ImageView
+            android:id="@+id/post_menu"
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/profile_name"
+            android:layout_alignBottom="@+id/posting_stamp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="@dimen/default_padding"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/menu" />
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/photoComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:layout_marginLeft="@dimen/default_padding"
+        android:layout_marginRight="@dimen/default_padding"
+        android:layout_marginBottom="@dimen/half_margin"
+        android:gravity="start|top"
+        android:textAppearance="@style/medium_font" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/main_white" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/main_white" />
+
+    <TextView
+        android:id="@+id/add_option"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="@dimen/default_padding"
+        android:text="@string/add_poll_option"
+        android:textAppearance="@style/large_font" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/optionView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding">
+
+        <EditText
+            android:id="@+id/optionET"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/clear_box_white_outline"
+            android:hint="@string/new_option"
+            android:importantForAutofill="no"
+            android:inputType="textPersonName"
+            android:padding="@dimen/default_padding"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/add_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:padding="@dimen/default_padding"
+            android:src="@drawable/add_w"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>

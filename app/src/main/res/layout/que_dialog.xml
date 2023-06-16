@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/black_box_white_outline_slight_transparent"
+    android:gravity="top"
+    android:orientation="vertical">
+
+    <ExpandableListView
+        android:id="@+id/talkers"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/ok"
+        android:listSelector="@android:color/transparent"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbarThumbVertical="@drawable/scrollbar"
+        android:scrollbars="vertical"
+        android:verticalScrollbarPosition="left" />
+
+
+    <TextView
+        android:id="@+id/ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:background="@drawable/dialog_button"
+        android:gravity="center"
+        android:text="@string/tenfour"
+        android:textAppearance="@style/title_font" />
+
+</RelativeLayout>

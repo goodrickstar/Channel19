@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/listview_selector"
+    android:orientation="vertical"
+    android:padding="@dimen/default_padding">
+
+    <ImageView
+        android:id="@+id/option_image_view"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/handle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/default_padding"
+        android:textAppearance="@style/title_font"
+        android:textColor="@drawable/white_to_black_text"
+        app:layout_constraintEnd_toStartOf="@+id/menu"
+        app:layout_constraintStart_toEndOf="@+id/option_image_view"
+        app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:gravity="top"
+        android:maxLines="2"
+        android:textAppearance="@style/small_italic"
+        android:textColor="@drawable/white_to_black_text"
+        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintEnd_toStartOf="@+id/last_online"
+        app:layout_constraintStart_toStartOf="@+id/handle"
+        app:layout_constraintTop_toBottomOf="@+id/handle" />
+
+    <TextView
+        android:id="@+id/last_online"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:gravity="top|end"
+        android:maxLines="2"
+        android:textAppearance="@style/tiny_font"
+        android:textColor="@drawable/white_to_black_text"
+        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/handle" />
+
+    <View
+        android:id="@+id/clickPoint"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintEnd_toStartOf="@+id/menu"
+        app:layout_constraintStart_toStartOf="@+id/handle"
+        app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+
+    <ImageView
+        android:id="@+id/menu"
+        android:layout_width="30dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/menu"
+        app:layout_constraintBottom_toBottomOf="@+id/handle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/handle" />
+</androidx.constraintlayout.widget.ConstraintLayout>

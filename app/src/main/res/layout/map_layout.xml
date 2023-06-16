@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.cb3g.channel19.Locations">
+
+    <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:id="@+id/map"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/info_tab"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#0e1626"
+        android:padding="@dimen/default_padding"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Switch
+            android:id="@+id/follow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/follow"
+            app:layout_constraintEnd_toEndOf="@+id/banner"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/option_image_view"
+            android:layout_width="@dimen/profile_picture_size"
+            android:layout_height="@dimen/profile_picture_size"
+            android:layout_marginTop="5dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/follow"
+            app:srcCompat="@drawable/hand" />
+
+        <TextView
+            android:id="@+id/handle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textSize="16dp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@+id/option_image_view"
+            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+
+        <TextView
+            android:id="@+id/banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:textSize="14dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/handle" />
+
+        <TextView
+            android:id="@+id/speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintStart_toEndOf="@+id/option_image_view"
+            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+
+        <TextView
+            android:id="@+id/direction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintStart_toEndOf="@+id/option_image_view"
+            app:layout_constraintTop_toBottomOf="@+id/speed" />
+
+        <TextView
+            android:id="@+id/distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintEnd_toEndOf="@+id/banner"
+            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+
+        <TextView
+            android:id="@+id/altitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintEnd_toEndOf="@+id/banner"
+            app:layout_constraintTop_toBottomOf="@+id/distance" />
+
+        <SeekBar
+            android:id="@+id/zoomBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:max="16"
+            app:layout_constraintBottom_toBottomOf="@+id/follow"
+            app:layout_constraintEnd_toStartOf="@+id/follow"
+            app:layout_constraintStart_toStartOf="@+id/option_image_view"
+            app:layout_constraintTop_toTopOf="@+id/follow" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

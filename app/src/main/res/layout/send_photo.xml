@@ -1,0 +1,108 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="1dp"
+    android:background="@drawable/black_box_white_outline_transparent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/blue_box_white_outline_transparent"
+        android:padding="@dimen/default_padding">
+
+        <TextView
+            android:id="@+id/banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:textAppearance="@style/title_font" />
+
+        <TextView
+            android:id="@+id/plus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:text="@string/plus_sign"
+            android:textAppearance="@style/title_font"
+            android:textColor="@drawable/whitetoblue" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/bottom"
+        android:layout_below="@+id/top"
+        android:layout_margin="@dimen/default_margin">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/image"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:adjustViewBounds="true" />
+
+            <TextView
+                android:id="@+id/captionTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:gravity="center"
+                android:padding="@dimen/default_padding"
+                android:textAppearance="@style/title_font"
+                android:visibility="visible" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+
+    <LinearLayout
+        android:id="@+id/bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/order"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/blue_to_white_transparent_button"
+            android:gravity="center"
+            android:padding="@dimen/default_padding"
+            android:text="@string/cancel"
+            android:textAppearance="@style/title_font"
+            android:textColor="@drawable/whitetoblue" />
+
+        <TextView
+            android:id="@+id/down"
+            android:layout_width="70dp"
+            android:layout_height="3dp"
+            android:layout_weight="0"
+            android:gravity="center_horizontal" />
+
+        <TextView
+            android:id="@+id/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/blue_to_white_transparent_button"
+            android:gravity="center"
+            android:padding="@dimen/default_padding"
+            android:text="@string/send"
+            android:textAppearance="@style/title_font"
+            android:textColor="@drawable/whitetoblue" />
+    </LinearLayout>
+</RelativeLayout>

@@ -1,0 +1,88 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dp">
+
+    <LinearLayout
+        android:id="@+id/optionbox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingLeft="25dp"
+        android:paddingRight="25dp">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/black_to_white_transparent_button"
+            android:gravity="center"
+            android:onClick="displayTerms"
+            android:text="@string/terms"
+            android:textColor="@drawable/white_to_black_text"
+            android:padding="@dimen/default_padding"
+            android:textAppearance="@style/title_font"/>
+
+        <TextView
+            android:id="@+id/contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/black_to_white_transparent_button"
+            android:gravity="center"
+            android:onClick="accountTouch"
+            android:text="@string/contact"
+            android:textColor="@drawable/white_to_black_text"
+            android:padding="@dimen/default_padding"
+            android:textAppearance="@style/title_font"/>
+
+        <TextView
+            android:id="@+id/shop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/black_to_white_transparent_button"
+            android:gravity="center"
+            android:onClick="accountTouch"
+            android:padding="@dimen/default_padding"
+            android:text="@string/radio_shop"
+            android:textAppearance="@style/title_font"
+            android:textColor="@drawable/white_to_black_text" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/statustv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/optionbox"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="right"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_toLeftOf="@+id/imageView2"
+        android:gravity="left"
+        android:textAppearance="@style/small_font"/>
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="53dp"
+        android:layout_height="45dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:onClick="buy"
+        android:scaleType="fitXY"
+        android:src="@drawable/playstore"
+        android:text="@string/help"
+        android:textColor="@drawable/white_to_black_text"
+        android:textSize="24dp"
+        android:textStyle="bold" />
+
+</RelativeLayout>

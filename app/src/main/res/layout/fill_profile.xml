@@ -1,0 +1,167 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/outside"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/main_black_transparent_light"
+    android:padding="@dimen/default_padding">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <ImageView
+            android:id="@+id/square"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/black_box_black_outline"
+            app:layout_constraintBottom_toBottomOf="@+id/cancel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/profile_photo"
+            app:layout_constraintTop_toTopOf="@+id/profile_photo" />
+
+        <TextView
+            android:id="@+id/captiontv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/black_box_white_outline"
+            android:gravity="center"
+            android:padding="@dimen/default_padding"
+            android:text="@string/public_profile"
+            android:textAppearance="@style/title_font"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/square"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/handletv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|right"
+            android:text="@string/radio_handle"
+            android:textAppearance="@style/title_font"
+            android:textSize="12dp"
+            app:layout_constraintBottom_toTopOf="@+id/handleET"
+            app:layout_constraintStart_toStartOf="@+id/handleET" />
+
+        <EditText
+            android:id="@+id/handleET"
+            style="@style/edit_text_style"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="38dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="45dp"
+            android:background="@null"
+            android:gravity="center_vertical|left"
+            android:hint="@string/enter_here"
+            android:importantForAutofill="no"
+            android:inputType="textCapWords|textAutoCorrect"
+            android:maxLength="21"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/square"
+            app:layout_constraintTop_toBottomOf="@+id/captiontv" />
+
+
+        <TextView
+            android:id="@+id/carriertv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical|right"
+            android:text="@string/carrier_company"
+            android:textAppearance="@style/title_font"
+            android:textSize="12dp"
+            app:layout_constraintStart_toStartOf="@+id/handletv"
+            app:layout_constraintTop_toBottomOf="@+id/handleET" />
+
+
+        <EditText
+            android:id="@+id/carrierET"
+            style="@style/edit_text_style"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:gravity="center_vertical|left"
+            android:hint="@string/enter_here"
+            android:importantForAutofill="no"
+            android:inputType="textCapWords|textAutoCorrect"
+            android:maxLength="18"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="@+id/handleET"
+            app:layout_constraintStart_toStartOf="@+id/handleET"
+            app:layout_constraintTop_toBottomOf="@+id/carriertv" />
+
+        <TextView
+            android:id="@+id/towntv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical|right"
+            android:text="@string/location"
+            android:textAppearance="@style/title_font"
+            android:textSize="12dp"
+            app:layout_constraintStart_toStartOf="@+id/handletv"
+            app:layout_constraintTop_toBottomOf="@+id/carrierET" />
+
+
+        <EditText
+            android:id="@+id/townET"
+            style="@style/edit_text_style"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:gravity="center_vertical|left"
+            android:hint="@string/optional"
+            android:importantForAutofill="no"
+            android:inputType="textCapWords|textAutoCorrect"
+            android:maxLength="18"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="@+id/carrierET"
+            app:layout_constraintStart_toStartOf="@+id/carrierET"
+            app:layout_constraintTop_toBottomOf="@+id/towntv" />
+
+        <TextView
+            android:id="@+id/cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/dialog_button"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textAppearance="@style/title_font"
+            app:layout_constraintStart_toStartOf="@+id/square"
+            app:layout_constraintTop_toBottomOf="@+id/townET" />
+
+        <TextView
+            android:id="@+id/save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/dialog_button"
+            android:gravity="center"
+            android:text="@string/save"
+            android:textAppearance="@style/title_font"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/cancel" />
+
+        <ImageView
+            android:id="@+id/profile_photo"
+            android:layout_width="@dimen/profile_picture_size"
+            android:layout_height="@dimen/profile_picture_size"
+            android:src="@drawable/app_icon"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

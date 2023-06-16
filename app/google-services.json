@@ -1,0 +1,61 @@
+{
+  "project_info": {
+    "project_number": "266162092275",
+    "firebase_url": "https://channel-19.firebaseio.com",
+    "project_id": "channel-19",
+    "storage_bucket": "channel-19.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266162092275:android:e732559b5620409d",
+        "android_client_info": {
+          "package_name": "com.cb3g.channel19"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "266162092275-f0vj45o1d689n40q4cqk123bemv836ij.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "9ec54141b5b620059971b32de71a7461c61f1b7e"
+          }
+        },
+        {
+          "client_id": "266162092275-delnl1l56rimhvsfohkmhpbhq70mj3ig.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "97a2bb745065d821171b94739b1f0b60bdb78b54"
+          }
+        },
+        {
+          "client_id": "266162092275-6dblphi7nnumdnp5jnrbbpr70mit1ivp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "e1aaad07c5a9cb4f67aa9647c494b22edfd63c82"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5-wl0GbQWyzCFGDu0W9xOijac2rbmksE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "266162092275-tu7qo2v6lt4vk1lh91d393r9mspgikib.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-4635898093945616~3345386484"
+    }
+  ],
+  "configuration_version": "1"
+}

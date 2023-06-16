@@ -1,0 +1,95 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/black_box_white_outline_square_bottom_transparent"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="right|center_vertical"
+        android:textAppearance="@style/title_font"
+        app:layout_constraintBottom_toBottomOf="@+id/back"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/back"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/back"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/commentsListView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:descendantFocusability="blocksDescendants"
+        android:focusableInTouchMode="true"
+        android:listSelector="@android:color/transparent"
+        android:paddingTop="@dimen/default_padding"
+        android:paddingBottom="@dimen/default_padding"
+        android:scrollbarThumbVertical="@drawable/scrollbar"
+        android:stackFromBottom="true"
+        android:transcriptMode="normal"
+        android:verticalScrollbarPosition="left"
+        app:layout_constraintBottom_toTopOf="@+id/editBox"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/back" />
+
+    <EditText
+        android:id="@+id/editBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/black_box_white_outline_square_left"
+        android:importantForAutofill="no"
+        android:inputType="textCapSentences|textMultiLine"
+        android:padding="@dimen/default_padding"
+        android:textAppearance="@style/small_font"
+        android:textColor="@color/main_white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageBox"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <ImageView
+        android:id="@+id/imageBox"
+        android:layout_width="35dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="16dp"
+        android:paddingBottom="@dimen/half_margin"
+        android:scaleType="fitCenter"
+        android:src="@drawable/gallery"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/giphyBox"
+        app:layout_constraintTop_toTopOf="@+id/editBox" />
+
+    <ImageView
+        android:id="@+id/giphyBox"
+        android:layout_width="35dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="16dp"
+        android:paddingBottom="@dimen/half_margin"
+        android:scaleType="fitCenter"
+        android:src="@drawable/gif_icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/editBox" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

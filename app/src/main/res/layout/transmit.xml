@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+
+    <RelativeLayout
+        android:id="@+id/inholder"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/incometop"
+        android:minHeight="87dp"
+        android:padding="@dimen/default_padding">
+
+        <ImageView
+            android:id="@+id/option_image_view"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_marginEnd="@dimen/half_margin" />
+
+        <TextView
+            android:id="@+id/handle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/tooth"
+            android:layout_toEndOf="@+id/option_image_view"
+            android:textAppearance="@style/large_font" />
+
+        <TextView
+            android:id="@+id/carrier"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/handle"
+            android:layout_marginStart="@dimen/half_margin"
+            android:layout_toEndOf="@+id/option_image_view"
+            android:textAppearance="@style/small_font" />
+
+        <ImageView
+            android:id="@+id/starIV"
+            android:layout_width="@dimen/star_width"
+            android:layout_height="@dimen/star_height"
+            android:layout_alignBottom="@+id/option_image_view"
+            android:layout_toEndOf="@+id/option_image_view"
+            android:scaleType="fitStart" />
+
+        <TextView
+            android:id="@+id/countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_below="@+id/handle"
+            android:textAppearance="@style/small_font" />
+
+        <TextView
+            android:id="@+id/banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/option_image_view"
+            android:layout_alignParentEnd="true"
+            android:layout_toEndOf="@+id/starIV"
+            android:gravity="right"
+            android:textAppearance="@style/small_font" />
+
+        <ImageView
+            android:id="@+id/tooth"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:padding="3dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/tooth"
+            android:visibility="visible" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/leftbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/inholder"
+        android:layout_below="@+id/inholder"
+        android:layout_toStartOf="@+id/rightbox"
+        android:background="@drawable/incomeleft"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/quetv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingStart="@dimen/default_padding"
+            android:text="@string/_0"
+            android:textAppearance="@style/medium_font" />
+
+        <SeekBar
+            android:id="@+id/pbar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="false"
+            android:padding="0dp"
+            android:theme="@style/Base.Widget.AppCompat.ProgressBar.Horizontal" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/rightbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/inholder"
+        android:layout_below="@+id/inholder"
+        android:background="@drawable/incomeright">
+
+        <ImageView
+            android:id="@+id/mute"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="7dp"
+            android:layout_marginRight="7dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/muter" />
+    </RelativeLayout>
+
+
+
+    <ImageView
+        android:id="@+id/blurr"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@color/main_black_transparent_light"
+        android:visibility="gone"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/leftbox"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/ring"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true" />
+
+        <ImageView
+            android:id="@+id/key"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true" />
+
+        <ImageView
+            android:id="@+id/pin"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true" />
+
+    </RelativeLayout>
+
+    <CheckBox
+        android:id="@+id/talkback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/leftbox"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:button="@drawable/rad"
+        android:text="@string/tb"
+        android:textSize="20dp"
+        tools:ignore="TouchTargetSizeCheck" />
+
+</RelativeLayout>
