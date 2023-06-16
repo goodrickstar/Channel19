@@ -578,8 +578,8 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                 @Override
                 public void run() {
                     if (drifrag.isAdded()) {
-                        drifrag.setdriverinfo();
-                        drifrag.setRankandStamp();
+                        drifrag.setDriverInfo();
+                        drifrag.setRankAndStamp();
                     }
                 }
             });

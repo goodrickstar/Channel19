@@ -53,29 +53,23 @@ public class Driver extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (!RadioService.operator.getDisableProfile()) {
-            binding.profilePicture.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
-                    context.sendBroadcast(new Intent("nineteenClickSound"));
-                    if (SI != null) SI.launchPicker(null, false);
-                }
+            binding.profilePicture.setOnClickListener(v -> {
+                context.sendBroadcast(new Intent("nineteenVibrate"));
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                if (SI != null) SI.launchPicker(null, false);
             });
         }
-        setdriverinfo();
-        setRankandStamp();
+        setDriverInfo();
+        setRankAndStamp();
         updateProfilePicture();
         refreshRank();
-        binding.blocked.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (SI != null) {
-                    context.sendBroadcast(new Intent("nineteenClickSound"));
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
-                    SI.checkBlocked();
-                }
-                return true;
+        binding.blocked.setOnLongClickListener(v -> {
+            if (SI != null) {
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenVibrate"));
+                SI.checkBlocked();
             }
+            return true;
         });
     }
 
@@ -116,7 +110,7 @@ public class Driver extends Fragment {
         new GlideImageLoader(context, binding.profilePicture).load(RadioService.operator.getProfileLink(), RadioService.profileOptions);
     }
 
-    public void setdriverinfo() {
+    public void setDriverInfo() {
         binding.handle.setText(RadioService.operator.getHandle());
         binding.carrier.setText(RadioService.operator.getCarrier());
         binding.banner.setText(RadioService.operator.getTown());
@@ -126,7 +120,7 @@ public class Driver extends Fragment {
             binding.banner.setText(RadioService.operator.getUserLocationString());
     }
 
-    public void setRankandStamp() {
+    public void setRankAndStamp() {
         if (isAdded())
             new GlideImageLoader(context, binding.starIm).load(Utils.parseRankUrl(RadioService.operator.getRank()));
     }
@@ -158,21 +152,15 @@ public class Driver extends Fragment {
                         final int donations = data.getInt("donations");
                         if (isAdded()) {
                             Handler handler = new Handler(Looper.getMainLooper());
-                            if (handler != null) handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (donations > 4)
-                                        binding.starIm.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                context.sendBroadcast(new Intent("nineteenVibrate"));
-                                                context.sendBroadcast(new Intent("nineteenClickSound"));
-                                                context.sendBroadcast(new Intent("starSelection"));
-                                            }
-                                        });
-                                    else binding.starIm.setOnClickListener(null);
-                                    setRankandStamp();
-                                }
+                            if (handler != null) handler.post(() -> {
+                                if (donations > 4)
+                                    binding.starIm.setOnClickListener(v -> {
+                                        context.sendBroadcast(new Intent("nineteenVibrate"));
+                                        context.sendBroadcast(new Intent("nineteenClickSound"));
+                                        context.sendBroadcast(new Intent("starSelection"));
+                                    });
+                                else binding.starIm.setOnClickListener(null);
+                                setRankAndStamp();
                             });
                         }
                     }

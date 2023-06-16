@@ -1403,7 +1403,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         channelName.setEnabled(!lock);
     }
 
-    @SuppressLint("SetTextI18n")
     private void updateDarkDisplay(String[] display, long stamp) {
         if (display[0].contains("Online") || display[0].contains("Dead")) handle.setText(" ");
         else handle.setText(display[0]);
