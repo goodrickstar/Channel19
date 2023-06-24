@@ -43,8 +43,8 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
     private final ExAdapter adapter = new ExAdapter();
     private Context context;
     private ExpandableListView listView;
-    private List<List<Talker>> talkers = new ArrayList<>();
-    private String[] titles = new String[]{"Recent Events", "Today's Newbies", "Today's Regulars", "Talker Totals", "Most Blocked", "Flag Counts"};
+    private final List<List<Talker>> talkers = new ArrayList<>();
+    private final String[] titles = new String[]{"Recent Events", "Today's Newbies", "Today's Regulars", "Talker Totals", "Most Blocked", "Flag Counts"};
     private Instant now;
 
     private boolean auto = false;
@@ -53,7 +53,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = getDialog().getWindow();
+        Window window = requireDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         return inflater.inflate(R.layout.que_dialog, container, false);
     }
@@ -116,6 +116,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
                 if (response.isSuccessful() && isAdded()) {
                     try {
                         now = Instant.now();
+                        assert response.body() != null;
                         final String data = response.body().string();
                         final JSONObject object = new JSONObject(data);
                         final List<Talker> newbies = new ArrayList<>();
@@ -133,22 +134,19 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
                         newbies.add(0, new Talker("0", "Combined Key-ups", combine(newbies), 0));
                         today.add(0, new Talker("0", "Combined Key-ups", combine(today), 0));
                         totals.add(0, new Talker("0", "Combined Key-ups", combine(totals), 0));
-                        listView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                talkers.clear();
-                                talkers.add(recents);
-                                talkers.add(newbies);
-                                talkers.add(today);
-                                talkers.add(totals);
-                                talkers.add(blocked);
-                                talkers.add(flags);
-                                adapter.notifyDataSetChanged();
-                                int position = settings.getInt("lastOpen", -1);
-                                if (position != -1) {
-                                    auto = true;
-                                    listView.expandGroup(position);
-                                }
+                        listView.post(() -> {
+                            talkers.clear();
+                            talkers.add(recents);
+                            talkers.add(newbies);
+                            talkers.add(today);
+                            talkers.add(totals);
+                            talkers.add(blocked);
+                            talkers.add(flags);
+                            adapter.notifyDataSetChanged();
+                            int position = settings.getInt("lastOpen", -1);
+                            if (position != -1) {
+                                auto = true;
+                                listView.expandGroup(position);
                             }
                         });
                     } catch (JSONException e) {
@@ -339,7 +337,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
         }
     }
 
-    private class Talker {
+    private static class Talker {
         String handle, userId;
         int count, newbie;
 

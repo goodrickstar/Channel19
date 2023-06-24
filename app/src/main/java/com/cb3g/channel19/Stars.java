@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -16,7 +15,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
-import com.bumptech.glide.util.Util;
 import com.example.android.multidex.myapplication.R;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +35,7 @@ public class Stars extends DialogFragment {
     private ListView selection;
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
     }
@@ -63,12 +61,7 @@ public class Stars extends DialogFragment {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful()) try {
                     stars = new JSONArray(response.body().string());
-                    selection.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            adapter.notifyDataSetChanged();
-                        }
-                    });
+                    selection.post(() -> adapter.notifyDataSetChanged());
                 } catch (JSONException e) {
                     Logger.INSTANCE.e("JSONException " + e);
                 }
@@ -83,9 +76,9 @@ public class Stars extends DialogFragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Window window = getDialog().getWindow();
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Window window = requireDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
     }
 
@@ -97,7 +90,6 @@ public class Stars extends DialogFragment {
     @Override
     public void onViewCreated(@NotNull View v, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-        context = getActivity().getApplicationContext();
         adapter = new BaseAdapter() {
             @Override
             public int getCount() {

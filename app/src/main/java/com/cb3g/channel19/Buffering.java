@@ -30,7 +30,7 @@ public class Buffering extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         percent = view.findViewById(R.id.percent);
-        setPercent(getArguments().getInt("data"));
+        setPercent(requireArguments().getInt("data"));
     }
 
     @Override

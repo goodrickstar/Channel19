@@ -41,7 +41,7 @@ public class CreatePoll extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (getArguments() != null) postId = getArguments().getString("postId");
+        postId = requireArguments().getString("postId");
         final TextView cancel = view.findViewById(R.id.cancel);
         final TextView finish = view.findViewById(R.id.finish);
         content = view.findViewById(R.id.question);

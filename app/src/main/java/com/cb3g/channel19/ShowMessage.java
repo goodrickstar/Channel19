@@ -26,16 +26,12 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
     private MI MI;
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Window window = getDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.pmAnimation;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = getDialog().getWindow();
-        if (window != null) window.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
+        Window window = requireDialog().getWindow();
+        if (window != null) {
+            window.getAttributes().windowAnimations = R.style.pmAnimation;
+            window.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
+        }
         return inflater.inflate(R.layout.show_pm, container, false);
     }
 
@@ -51,7 +47,7 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
         inbound = view.findViewById(R.id.inboundBox);
         left = view.findViewById(R.id.order);
         right = view.findViewById(R.id.send);
-        message = getArguments().getStringArray("data");
+        message = requireArguments().getStringArray("data");
         new GlideImageLoader(context, profile).load(message[4], RadioService.profileOptions);
         new GlideImageLoader(context, starIV).load(Utils.parseRankUrl(message[3]));
         handle.setText(message[1]);
@@ -62,21 +58,21 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (MI) getActivity();
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
+    public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
     @Override
-    public void onCancel(DialogInterface dialog) {
+    public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));

@@ -32,7 +32,7 @@ public class Caption extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        caption = getArguments().getString("data");
+        caption = requireArguments().getString("data");
         Utils.showKeyboard(context, binding.captionET);
         if (caption != null)
             binding.captionET.setText(caption);

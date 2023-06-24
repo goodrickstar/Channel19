@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import static android.content.Context.MODE_PRIVATE;
 
 import android.content.Context;
@@ -57,18 +58,17 @@ public class FillProfile extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ImageView profile = view.findViewById(R.id.profile_photo);
-        if (getArguments() != null) {
-            String profileLink = getArguments().getString("profileLink");
-            String handle = getArguments().getString("handle");
-            String carrier = getArguments().getString("carrier");
-            String location = getArguments().getString("location");
-            if (profileLink != null)
-                Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(profile);
-            if (handle != null) binding.handleET.setText(handle);
-            if (carrier != null) binding.carrierET.setText(carrier);
-            if (location != null) binding.townET.setText(location);
-        }
+        final ImageView profile = view.findViewById(R.id.profile_photo);
+        final Bundle bundle = requireArguments();
+        final String profileLink = bundle.getString("profileLink");
+        final String handle = bundle.getString("handle");
+        final String carrier = bundle.getString("carrier");
+        final String location = bundle.getString("location");
+        if (profileLink != null)
+            Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(profile);
+        if (handle != null) binding.handleET.setText(handle);
+        if (carrier != null) binding.carrierET.setText(carrier);
+        if (location != null) binding.townET.setText(location);
         final View.OnClickListener listener = v -> {
             context.sendBroadcast(new Intent("nineteenClickSound"));
             Utils.vibrate(v);
@@ -76,7 +76,7 @@ public class FillProfile extends DialogFragment {
             final String newCarrier = binding.carrierET.getText().toString().trim();
             final String newTown = binding.townET.getText().toString().trim();
             int id = v.getId();
-            if (id == R.id.save){
+            if (id == R.id.save) {
                 String minimum = "Min of 4 char";
                 String characters = "Use chars A-Z";
                 if (preTest(newHandle) || preTest(newCarrier) || preTest(newTown)) {
@@ -125,8 +125,9 @@ public class FillProfile extends DialogFragment {
                         @Override
                         public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                             if (response.isSuccessful()) {
+                                assert response.body() != null;
                                 String data = response.body().string();
-                                getActivity().runOnUiThread(() -> {
+                                requireActivity().runOnUiThread(() -> {
                                     try {
                                         JSONObject object = new JSONObject(data);
                                         if (object.getBoolean("match"))
@@ -141,7 +142,7 @@ public class FillProfile extends DialogFragment {
                         }
                     });
                 }
-            }else if (id == R.id.cancel){
+            } else if (id == R.id.cancel) {
                 dismiss();
             }
         };

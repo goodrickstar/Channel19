@@ -4,7 +4,6 @@ package com.cb3g.channel19;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +29,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -37,13 +37,12 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ImageSearch extends DialogFragment {
-    private List<Giph> giphs = new ArrayList<>();
+    private final List<Giph> giphs = new ArrayList<>();
     private Context context;
     private int columnWidth = 0;
     private RecyclerView recyclerView;
-    private RecycleAdapter recycleAdapter = new RecycleAdapter();
+    private final RecycleAdapter recycleAdapter = new RecycleAdapter();
     private String id;
-    private boolean hd = false;
 
     private void giphySearch(final String search) {
         Request request;
@@ -66,30 +65,28 @@ public class ImageSearch extends DialogFragment {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful()) {
                     try {
+                        assert response.body() != null;
                         String info = response.body().string();
                         context.getSharedPreferences("giphy", Context.MODE_PRIVATE).edit().putString("popular", info).apply();
                         final JSONObject object = new JSONObject(info);
-                        recyclerView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    JSONArray data = new JSONArray(object.getString("data"));
-                                    giphs.clear();
-                                    recycleAdapter.notifyDataSetChanged();
-                                    if (data.length() > 0) {
-                                        for (int i = 0; i < data.length(); i++) {
-                                            JSONObject topObject = new JSONObject(data.getString(i));
-                                            JSONObject giphObject = new JSONObject(topObject.getString("images"));
-                                            Giph giph = RadioService.gson.fromJson(giphObject.toString(), Giph.class);
-                                            giph.setId(topObject.getString("id"));
-                                            giphs.add(giph);
-                                            recycleAdapter.notifyItemInserted(i);
-                                        }
+                        recyclerView.post(() -> {
+                            try {
+                                JSONArray data = new JSONArray(object.getString("data"));
+                                giphs.clear();
+                                recycleAdapter.notifyDataSetChanged();
+                                if (data.length() > 0) {
+                                    for (int i = 0; i < data.length(); i++) {
+                                        JSONObject topObject = new JSONObject(data.getString(i));
+                                        JSONObject giphObject = new JSONObject(topObject.getString("images"));
+                                        Giph giph = RadioService.gson.fromJson(giphObject.toString(), Giph.class);
+                                        giph.setId(topObject.getString("id"));
+                                        giphs.add(giph);
+                                        recycleAdapter.notifyItemInserted(i);
                                     }
-                                    recyclerView.smoothScrollToPosition(0);
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
                                 }
+                                recyclerView.smoothScrollToPosition(0);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
                         });
                     } catch (JSONException e) {
@@ -116,18 +113,15 @@ public class ImageSearch extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (getArguments() != null) id = getArguments().getString("data");
+        id = requireArguments().getString("data");
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         recyclerView.setAdapter(recycleAdapter);
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        columnWidth = ((displaymetrics.widthPixels) / 2) - 10;
+        columnWidth = Utils.getScreenWidth(requireActivity());
         SearchView gifSearch = view.findViewById(R.id.gif_search);
-        ImageView closeButton = gifSearch.findViewById(R.id.search_close_btn);
-        closeButton.setOnClickListener(v -> {
-            Utils.vibrate(v);
+        gifSearch.setOnSearchClickListener(view1 -> {
+            Utils.vibrate(view1);
             Utils.hideKeyboard(context, gifSearch);
             giphySearch("");
             gifSearch.setQuery("", false);
@@ -142,13 +136,6 @@ public class ImageSearch extends DialogFragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                /*
-                if (newText.isEmpty()) {
-                    context.sendBroadcast(new Intent("nineteenVibrate"));
-                    Utils.hideKeyboard(context, gifSearch);
-                    giphySearch("popular");
-                }
-                 */
                 return false;
             }
         });
@@ -157,41 +144,38 @@ public class ImageSearch extends DialogFragment {
             try {
                 context.getSharedPreferences("giphy", Context.MODE_PRIVATE).edit().putString("popular", info).apply();
                 final JSONObject object = new JSONObject(info);
-                recyclerView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            JSONArray data = new JSONArray(object.getString("data"));
-                            giphs.clear();
-                            recycleAdapter.notifyDataSetChanged();
-                            int index = 0;
-                            if (data.length() > 0) {
-                                for (int i = 0; i < data.length(); i++) {
-                                    JSONObject topObject = new JSONObject(data.getString(i));
-                                    JSONObject giphObject = new JSONObject(topObject.getString("images"));
-                                    Giph giph = RadioService.gson.fromJson(giphObject.toString(), Giph.class);
-                                    giph.setId(topObject.getString("id"));
-                                    giphs.add(giph);
-                                    recycleAdapter.notifyItemInserted(i);
-                                    if (id != null) {
-                                        if (giph.getId().equals(id)) index = i;
-                                    }
+                recyclerView.post(() -> {
+                    try {
+                        JSONArray data = new JSONArray(object.getString("data"));
+                        giphs.clear();
+                        recycleAdapter.notifyDataSetChanged();
+                        int index = 0;
+                        if (data.length() > 0) {
+                            for (int i = 0; i < data.length(); i++) {
+                                JSONObject topObject = new JSONObject(data.getString(i));
+                                JSONObject giphObject = new JSONObject(topObject.getString("images"));
+                                Giph giph = RadioService.gson.fromJson(giphObject.toString(), Giph.class);
+                                giph.setId(topObject.getString("id"));
+                                giphs.add(giph);
+                                recycleAdapter.notifyItemInserted(i);
+                                if (id != null) {
+                                    if (giph.getId().equals(id)) index = i;
                                 }
                             }
-                            if (index != 0) {
-                                RecyclerView.SmoothScroller smoothScroller = new
-                                        LinearSmoothScroller(context) {
-                                            @Override
-                                            protected int getVerticalSnapPreference() {
-                                                return LinearSmoothScroller.SNAP_TO_START;
-                                            }
-                                        };
-                                smoothScroller.setTargetPosition(index);
-                                recyclerView.getLayoutManager().startSmoothScroll(smoothScroller);
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
                         }
+                        if (index != 0) {
+                            RecyclerView.SmoothScroller smoothScroller = new
+                                    LinearSmoothScroller(context) {
+                                        @Override
+                                        protected int getVerticalSnapPreference() {
+                                            return LinearSmoothScroller.SNAP_TO_START;
+                                        }
+                                    };
+                            smoothScroller.setTargetPosition(index);
+                            Objects.requireNonNull(recyclerView.getLayoutManager()).startSmoothScroll(smoothScroller);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
                 });
             } catch (JSONException e) {
@@ -213,9 +197,7 @@ public class ImageSearch extends DialogFragment {
         public void onBindViewHolder(GifHolder holder, int position) {
             int positiion = holder.getAdapterPosition();
             final Giph giph = giphs.get(positiion);
-            Gif activeGif;
-            if (hd) activeGif = giph.getDownsized();
-            else activeGif = giph.getFixed_width_downsampled();
+            Gif activeGif = giph.getFixed_width_downsampled();
             scaleImageView(holder.imageView, activeGif.getHeight(), activeGif.getWidth(), columnWidth);
             new GlideImageLoader(context, holder.imageView, holder.loading).load(activeGif.getUrl());
             holder.itemView.setTag(giph);
@@ -253,7 +235,7 @@ public class ImageSearch extends DialogFragment {
             bundle.putString("data", gif.getUrl());
             showCase.setArguments(bundle);
             showCase.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            showCase.show(getFragmentManager(), "showcase");
+            showCase.show(getParentFragmentManager(), "showcase");
             return true;
         }
 

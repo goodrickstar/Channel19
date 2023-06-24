@@ -42,7 +42,7 @@ public class LongFlagFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         binding.close2.setVisibility(View.INVISIBLE);
-        binding.captiontext.setText("Courtesy of " + getArguments().getString("data"));
+        binding.captiontext.setText("Courtesy of " + requireArguments().getString("data"));
         binding.birdView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.bird));
         flipCard(binding.birdView);
         binding.close2.setOnClickListener(new View.OnClickListener() {

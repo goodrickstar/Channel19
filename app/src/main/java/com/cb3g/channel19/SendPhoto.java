@@ -1,8 +1,8 @@
 package com.cb3g.channel19;
 
 
-import android.content.DialogInterface;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,90 +10,81 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.SendPhotoBinding;
 
 public class SendPhoto extends DialogFragment {
     private Context context;
-    private TextView captionTV;
+    private SendPhotoBinding binding;
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        final Window window = getDialog().getWindow();
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        final Window window = requireDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.send_photo, container, false);
+        binding = SendPhotoBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
         RadioService.occupied.set(true);
-        final String[] photoArray = getArguments().getStringArray("data");
-        final TextView title = v.findViewById(R.id.banner);
-        final TextView ok = v.findViewById(R.id.send);
-        final TextView cancel = v.findViewById(R.id.order);
-        final TextView plus = v.findViewById(R.id.plus);
-        final ImageView image = v.findViewById(R.id.image);
-        captionTV = v.findViewById(R.id.captionTV);
-        assert photoArray != null;
-        title.setText(photoArray[2]);
-        final View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                int id = v.getId();
-                if (id == R.id.send){
-                    context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", image.getHeight()).putExtra("width", image.getWidth()));
-                    dismiss();
-                }else if (id == R.id.order){
-                    dismiss();
-                }else if (id == R.id.plus){
-                    context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", captionTV.getText().toString()));
-                }
+        final String[] photoArray = requireArguments().getStringArray("data");
+        binding.banner.setText(photoArray[2]);
+        final View.OnClickListener listener = v1 -> {
+            Utils.vibrate(v1);
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            int id = v1.getId();
+            if (id == R.id.send){
+                context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", binding.captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", binding.image.getHeight()).putExtra("width", binding.image.getWidth()));
+                dismiss();
+            }else if (id == R.id.order){
+                dismiss();
+            }else if (id == R.id.plus){
+                context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", binding.captionTV.getText().toString()));
             }
         };
-        ok.setOnClickListener(listener);
-        plus.setOnClickListener(listener);
-        cancel.setOnClickListener(listener);
-        Glide.with(SendPhoto.this).load(Uri.parse(photoArray[0])).into(image);
+        binding.send.setOnClickListener(listener);
+        binding.plus.setOnClickListener(listener);
+        binding.order.setOnClickListener(listener);
+        Glide.with(SendPhoto.this).load(Uri.parse(photoArray[0])).into(binding.image);
     }
 
     public void updateCaption(String text) {
         if (text == null) return;
-        if (text.equals("")) captionTV.setVisibility(View.GONE);
+        if (text.equals("")) binding.captionTV.setVisibility(View.GONE);
         else {
-            captionTV.setVisibility(View.VISIBLE);
-            captionTV.setText(text);
+            binding.captionTV.setVisibility(View.VISIBLE);
+            binding.captionTV.setText(text);
         }
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
+    public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
     @Override
-    public void onCancel(DialogInterface dialog) {
+    public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));

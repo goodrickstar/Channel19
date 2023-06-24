@@ -19,6 +19,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class EnterPassword extends DialogFragment {
     private Context context;
@@ -35,7 +36,7 @@ public class EnterPassword extends DialogFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Window window = getDialog().getWindow();
+        final Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) {
             window.setGravity(Gravity.CENTER);
             window.getAttributes().windowAnimations = R.style.photoAnimation;
@@ -48,7 +49,7 @@ public class EnterPassword extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        final Channel channel = RadioService.gson.fromJson(getArguments().getString("data"), Channel.class);
+        final Channel channel = RadioService.gson.fromJson(requireArguments().getString("data"), Channel.class);
         binding.top.setText(channel.getChannel_name());
         binding.accept.setOnClickListener(v -> {
             Utils.vibrate(v);

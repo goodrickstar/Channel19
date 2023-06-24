@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
@@ -97,6 +98,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
                     if (sound) context.sendBroadcast(new Intent("nineteenChatSound"));
+                    assert response.body() != null;
                     final String data = response.body().string();
                     chat_view.post(() -> {
                         loading.setVisibility(View.GONE);
@@ -122,7 +124,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                                             }
                                         };
                                 smoothScroller.setTargetPosition(0);
-                                chat_view.getLayoutManager().startSmoothScroll(smoothScroller);
+                                Objects.requireNonNull(chat_view.getLayoutManager()).startSmoothScroll(smoothScroller);
                             }
                         } catch (JSONException e) {
                             Logger.INSTANCE.e(String.valueOf(e));
@@ -157,7 +159,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-        user = RadioService.gson.fromJson(getArguments().getString("data"), UserListEntry.class);
+        user = RadioService.gson.fromJson(requireArguments().getString("data"), UserListEntry.class);
         final TextView title = v.findViewById(R.id.handle);
         final ImageView profile = v.findViewById(R.id.option_image_view);
         loading = v.findViewById(R.id.loading);
@@ -170,7 +172,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         chat_view.setLayoutManager(linearLayoutManager);
         chat_view.setHasFixedSize(true);
         chat_view.setAdapter(adapter);
-        launchHistory = getArguments().getBoolean("launch");
+        launchHistory = requireArguments().getBoolean("launch");
         title.setText(user.getRadio_hanlde());
         final ImageView image_selector = v.findViewById(R.id.imageBox);
         image_selector.setOnClickListener(this);
@@ -189,7 +191,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                 else image_selector.setImageResource(R.drawable.gallery);
             }
         });
-        screenWidth = Utils.getScreenWidth(getActivity());
+        screenWidth = Utils.getScreenWidth(requireActivity());
     }
 
     private void reply() {
@@ -244,13 +246,10 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         @NotNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NotNull ViewGroup parent, int viewType) {
-            switch (viewType) {
-                case 0:
-                    return new ChatTextHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_row, parent, false));
-                case 1:
-                    return new ChatPhotoHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_row_photo, parent, false));
+            if (viewType == 0) {
+                return new ChatTextHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_row, parent, false));
             }
-            return null;
+            return new ChatPhotoHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_row_photo, parent, false));
         }
 
         @Override

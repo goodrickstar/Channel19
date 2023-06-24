@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -54,7 +55,7 @@ public class CreateChannel extends DialogFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Window window = getDialog().getWindow();
+        final Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) {
             window.setGravity(Gravity.CENTER);
             window.getAttributes().windowAnimations = R.style.photoAnimation;
@@ -118,8 +119,9 @@ public class CreateChannel extends DialogFragment {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
                     try {
+                        assert response.body() != null;
                         final JSONObject data = new JSONObject(response.body().string());
-                        getActivity().runOnUiThread(() -> {
+                       requireActivity().runOnUiThread(() -> {
                             try {
                                 if (data.getBoolean("success")) {
                                     SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -74,6 +75,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
                     try {
+                        assert response.body() != null;
                         JSONObject result = new JSONObject(response.body().string());
                         final List<ChannelInfo> responseChannelInfo = groupIntoSidebands(returnDataList(result.getString("users")), returnChannelList(result.getString("channels")));
                         if (responseChannelInfo.isEmpty() || (!owned && !RadioService.operator.getSilenced() && RadioService.operator.getChannel() != null))
@@ -84,6 +86,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                     }
                 } else {
                     Logger.INSTANCE.e("Error", response.message());
+                    assert response.body() != null;
                     Logger.INSTANCE.e("Error", response.body().string());
                 }
                 binding.swiper.post(() -> binding.swiper.setRefreshing(false));
@@ -183,7 +186,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-        Window window = getDialog().getWindow();
+        Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         binding.swiper.setOnRefreshListener(() -> {
             Utils.vibrate(v);
@@ -229,14 +232,10 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            switch (viewType) {
-                case 0:
-                    return new ChannelCreatorHolder(getLayoutInflater().inflate(R.layout.sideband, parent, false));
-                case 1:
-                    return new ChannelViewHolder(getLayoutInflater().inflate(R.layout.sideband_creator, parent, false));
-                default:
-                    return null;
+            if (viewType == 0) {
+                return new ChannelCreatorHolder(getLayoutInflater().inflate(R.layout.sideband, parent, false));
             }
+            return new ChannelViewHolder(getLayoutInflater().inflate(R.layout.sideband_creator, parent, false));
         }
 
         @Override

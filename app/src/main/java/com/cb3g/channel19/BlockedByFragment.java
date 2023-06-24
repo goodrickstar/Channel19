@@ -34,7 +34,7 @@ public class BlockedByFragment extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ArrayList<String> data = getArguments().getStringArrayList("handles");
+        ArrayList<String> data = requireArguments().getStringArrayList("handles");
         binding.title.setText("Blocked By " + data.size() + " Users");
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);

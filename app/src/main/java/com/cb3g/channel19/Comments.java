@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -43,6 +44,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
 import io.jsonwebtoken.Jwts;
@@ -54,6 +56,7 @@ import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
+
 public class Comments extends DialogFragment implements ChildEventListener, View.OnClickListener {
     private final CommentAdapter commentAdapter = new CommentAdapter();
     private final List<Comment> comments = new ArrayList<>();
@@ -72,7 +75,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     }
                 };
         smoothScroller.setTargetPosition(position);
-        binding.commentsListView.getLayoutManager().startSmoothScroll(smoothScroller);
+        Objects.requireNonNull(binding.commentsListView.getLayoutManager()).startSmoothScroll(smoothScroller);
     }
 
     @Override
@@ -100,6 +103,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
         Comment comment = dataSnapshot.getValue(Comment.class);
         for (int i = 0; i < comments.size(); i++) {
+            assert comment != null;
             if (comments.get(i).getRemarkId().equals(comment.getRemarkId())) {
                 comments.set(i, comment);
                 commentAdapter.notifyDataSetChanged();
@@ -111,6 +115,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
         Comment comment = dataSnapshot.getValue(Comment.class);
         for (int i = 0; i < comments.size(); i++) {
+            assert comment != null;
             if (comments.get(i).getRemarkId().equals(comment.getRemarkId())) {
                 comments.remove(i);
                 commentAdapter.notifyItemRemoved(i);
@@ -135,7 +140,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Window window = getDialog().getWindow();
+        final Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         binding = CommentsDialogBinding.inflate(inflater);
         return binding.getRoot();
@@ -152,7 +157,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             context.sendBroadcast(new Intent("vibrate"));
             dismiss();
         });
-        post = RadioService.gson.fromJson(getArguments().getString("post"), Post.class);
+        post = RadioService.gson.fromJson(requireArguments().getString("post"), Post.class);
         binding.commentsListView.setHasFixedSize(true);
         binding.commentsListView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.commentsListView.setAdapter(commentAdapter);
@@ -223,7 +228,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         if (content.length() == 0) return;
         final Comment comment = new Comment();
         comment.setPostId(post.getPostId());
-        comment.setRemarkId(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey());
+        comment.setRemarkId(Objects.requireNonNull(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey()));
         comment.setContent(content);
         comment.setUserId(RadioService.operator.getUser_id());
         comment.setProfileLink(RadioService.operator.getProfileLink());
@@ -238,7 +243,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         if (gif != null) {
             final Comment comment = new Comment();
             comment.setPostId(post.getPostId());
-            comment.setRemarkId(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey());
+            comment.setRemarkId(Objects.requireNonNull(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey()));
             comment.setType(1);
             comment.setPost_date(RI.return_timestamp_string());
             comment.setUserId(RadioService.operator.getUser_id());
@@ -257,7 +262,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         if (url != null) {
             final Comment comment = new Comment();
             comment.setPostId(post.getPostId());
-            comment.setRemarkId(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey());
+            comment.setRemarkId(Objects.requireNonNull(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey()));
             comment.setType(1);
             comment.setPost_date(RI.return_timestamp_string());
             comment.setUserId(RadioService.operator.getUser_id());
@@ -276,7 +281,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                             UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
                             uploadTask.continueWithTask(task -> {
                                 if (!task.isSuccessful()) {
-                                    throw task.getException();
+                                    throw Objects.requireNonNull(task.getException());
                                 }
                                 return ref.getDownloadUrl();
                             }).addOnCompleteListener(task -> {
@@ -290,7 +295,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                                         try {
                                             Bitmap bitmap = BitmapFactory.decodeStream(new URL(downloadUri.toString()).openConnection().getInputStream());
                                             if (bitmap != null) {
-                                                getActivity().runOnUiThread(() -> {
+                                                requireActivity().runOnUiThread(() -> {
                                                     comment.setImage_height(bitmap.getHeight());
                                                     comment.setImage_width(bitmap.getWidth());
                                                     bitmap.recycle();
@@ -323,6 +328,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 final Post post = dataSnapshot.getValue(Post.class);
+                assert post != null;
                 post.setRemarks(post.getRemarks() + 1);
                 post.setLatest_handle(RadioService.operator.getHandle());
                 post.setLatest_profileLink(RadioService.operator.getProfileLink());
@@ -351,6 +357,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                 if (dataSnapshot.hasChildren()) {
                     for (DataSnapshot child : dataSnapshot.getChildren()) {
                         final Comment comment = child.getValue(Comment.class);
+                        assert comment != null;
                         post.setRemarks(post.getRemarks() - 1);
                         post.setLatest_handle(comment.getHandle());
                         post.setLatest_profileLink(comment.getProfileLink());
@@ -379,13 +386,10 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            switch (viewType) {
-                case 0:
-                    return new TextHolder(LayoutInflater.from(context).inflate(R.layout.text_row, parent, false));
-                case 1:
-                    return new PhotoHolder(LayoutInflater.from(context).inflate(R.layout.image_row, parent, false));
+            if (viewType == 0) {
+                return new TextHolder(LayoutInflater.from(context).inflate(R.layout.text_row, parent, false));
             }
-            return null;
+            return new PhotoHolder(LayoutInflater.from(context).inflate(R.layout.image_row, parent, false));
         }
 
         @Override
@@ -489,6 +493,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                 menu = v.findViewById(R.id.profile_menu);
             }
         }
+
         private class PhotoHolder extends RecyclerView.ViewHolder {
             TextView name, stamp;
             ImageView profile, menu, content;

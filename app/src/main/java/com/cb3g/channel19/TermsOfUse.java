@@ -37,9 +37,9 @@ public class TermsOfUse extends DialogFragment {
     ArrayList<Term> terms = new ArrayList<>();
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Window window = getDialog().getWindow();
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Window window = requireDialog().getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
     }
 
@@ -52,13 +52,10 @@ public class TermsOfUse extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         final TextView ok = view.findViewById(R.id.ok);
-        ok.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getContext().getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("accepted", true).apply();
-                getContext().sendBroadcast(new Intent("nineteenProve"));
-                dismiss();
-            }
+        ok.setOnClickListener(v -> {
+            getContext().getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("accepted", true).apply();
+            getContext().sendBroadcast(new Intent("nineteenProve"));
+            dismiss();
         });
         final RecyclerView userlist = view.findViewById(R.id.recyclerView);
         userlist.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
@@ -94,7 +91,7 @@ public class TermsOfUse extends DialogFragment {
                 });
     }
 
-    class Term {
+    static class Term {
         String message;
 
         public Term() {

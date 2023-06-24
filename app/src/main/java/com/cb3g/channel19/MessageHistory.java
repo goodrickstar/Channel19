@@ -1,11 +1,11 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.threeten.bp.Instant;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,29 +43,23 @@ import okhttp3.Response;
 public class MessageHistory extends DialogFragment {
     private final recycler_adapter adapter = new recycler_adapter();
     private Context context;
-    private List<History> list = new ArrayList<>();
+    private final List<History> list = new ArrayList<>();
     private MI MI;
     private RecyclerView history;
-    private long now = Instant.now().getEpochSecond();
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        final Window window = getDialog().getWindow();
-        if (window != null)
-            window.getAttributes().windowAnimations = R.style.photoAnimation;
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+        final Window window = requireDialog().getWindow();
+        if (window != null) {
+            window.setGravity(Gravity.CENTER);
+            window.getAttributes().windowAnimations = R.style.photoAnimation;
+        }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Window window = getDialog().getWindow();
-        if (window != null) window.setGravity(Gravity.CENTER);
         return inflater.inflate(R.layout.message_history, container, false);
     }
 
@@ -80,13 +73,10 @@ public class MessageHistory extends DialogFragment {
         history.setAdapter(adapter);
         history.setAdapter(adapter);
         final TextView close = view.findViewById(R.id.close);
-        close.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                dismiss();
-            }
+        close.setOnClickListener(v -> {
+            Utils.vibrate(v);
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            dismiss();
         });
     }
 
@@ -114,29 +104,26 @@ public class MessageHistory extends DialogFragment {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
+                    assert response.body() != null;
                     final String data = response.body().string();
-                    history.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                now = Instant.now().getEpochSecond();
-                                JSONObject returnedObject = new JSONObject(data);
-                                JSONArray returnedList = returnedObject.getJSONArray("data");
-                                JSONArray onlineList = returnedObject.getJSONArray("online");
-                                list.clear();
-                                for (int i = 0; i < returnedList.length(); i++) {
-                                    History entry = RadioService.gson.fromJson(returnedList.get(i).toString(), History.class);
-                                    try {
-                                        entry.setOnline(onlineList.getInt(i));
-                                    } catch (JSONException e) {
-                                        Logger.INSTANCE.e("entry.setOnline", String.valueOf(e));
-                                    }
-                                    list.add(entry);
+                    history.post(() -> {
+                        try {
+                            JSONObject returnedObject = new JSONObject(data);
+                            JSONArray returnedList = returnedObject.getJSONArray("data");
+                            JSONArray onlineList = returnedObject.getJSONArray("online");
+                            list.clear();
+                            for (int i = 0; i < returnedList.length(); i++) {
+                                History entry = RadioService.gson.fromJson(returnedList.get(i).toString(), History.class);
+                                try {
+                                    entry.setOnline(onlineList.getInt(i));
+                                } catch (JSONException e) {
+                                    Logger.INSTANCE.e("entry.setOnline", String.valueOf(e));
                                 }
-                                adapter.notifyDataSetChanged();
-                            } catch (JSONException e) {
-                                Logger.INSTANCE.e(String.valueOf(e));
+                                list.add(entry);
                             }
+                            adapter.notifyDataSetChanged();
+                        } catch (JSONException e) {
+                            Logger.INSTANCE.e(String.valueOf(e));
                         }
                     });
                 }
@@ -172,6 +159,7 @@ public class MessageHistory extends DialogFragment {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
                     try {
+                        assert response.body() != null;
                         JSONArray returnedList = new JSONArray(response.body().string());
                         for (int x = 0; x < data.length(); x++) {
                             try {
@@ -189,28 +177,28 @@ public class MessageHistory extends DialogFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
+    public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
     @Override
-    public void onCancel(DialogInterface dialog) {
+    public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
     private class recycler_adapter extends RecyclerView.Adapter<MessageHistory.recycler_adapter.MyViewHolder> {
-        private View.OnClickListener listener = new View.OnClickListener() {
+        private final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Utils.vibrate(v);

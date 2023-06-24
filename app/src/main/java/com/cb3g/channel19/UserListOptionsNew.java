@@ -32,13 +32,13 @@ import org.threeten.bp.Instant;
 import java.util.ArrayList;
 
 public class UserListOptionsNew extends DialogFragment {
-    private options_adapter optionsAdapter = new options_adapter();
+    private final options_adapter optionsAdapter = new options_adapter();
     private Context context;
     private MI MI;
     private ListOptionNewBinding binding;
     private UserListEntry user = new UserListEntry();
     private Coordinates coordinates = null;
-    private ArrayList<UserOption> options = new ArrayList<>();
+    private final ArrayList<UserOption> options = new ArrayList<>();
     private final int cancel = 0;
     private final int text = 1;
     private final int photo = 2;
@@ -70,8 +70,7 @@ public class UserListOptionsNew extends DialogFragment {
     public void onViewCreated(@NotNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
         RadioService.occupied.set(true);
-        if (!getArguments().isEmpty())
-            user = new Gson().fromJson(getArguments().getString("user"), UserListEntry.class);
+        user = new Gson().fromJson(requireArguments().getString("user"), UserListEntry.class);
         View.OnClickListener dismisser = v1 -> {
             Utils.vibrate(v1);
             dismiss();
@@ -219,7 +218,7 @@ public class UserListOptionsNew extends DialogFragment {
         View view = snackbar.getView();
         TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
         tv.setTextColor(ContextCompat.getColor(context, R.color.main_white));
-        view.setBackgroundColor(getResources().getColor(R.color.main_black_transparent));
+        view.setBackgroundColor(ContextCompat.getColor(context, R.color.main_black_transparent));
         tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         snackbar.show();
     }
@@ -295,7 +294,7 @@ public class UserListOptionsNew extends DialogFragment {
         }
 
 
-        private View.OnClickListener listener = new View.OnClickListener() {
+        private final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Utils.vibrate(v);

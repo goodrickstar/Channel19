@@ -146,13 +146,13 @@ public class Driver extends Fragment {
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 try {
                     if (response.isSuccessful()) {
+                        assert response.body() != null;
                         final JSONObject data = new JSONObject(response.body().string());
                         RadioService.operator.setRank(data.getString("rank"));
                         RadioService.operator.setStamp(data.getString("stamp").replace("\\", ""));
                         final int donations = data.getInt("donations");
                         if (isAdded()) {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            if (handler != null) handler.post(() -> {
+                            new Handler(Looper.getMainLooper()).post(() -> {
                                 if (donations > 4)
                                     binding.starIm.setOnClickListener(v -> {
                                         Utils.vibrate(v);

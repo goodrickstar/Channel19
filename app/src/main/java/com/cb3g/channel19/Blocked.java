@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Blocked extends DialogFragment {
     private TextView count;
@@ -61,7 +62,7 @@ public class Blocked extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final Window window = getDialog().getWindow();
+        final Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         settings = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
         radio = returnBlockListObjectFromStorage("blockedIDs");

@@ -23,7 +23,7 @@ import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 public class ImagePicker extends DialogFragment implements View.OnClickListener {
     private Context context;
-    private Gif gif = new Gif();
+    private final Gif gif = new Gif();
     private ImageView preview, placeHolder;
     private MI MI;
     private boolean upload = false;
@@ -31,7 +31,7 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     private TextView accept;
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (MI) getActivity();
@@ -57,10 +57,10 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         fromGiphy.setOnClickListener(this);
         accept.setOnClickListener(this);
         cancel.setOnClickListener(this);
-        title.setText(getArguments().getString("handle"));
         loading = v.findViewById(R.id.loading);
         placeHolder.setVisibility(View.VISIBLE);
         accept.setVisibility(View.GONE);
+        title.setText(requireArguments().getString("handle"));
     }
 
     @Override
@@ -87,40 +87,38 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         placeHolder.setVisibility(View.GONE);
         gif.setUrl(photo.getUrl());
         gif.setId(photo.getId());
-        if (photo != null) {
-            Glide.with(context).load(photo.getUrl()).addListener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                    loading.setVisibility(View.GONE);
-                    return false;
-                }
+        Glide.with(context).load(photo.getUrl()).addListener(new RequestListener<Drawable>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                loading.setVisibility(View.GONE);
+                return false;
+            }
 
-                @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                    loading.setVisibility(View.GONE);
-                    if (photo.getHeight() == 0 || photo.getWidth() == 0) {
-                        gif.setHeight(resource.getIntrinsicHeight());
-                        gif.setWidth(resource.getIntrinsicWidth());
-                    } else {
-                        gif.setHeight(photo.getHeight());
-                        gif.setWidth(photo.getWidth());
-                    }
-                    accept.setVisibility(View.VISIBLE);
-                    return false;
+            @Override
+            public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                loading.setVisibility(View.GONE);
+                if (photo.getHeight() == 0 || photo.getWidth() == 0) {
+                    gif.setHeight(resource.getIntrinsicHeight());
+                    gif.setWidth(resource.getIntrinsicWidth());
+                } else {
+                    gif.setHeight(photo.getHeight());
+                    gif.setWidth(photo.getWidth());
                 }
-            }).error(R.drawable.no_signal_w).into(preview);
-        }
+                accept.setVisibility(View.VISIBLE);
+                return false;
+            }
+        }).error(R.drawable.no_signal_w).into(preview);
     }
 
     @Override
-    public void onCancel(DialogInterface dialog) {
+    public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
     @Override
-    public void onDismiss(DialogInterface dialog) {
+    public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
         context.sendBroadcast(new Intent("checkForMessages"));

@@ -33,14 +33,9 @@ public class ShowPhoto extends DialogFragment {
     private ShowPhotoBinding binding;
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        Window window = getDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Window window = requireDialog().getWindow();
+        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         binding = ShowPhotoBinding.inflate(inflater);
         return binding.getRoot();
     }
@@ -49,7 +44,7 @@ public class ShowPhoto extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        photo = new Gson().fromJson(getArguments().getString("data"), Photo.class);
+        photo = new Gson().fromJson(requireArguments().getString("data"), Photo.class);
         if (!photo.getCaption().isEmpty()) {
             binding.photoCaption.setVisibility(View.VISIBLE);
             binding.photoCaption.setText(photo.getCaption());

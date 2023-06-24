@@ -15,6 +15,9 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.ContactBinding;
+
+import java.util.Objects;
+
 public class Contact extends DialogFragment implements View.OnClickListener {
     private Context context;
     private ContactBinding binding;
@@ -27,7 +30,7 @@ public class Contact extends DialogFragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = getDialog().getWindow();
+        Window window = Objects.requireNonNull(getDialog()).getWindow();
         if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         binding = ContactBinding.inflate(inflater);
         return binding.getRoot();
