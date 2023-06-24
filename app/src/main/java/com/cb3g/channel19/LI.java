@@ -11,8 +11,6 @@ interface LI {
 
     void select_title();
 
-    void vibrate();
-
     void rotate_logo();
 
     void welcome(final String text, final String profileLink);

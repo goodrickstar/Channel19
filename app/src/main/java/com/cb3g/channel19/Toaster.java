@@ -10,7 +10,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.android.multidex.myapplication.R;
@@ -92,9 +96,9 @@ final class Toaster {
         @SuppressLint("InflateParams") final View layout = inflater.inflate(R.layout.toast_label, null);
         final TextView text = layout.findViewById(R.id.toasttext);
         final ImageView profile = layout.findViewById(R.id.profileToast);
-        Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(new SimpleTarget<Drawable>() {
+        Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(new CustomTarget<Drawable>() {
             @Override
-            public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+            public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                 profile.setImageDrawable(resource);
                 text.setText(message);
                 Toast toast = new Toast(context);
@@ -102,6 +106,11 @@ final class Toaster {
                 toast.setDuration(Toast.LENGTH_LONG);
                 toast.setView(layout);
                 toast.show();
+            }
+
+            @Override
+            public void onLoadCleared(@Nullable Drawable placeholder) {
+
             }
         });
     }

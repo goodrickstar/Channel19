@@ -1,29 +1,23 @@
 package com.cb3g.channel19;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.View;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 
@@ -66,9 +60,9 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
     private TextView direction;
     private ConstraintLayout infoTab;
     private Coordinates selected = null;
-    private List<Marker> markers = new ArrayList<>();
+    private final List<Marker> markers = new ArrayList<>();
     private FusedLocationProviderClient mFusedLocationClient;
-    private LocationCallback locationCallback = new locationCallback();
+    private final LocationCallback locationCallback = new locationCallback();
     private Coordinates userToFind = null;
     private boolean follow = false;
     private SeekBar zoomBar;
@@ -137,9 +131,9 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
         altitude = findViewById(R.id.altitude);
         direction = findViewById(R.id.direction);
         distance = findViewById(R.id.distance);
-        Switch trace = findViewById(R.id.follow);
-        trace.getThumbDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
-        trace.getTrackDrawable().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN);
+        SwitchCompat trace = findViewById(R.id.follow);
+        trace.getThumbDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+        trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.BLACK));
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         if (getIntent().hasExtra("data")) {
@@ -147,21 +141,18 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
             selected = userToFind;
         }
         trace.setChecked(follow);
-        trace.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                Utils.vibrate(buttonView);
-                follow = isChecked;
-                if (isChecked) {
-                    trace.getTrackDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
-                    if (follow) moveCamera(selected.getLatitude(), selected.getLongitude(), map.getCameraPosition().zoom);
-                }
-                else trace.getTrackDrawable().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN);
+        trace.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Utils.vibrate(buttonView);
+            follow = isChecked;
+            if (isChecked) {
+                trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+                if (follow) moveCamera(selected.getLatitude(), selected.getLongitude(), map.getCameraPosition().zoom);
             }
+            else trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.BLACK));
         });
         zoomBar = findViewById(R.id.zoomBar);
-        zoomBar.getProgressDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
-        zoomBar.getThumb().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN);
+        zoomBar.getProgressDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+        zoomBar.getThumb().setColorFilter(Utils.colorFilter(Color.WHITE));
         zoomBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -200,15 +191,13 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
         if (listen)
             RadioService.databaseReference.child("locations").addChildEventListener(this);
         else {
-            RadioService.databaseReference.child("locations").removeEventListener((ChildEventListener) this);
+            RadioService.databaseReference.child("locations").removeEventListener(this);
         }
     }
 
     @Override
     public void onCameraIdle() {
         if (update) {
-            //map.setMaxZoomPreference(16f);
-            //map.setMinZoomPreference(0f);
             map.getUiSettings().setMapToolbarEnabled(false);
             map.getUiSettings().setZoomControlsEnabled(true);
             if (ActivityCompat.checkSelfPermission(Locations.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -370,7 +359,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
 
     }
 
-    class locationCallback extends LocationCallback {
+    static class locationCallback extends LocationCallback {
         @Override
         public void onLocationResult(@NonNull LocationResult locationResult) {
             super.onLocationResult(locationResult);

@@ -34,6 +34,10 @@ public class GlideImageLoader {
         this.context = context;
     }
 
+    public GlideImageLoader(Context context) {
+        this.context = context;
+    }
+
     public void load(final String url, RequestOptions options) {
         if (url == null || content == null) return;
         if (loading != null) loading.setVisibility(View.VISIBLE);
@@ -84,6 +88,13 @@ public class GlideImageLoader {
                         return false;
                     }
                 })
+                .into(content);
+    }
+
+    public void load(ImageView imageView, final String url) {
+        Glide.with(context)
+                .load(url)
+                .thumbnail(0.1f)
                 .into(content);
     }
 

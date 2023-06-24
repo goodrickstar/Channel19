@@ -4,7 +4,7 @@ package com.cb3g.channel19;
 import com.google.android.material.snackbar.Snackbar;
 
 public class Snack {
-    private String message = "";
+    private String message;
     private int length = Snackbar.LENGTH_INDEFINITE;
 
     public Snack(String message) {

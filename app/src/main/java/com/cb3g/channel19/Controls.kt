@@ -192,16 +192,16 @@ class Controls : Fragment() {
                 }
             }
         }
-        MyDrawableCompat.setColorFilter(blackout.progressDrawable, Color.WHITE)
-        MyDrawableCompat.setColorFilter(purgeLimit.progressDrawable, Color.WHITE)
-        MyDrawableCompat.setColorFilter(nearbyLimit.progressDrawable, Color.WHITE)
-        MyDrawableCompat.setColorFilter(pauseLimit.progressDrawable, Color.WHITE)
-        MyDrawableCompat.setColorFilter(ring.progressDrawable, Color.WHITE)
-        MyDrawableCompat.setColorFilter(purgeLimit.thumb, Color.WHITE)
-        MyDrawableCompat.setColorFilter(nearbyLimit.thumb, Color.WHITE)
-        MyDrawableCompat.setColorFilter(pauseLimit.thumb, Color.WHITE)
-        MyDrawableCompat.setColorFilter(blackout.thumb, Color.WHITE)
-        MyDrawableCompat.setColorFilter(ring.thumb, Color.WHITE)
+        blackout.progressDrawable.colorFilter = Utils.colorFilter(Color.WHITE)
+        purgeLimit.progressDrawable.colorFilter = Utils.colorFilter(Color.WHITE)
+        nearbyLimit.progressDrawable.colorFilter = Utils.colorFilter(Color.WHITE)
+        pauseLimit.progressDrawable.colorFilter = Utils.colorFilter(Color.WHITE)
+        ring.progressDrawable.colorFilter = Utils.colorFilter(Color.WHITE)
+        blackout.thumb.colorFilter = Utils.colorFilter(Color.WHITE)
+        purgeLimit.thumb.colorFilter = Utils.colorFilter(Color.WHITE)
+        nearbyLimit.thumb.colorFilter = Utils.colorFilter(Color.WHITE)
+        pauseLimit.thumb.colorFilter = Utils.colorFilter(Color.WHITE)
+        ring.thumb.colorFilter = Utils.colorFilter(Color.WHITE)
         boTV = v.findViewById(R.id.boTV)
         val browse = v.findViewById<TextView>(R.id.browse)
         browse.setOnClickListener {

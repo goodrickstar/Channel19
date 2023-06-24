@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import static android.os.SystemClock.sleep;
 import static com.cb3g.channel19.RadioService.databaseReference;
 import static com.cb3g.channel19.RadioService.gson;
@@ -14,7 +15,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -84,7 +84,7 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
-@SuppressWarnings("deprecation")
+
 public class MainActivity extends FragmentActivity implements MI, View.OnClickListener, View.OnLongClickListener, PurchasesUpdatedListener, ValueEventListener {
     public final String SILENCE = "silence";
     public final String UNSILENCE = "unsilence";
@@ -746,12 +746,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 timeBar.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.white_bar));
             if (timeBar.isIndeterminate()) {
                 if (!dark)
-                    timeBar.getIndeterminateDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+                    timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
                 else {
                     if (poor)
-                        timeBar.getIndeterminateDrawable().setColorFilter(Color.RED, PorterDuff.Mode.SRC_ATOP);
+                        timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.RED));
                     else
-                        timeBar.getIndeterminateDrawable().setColorFilter(ContextCompat.getColor(MainActivity.this, R.color.light_blue), PorterDuff.Mode.SRC_ATOP);
+                        timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(ContextCompat.getColor(MainActivity.this, R.color.light_blue)));
                 }
             }
         });

@@ -634,193 +634,172 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     public void touch(View v) {
         Utils.vibrate(v);
-        switch (v.getId()) {
-            case R.id.ghost:
-                clickSound();
-                if (!RadioService.operator.getGhostModeAvailible()) {
-                    showResult("Temporarily Closed", "Ghost Mode is temporarily offline");
-                    return;
+        int id = v.getId();
+        if (id == R.id.ghost) {
+            clickSound();
+            if (!RadioService.operator.getGhostModeAvailible()) {
+                showResult("Temporarily Closed", "Ghost Mode is temporarily offline");
+                return;
+            }
+            if (billingUtils.isConnected()) {
+                billingUtils.queryProductDetails(GHOST, new ProductDetailsResponseListener() {
+                    @Override
+                    public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull List<ProductDetails> list) {
+                        if (!list.isEmpty())
+                            billingUtils.purchaseProduct(SettingsActivity.this, list.get(0));
+                    }
+                });
+            }
+        } else if (id == R.id.stats) {
+            clickSound();
+            final String stats = Jwts.builder()
+                    .setHeader(RadioService.header)
+                    .claim("userId", RadioService.operator.getUser_id())
+                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                    .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
+                    .compact();
+            final Request request = new Request.Builder()
+                    .url(RadioService.SITE_URL + "user_stats.php")
+                    .post(new FormBody.Builder().add("data", stats).build())
+                    .build();
+            RadioService.client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 }
-                if (billingUtils.isConnected()) {
-                    billingUtils.queryProductDetails(GHOST, new ProductDetailsResponseListener() {
-                        @Override
-                        public void onProductDetailsResponse(@NonNull BillingResult billingResult, @NonNull List<ProductDetails> list) {
-                            if (!list.isEmpty())
-                                billingUtils.purchaseProduct(SettingsActivity.this, list.get(0));
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    try {
+                        if (response.isSuccessful()) {
+                            final JSONObject data = new JSONObject(response.body().string());
+                            String content = "User ID: " + RadioService.operator.getUser_id() + " Version: " + data.getString("version_name") + " (" + data.getString("version") + ")";
+                            if (!data.getString("created").equals("2015-01-01 00:00:00"))
+                                content += "\n" + "Created: " + data.getString("created");
+                            content += "Salutes: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("salutes")) + ", Flags: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("flags"));
+                            showResult(RadioService.operator.getHandle(), content);
                         }
-                    });
+                    } catch (JSONException e) {
+                        LOG.e("touch", e.getMessage());
+                    }
                 }
-                break;
-            case R.id.stats:
-                clickSound();
-                final String stats = Jwts.builder()
+            });
+        } else if (id == R.id.menu) {
+            onBackPressed();
+        } else if (id == R.id.control) {
+            stage = 1;
+            if (stage != post) clickSound();
+            chstage();
+        } else if (id == R.id.driver) {
+            stage = 2;
+            if (stage != post) clickSound();
+            chstage();
+        } else if (id == R.id.account) {
+            stage = 3;
+            if (stage != post) clickSound();
+            chstage();
+        } else if (id == R.id.update) {
+            clickSound();
+            if (RadioService.operator.getAdmin()) {
+                FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
+                if (sdf == null) {
+                    sdf = new FillProfile();
+                    userbundle.putString("profileLink", RadioService.operator.getProfileLink());
+                    userbundle.putString("handle", RadioService.operator.getHandle());
+                    userbundle.putString("carrier", RadioService.operator.getCarrier());
+                    userbundle.putString("location", RadioService.operator.getTown());
+                    sdf.setArguments(userbundle);
+                    sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    sdf.show(manager, "sdf");
+                }
+            } else {
+                final String data = Jwts.builder()
                         .setHeader(RadioService.header)
                         .claim("userId", RadioService.operator.getUser_id())
                         .setIssuedAt(new Date(System.currentTimeMillis()))
                         .setExpiration(new Date(System.currentTimeMillis() + 60000))
                         .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
                         .compact();
-                final Request request = new Request.Builder()
-                        .url(RadioService.SITE_URL + "user_stats.php")
-                        .post(new FormBody.Builder().add("data", stats).build())
-                        .build();
-                RadioService.client.newCall(request).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                        try {
-                            if (response.isSuccessful()) {
-                                final JSONObject data = new JSONObject(response.body().string());
-                                String content = "User ID: " + RadioService.operator.getUser_id() + " Version: " + data.getString("version_name") + " (" + data.getString("version") + ")";
-                                if (!data.getString("created").equals("2015-01-01 00:00:00"))
-                                    content += "\n" + "Created: " + data.getString("created");
-                                content += "Salutes: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("salutes")) + ", Flags: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("flags"));
-                                showResult(RadioService.operator.getHandle(), content);
+                RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_check_time.php")
+                                .post(new FormBody.Builder().add("data", data).build()).build())
+                        .enqueue(new Callback() {
+                            @Override
+                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             }
-                        } catch (JSONException e) {
-                            LOG.e("touch", e.getMessage());
-                        }
-                    }
-                });
-                break;
-            case R.id.menu:
-                onBackPressed();
-                break;
-            case R.id.control:
-                stage = 1;
-                if (stage != post) clickSound();
-                chstage();
-                break;
-            case R.id.driver:
-                stage = 2;
-                if (stage != post) clickSound();
-                chstage();
-                break;
-            case R.id.account:
-                stage = 3;
-                if (stage != post) clickSound();
-                chstage();
-                break;
-            case R.id.update:
-                clickSound();
-                if (RadioService.operator.getAdmin()) {
-                    FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
-                    if (sdf == null) {
-                        sdf = new FillProfile();
-                        userbundle.putString("profileLink", RadioService.operator.getProfileLink());
-                        userbundle.putString("handle", RadioService.operator.getHandle());
-                        userbundle.putString("carrier", RadioService.operator.getCarrier());
-                        userbundle.putString("location", RadioService.operator.getTown());
-                        sdf.setArguments(userbundle);
-                        sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                        sdf.show(manager, "sdf");
-                    }
-                } else {
-                    final String data = Jwts.builder()
-                            .setHeader(RadioService.header)
-                            .claim("userId", RadioService.operator.getUser_id())
-                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                            .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                            .compact();
-                    RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_check_time.php")
-                                    .post(new FormBody.Builder().add("data", data).build()).build())
-                            .enqueue(new Callback() {
-                                @Override
-                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                }
 
-                                @Override
-                                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                    if (response.isSuccessful()) {
-                                        final String data = response.body().string();
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    final JSONObject object = new JSONObject(data);
-                                                    if (object.getString("success").equals("1")) {
-                                                        FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
-                                                        if (sdf == null) {
-                                                            sdf = new FillProfile();
-                                                            userbundle.putString("profileLink", RadioService.operator.getProfileLink());
-                                                            userbundle.putString("handle", RadioService.operator.getHandle());
-                                                            userbundle.putString("carrier", RadioService.operator.getCarrier());
-                                                            userbundle.putString("location", RadioService.operator.getTown());
-                                                            sdf.setArguments(userbundle);
-                                                            sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                                                            sdf.show(manager, "sdf");
-                                                        }
-                                                    } else
-                                                        showResult(object.getString("title"), object.getString("message"));
-                                                } catch (JSONException e) {
-                                                    LOG.e("update", e.getMessage());
-                                                }
+                            @Override
+                            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                if (response.isSuccessful()) {
+                                    final String data = response.body().string();
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                final JSONObject object = new JSONObject(data);
+                                                if (object.getString("success").equals("1")) {
+                                                    FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
+                                                    if (sdf == null) {
+                                                        sdf = new FillProfile();
+                                                        userbundle.putString("profileLink", RadioService.operator.getProfileLink());
+                                                        userbundle.putString("handle", RadioService.operator.getHandle());
+                                                        userbundle.putString("carrier", RadioService.operator.getCarrier());
+                                                        userbundle.putString("location", RadioService.operator.getTown());
+                                                        sdf.setArguments(userbundle);
+                                                        sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                                                        sdf.show(manager, "sdf");
+                                                    }
+                                                } else
+                                                    showResult(object.getString("title"), object.getString("message"));
+                                            } catch (JSONException e) {
+                                                LOG.e("update", e.getMessage());
                                             }
-                                        });
-                                    }
+                                        }
+                                    });
                                 }
-                            });
-                }
-                break;
-            case R.id.blocked:
-                clickSound();
-                Blocked bd = (Blocked) manager.findFragmentByTag("bd");
-                if (bd == null) {
-                    bd = new Blocked();
-                    bd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    bd.show(manager, "bd");
-                }
-                break;
+                            }
+                        });
+            }
+        } else if (id == R.id.blocked) {
+            clickSound();
+            Blocked bd = (Blocked) manager.findFragmentByTag("bd");
+            if (bd == null) {
+                bd = new Blocked();
+                bd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                bd.show(manager, "bd");
+            }
         }
     }
 
     public void help(View v) {
         Utils.vibrate(v);
         clickSound();
-        switch (v.getId()) {
-            case R.id.help41:
-                showResult("Pause Limit", getString(R.string.help41));
-                break;
-            case R.id.help2:
-                showResult("Mic Key Behavior", getString(R.string.help2));
-                break;
-            case R.id.help3:
-                showResult("Volume Keys", getString(R.string.help3));
-                break;
-            case R.id.help7:
-                showResult("Vibration", getString(R.string.help7));
-                break;
-            case R.id.help8:
-                showResult("Other Sounds", getString(R.string.help8));
-                break;
-            case R.id.help10:
-                showResult("Messaging Options", getString(R.string.help10));
-                break;
-            case R.id.help13:
-                showResult("BlueTooth Headset", getString(R.string.help13));
-                break;
-            case R.id.help20:
-                showResult("BlackOut", getString(R.string.help20));
-                break;
-            case R.id.helpAS:
-                showResult(getString(R.string.mic_animation_speed), getString(R.string.help34));
-                break;
-            case R.id.help38:
-                showResult(getString(R.string.share_location), getString(R.string.help38));
-                break;
-            case R.id.help40:
-                showResult(getString(R.string.map_theme), getString(R.string.help40));
-                break;
-            case R.id.helpPurge:
-                showResult(getString(R.string.purge_limit), getString(R.string.help42));
-                break;
-            case R.id.helpNearby:
-                showResult(getString(R.string.nearby_limit), getString(R.string.help43));
-                break;
+        int id = v.getId();
+        if (id == R.id.help41) {
+            showResult("Pause Limit", getString(R.string.help41));
+        } else if (id == R.id.help2) {
+            showResult("Mic Key Behavior", getString(R.string.help2));
+        } else if (id == R.id.help3) {
+            showResult("Volume Keys", getString(R.string.help3));
+        } else if (id == R.id.help7) {
+            showResult("Vibration", getString(R.string.help7));
+        } else if (id == R.id.help8) {
+            showResult("Other Sounds", getString(R.string.help8));
+        } else if (id == R.id.help10) {
+            showResult("Messaging Options", getString(R.string.help10));
+        } else if (id == R.id.help13) {
+            showResult("BlueTooth Headset", getString(R.string.help13));
+        } else if (id == R.id.help20) {
+            showResult("BlackOut", getString(R.string.help20));
+        } else if (id == R.id.helpAS) {
+            showResult(getString(R.string.mic_animation_speed), getString(R.string.help34));
+        } else if (id == R.id.help38) {
+            showResult(getString(R.string.share_location), getString(R.string.help38));
+        } else if (id == R.id.help40) {
+            showResult(getString(R.string.map_theme), getString(R.string.help40));
+        } else if (id == R.id.helpPurge) {
+            showResult(getString(R.string.purge_limit), getString(R.string.help42));
+        } else if (id == R.id.helpNearby) {
+            showResult(getString(R.string.nearby_limit), getString(R.string.help43));
         }
     }
 
@@ -839,43 +818,41 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     private void clickSound() {
         sendBroadcast(new Intent("nineteenClickSound"));
     }
+
     public void accountTouch(View v) {
         Utils.vibrate(v);
         clickSound();
-        switch (v.getId()) {
-            case R.id.contact:
-                Contact cdf = (Contact) manager.findFragmentByTag("cdf");
-                if (cdf == null) {
-                    cdf = new Contact();
-                    cdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    cdf.show(manager, "cdf");
-                }
-                break;
-            case R.id.shop:
-                if (!RadioService.operator.getRadioShopOpen()) {
-                    showResult("Temporarily Closed", "The Radio Shop is temporarily offline");
-                    return;
-                }
-                RadioShop shop = (RadioShop) manager.findFragmentByTag("shop");
-                if (shop == null) {
-                    shop = new RadioShop();
-                    shop.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    Bundle bundle = new Bundle();
-                    bundle.putString("userId", RadioService.operator.getUser_id());
-                    shop.setArguments(bundle);
-                    shop.show(manager, "shop");
-                }
-                break;
+        int id = v.getId();
+        if (id == R.id.contact) {
+            Contact cdf = (Contact) manager.findFragmentByTag("cdf");
+            if (cdf == null) {
+                cdf = new Contact();
+                cdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                cdf.show(manager, "cdf");
+            }
+        } else if (id == R.id.shop) {
+            if (!RadioService.operator.getRadioShopOpen()) {
+                showResult("Temporarily Closed", "The Radio Shop is temporarily offline");
+                return;
+            }
+            RadioShop shop = (RadioShop) manager.findFragmentByTag("shop");
+            if (shop == null) {
+                shop = new RadioShop();
+                shop.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                Bundle bundle = new Bundle();
+                bundle.putString("userId", RadioService.operator.getUser_id());
+                shop.setArguments(bundle);
+                shop.show(manager, "shop");
+            }
         }
-
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
+        switch (requestCode) {
             case 2:
-                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())){
+                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
                     try {
                         startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), 3456);
                     } catch (Exception e) {
@@ -884,7 +861,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                 }
                 break;
             case 3:
-                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())){
+                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
                     try {
                         startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), 9999);
                     } catch (Exception e) {
@@ -892,9 +869,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     }
                 }
                 break;
-            default:
-                if (confrag.isAdded())
-                    confrag.gpsGranted(Utils.permissionsAccepted(SettingsActivity.this, Utils.getLocationPermissions()));
         }
     }
 

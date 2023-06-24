@@ -4,20 +4,18 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.request.RequestOptions;
 import com.example.android.multidex.myapplication.R;
@@ -35,13 +33,13 @@ import java.util.HashMap;
 
 
 public class MassPast extends DialogFragment implements ValueEventListener {
-    private RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
+    private final RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
     private Context context;
-    private DatabaseReference massReference = Utils.getDatabase().getReference().child("mass history").child(RadioService.operator.getUser_id());
-    private RecyleAdapter recycler_adapter = new RecyleAdapter();
-    private ArrayList<Photo> photoRecords = new ArrayList<>();
+    private final DatabaseReference massReference = Utils.getDatabase().getReference().child("mass history").child(RadioService.operator.getUser_id());
+    private final RecyleAdapter recycler_adapter = new RecyleAdapter();
+    private final ArrayList<Photo> photoRecords = new ArrayList<>();
     private int screenWidth = 0;
-    private long stamp = Instant.now().getEpochSecond();
+    private final long stamp = Instant.now().getEpochSecond();
     private MassPastLayoutBinding binding;
     private MI MI;
 
@@ -64,9 +62,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        screenWidth = displaymetrics.widthPixels;
+        screenWidth = Utils.getScreenWidth(requireActivity());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setAdapter(recycler_adapter);
@@ -129,7 +125,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         @Override
         public void onBindViewHolder(@NonNull RecyleAdapter.MyViewHolder holder, int i) {
             Photo photo = photoRecords.get(holder.getAdapterPosition());
-            holder.image.getLayoutParams().height = (int) (((photo.getHeight() * screenWidth) / photo.getWidth()));
+            holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
             holder.handle.setText(photo.getHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));
             new GlideImageLoader(context, holder.image, holder.progressBar).load(photo.getUrl());

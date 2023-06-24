@@ -8,6 +8,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
+import android.graphics.BlendModeColorFilter;
+import android.graphics.ColorFilter;
 import android.graphics.Insets;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
@@ -21,7 +24,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -52,6 +54,9 @@ import java.util.Locale;
 
 class Utils {
 
+    static ColorFilter colorFilter(int color){
+        return new BlendModeColorFilter(color, BlendMode.SRC_ATOP);
+    }
 
     static boolean alreadyFlagged(String userId){
         return RadioService.flaggedIds.contains(userId);

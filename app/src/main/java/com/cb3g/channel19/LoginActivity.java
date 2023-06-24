@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
@@ -18,17 +17,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,10 +31,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
-import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
@@ -50,12 +43,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -86,11 +77,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, ValueEventListener, View.OnClickListener, FirebaseAuth.AuthStateListener, ActivityResultCallback<ActivityResult> {
+public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, ValueEventListener, View.OnClickListener, FirebaseAuth.AuthStateListener {
     private GoogleSignInClient mGoogleSignInClient;
     private FirebaseUser googleUser;
     private FirebaseAuth mAuth;
-    private ServiceConnection mServiceConn;
     private OkHttpClient okClient;
     private SharedPreferences settings;
     private String SITE_URL, TOKEN, KEY;
@@ -101,13 +91,10 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private RotateAnimation rotate;
     private BroadcastReceiver receiver;
     private Map<String, Object> header;
-    private int GOOGLESIGNINTAG = 669;
-    private int RC_SIGN_IN = 777;
-    private boolean isEmulator = false;
-    private BillingClient billingClient;
-    //TODO: unique identifier
-    private Object serial = "unknown";
+    private final int RC_SIGN_IN = 777;
+    private final Object serial = "unknown";
     private BillingUtils billingUtils;
+    private boolean isEmulator = false;
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -126,30 +113,21 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     }
 
     @Override
-    public void onActivityResult(ActivityResult result) {
-
-    }
-
-    @Override
     public void onClick(View v) {
-        vibrate();
-        switch (v.getId()) {
-            case R.id.googleButton:
-            case R.id.profileName:
-                if (googleUser == null) {
-                    logInWithGoogle();
-                }
-                break;
-            case R.id.logout:
-                if (googleUser != null) {
-                    logOutWithGoogle();
-                }
-                break;
-            case R.id.loginIntoServerWithGoogleButton:
-                if (googleUser != null) {
-                    login(googleUser);
-                } else showSnack(new Snack("First log in with Google", Snackbar.LENGTH_SHORT));
-
+        Utils.vibrate(v);
+        int id = v.getId();
+        if (id == R.id.googleButton || id == R.id.profileName) {
+            if (googleUser == null) {
+                logInWithGoogle();
+            }
+        } else if (id == R.id.logout) {
+            if (googleUser != null) {
+                logOutWithGoogle();
+            }
+        } else if (id == R.id.loginIntoServerWithGoogleButton) {
+            if (googleUser != null) {
+                login(googleUser);
+            } else showSnack(new Snack("First log in with Google", Snackbar.LENGTH_SHORT));
         }
     }
 
@@ -183,15 +161,12 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            showSnack(new Snack("Login succesful", Snackbar.LENGTH_SHORT));
-                        } else {
-                            showSnack(new Snack("Firebase Authentification failed", Snackbar.LENGTH_LONG));
-                            Logger.INSTANCE.e("Firebase Authentification failed", task.getException().getMessage());
-                        }
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        showSnack(new Snack("Login succesful", Snackbar.LENGTH_SHORT));
+                    } else {
+                        showSnack(new Snack("Firebase Authentification failed", Snackbar.LENGTH_LONG));
+                        Logger.INSTANCE.e("Firebase Authentification failed", task.getException().getMessage());
                     }
                 });
     }
@@ -200,7 +175,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
-        Rumble.init(this);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         binding = LoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -236,15 +210,12 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         Utils.getDatabase().getReference().child("keychain").addValueEventListener(this);
         Utils.getDatabase().getReference().child("siteUrl").addValueEventListener(this);
         FirebaseMessaging.getInstance().getToken()
-                .addOnCompleteListener(new OnCompleteListener<String>() {
-                    @Override
-                    public void onComplete(@NonNull Task<String> task) {
-                        if (task.isSuccessful()) {
-                            TOKEN = task.getResult();
-                            settings.edit().putString("token", TOKEN).apply();
-                        } else {
-                            showSnack(new Snack("There was an issue registering this device with Firebase"));
-                        }
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        TOKEN = task.getResult();
+                        settings.edit().putString("token", TOKEN).apply();
+                    } else {
+                        showSnack(new Snack("There was an issue registering this device with Firebase"));
                     }
                 });
         Logger.INSTANCE.i("Activity Created");
@@ -260,7 +231,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                 if (action != null && KEY != null && SITE_URL != null) {
                     if ("nineteenSendProfileToServer".equals(action)) {
                         click_sound();
-                        vibrate();
                         rotate_logo();
                         pre_text("Creating Profile...");
                         final String compactJws = Jwts.builder()
@@ -318,12 +288,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         EmulatorDetector.with(this)
                 .addPackageName("com.bluestacks")
                 .setDebug(true)
-                .detect(new EmulatorDetector.OnEmulatorDetectorListener() {
-                    @Override
-                    public void onResult(boolean isEmulator) {
-                        LoginActivity.this.isEmulator = isEmulator;
-                    }
-                });
+                .detect(isEmulator -> LoginActivity.this.isEmulator = isEmulator);
     }
 
     private void launch_main_activity() {
@@ -335,111 +300,97 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         if (KEY == null || SITE_URL == null || TOKEN == null) return;
         pre_text("Logging in..");
         rotate_logo();
-        if (billingUtils.isConnected){
-            billingUtils.queryActiveSubscriptions(new PurchasesResponseListener() {
-                @Override
-                public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> subscriptions) {
-                    DeviceName.with(LoginActivity.this).request(new DeviceName.Callback() {
-                        @Override
-                        public void onFinished(DeviceName.DeviceInfo info, Exception error) {
-                            @SuppressLint("HardwareIds") String compactJws = Jwts.builder()
-                                    .setHeader(header)
-                                    .claim("userId", user.getUid())
-                                    .claim("email", user.getEmail())
-                                    .claim("name", user.getDisplayName())
-                                    .claim("reg_id", TOKEN)
-                                    .claim("deviceId", getDeviceId())
-                                    .claim("gsf", returnGSF())
-                                    .claim("imei", "")
-                                    .claim("serial", serial)
-                                    .claim("language", Locale.getDefault().getDisplayLanguage())
-                                    .claim("deviceName", info.marketName)
-                                    .claim("active", !subscriptions.isEmpty())
-                                    .claim("version", String.valueOf(getVersion()))
-                                    .claim("version_name", getVersionName())
-                                    .claim("build", getBuildVersion())
-                                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                    .signWith(SignatureAlgorithm.HS256, KEY)
-                                    .compact();
-                            Request request = new Request.Builder()
-                                    .url(SITE_URL + "google_login.php")
-                                    .post(new FormBody.Builder().add("data", compactJws).build())
-                                    .build();
-                            okClient.newCall(request).enqueue(new Callback() {
-                                @Override
-                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                    show_result("Network Error", e.getMessage());
-                                }
+        if (billingUtils.isConnected) {
+            billingUtils.queryActiveSubscriptions((billingResult, subscriptions) -> DeviceName.with(LoginActivity.this).request((info, error) -> {
+                @SuppressLint("HardwareIds") String compactJws = Jwts.builder()
+                        .setHeader(header)
+                        .claim("userId", user.getUid())
+                        .claim("email", user.getEmail())
+                        .claim("name", user.getDisplayName())
+                        .claim("reg_id", TOKEN)
+                        .claim("deviceId", getDeviceId())
+                        .claim("gsf", returnGSF())
+                        .claim("imei", "")
+                        .claim("serial", serial)
+                        .claim("language", Locale.getDefault().getDisplayLanguage())
+                        .claim("deviceName", info.marketName)
+                        .claim("active", !subscriptions.isEmpty())
+                        .claim("version", String.valueOf(getVersion()))
+                        .claim("version_name", getVersionName())
+                        .claim("build", getBuildVersion())
+                        .setIssuedAt(new Date(System.currentTimeMillis()))
+                        .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                        .signWith(SignatureAlgorithm.HS256, KEY)
+                        .compact();
+                Request request = new Request.Builder()
+                        .url(SITE_URL + "google_login.php")
+                        .post(new FormBody.Builder().add("data", compactJws).build())
+                        .build();
+                okClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        show_result("Network Error", e.getMessage());
+                    }
 
-                                @Override
-                                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                                    String image = response.body().string();
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                JSONObject data = new JSONObject(image);
-                                                if (data.getString("user_id").equals("0")) {
-                                                    show_result(data.getString("mode"), data.getString("msg"));
-                                                } else {
-                                                    final String handle = data.getString("radio_hanlde");
-                                                    if (handle.equals("default")) {
-                                                        select_title();
-                                                        return;
-                                                    }
-                                                    final String profile = data.getString("profileLink");
-                                                    final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
-                                                    welcome(handle, profile);
-                                                    final SharedPreferences.Editor edit = settings.edit();
-                                                    edit.putString("email", data.getString("email"));
-                                                    edit.putString("userId", data.getString("user_id"));
-                                                    edit.putString("handle", handle);
-                                                    edit.putString("rank", data.getString("rank"));
-                                                    edit.putString("carrier", data.getString("carrier"));
-                                                    edit.putString("town", data.getString("hometown"));
-                                                    edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
-                                                    edit.putBoolean("invisible", invisible);
-                                                    edit.putString("profileLink", profile);
-                                                    edit.putInt("newbie", data.getInt("newbie"));
-                                                    edit.putBoolean("active", data.getBoolean("subscribed"));
-                                                    edit.putString("photoIDs", data.getString("photoIDs"));
-                                                    edit.putString("textIDs", data.getString("textIDs"));
-                                                    edit.putString("blockedIDs", data.getString("blockedIDs"));
-                                                    edit.putString("salutedIDs", data.getString("salutedIDs"));
-                                                    edit.putString("flaggedIDs", data.getString("flaggedIDs"));
-                                                    edit.putString("main_backdrop", data.getString("one"));
-                                                    edit.putString("settings_backdrop", data.getString("two"));
-                                                    edit.putInt("count", data.getInt("total_count"));
-                                                    edit.putInt("salutes", data.getInt("salutes"));
-                                                    edit.putBoolean("exiting", false);
-                                                    edit.apply();
-                                                    finish();
-                                                    startForegroundService(new Intent(LoginActivity.this, RadioService.class));
-                                                    launch_main_activity();
-                                                }
-                                            } catch (JSONException e) {
-                                                show_result("Login Error", e.getMessage());
-                                                Logger.INSTANCE.e("google_login", e.getMessage());
-                                            } finally {
-                                                response.close();
-                                            }
-                                        }
-                                    });
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        String image = response.body().string();
+                        runOnUiThread(() -> {
+                            try {
+                                JSONObject data = new JSONObject(image);
+                                if (data.getString("user_id").equals("0")) {
+                                    show_result(data.getString("mode"), data.getString("msg"));
+                                } else {
+                                    final String handle = data.getString("radio_hanlde");
+                                    if (handle.equals("default")) {
+                                        select_title();
+                                        return;
+                                    }
+                                    final String profile = data.getString("profileLink");
+                                    final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
+                                    welcome(handle, profile);
+                                    final SharedPreferences.Editor edit = settings.edit();
+                                    edit.putString("email", data.getString("email"));
+                                    edit.putString("userId", data.getString("user_id"));
+                                    edit.putString("handle", handle);
+                                    edit.putString("rank", data.getString("rank"));
+                                    edit.putString("carrier", data.getString("carrier"));
+                                    edit.putString("town", data.getString("hometown"));
+                                    edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
+                                    edit.putBoolean("invisible", invisible);
+                                    edit.putString("profileLink", profile);
+                                    edit.putInt("newbie", data.getInt("newbie"));
+                                    edit.putBoolean("active", data.getBoolean("subscribed"));
+                                    edit.putString("photoIDs", data.getString("photoIDs"));
+                                    edit.putString("textIDs", data.getString("textIDs"));
+                                    edit.putString("blockedIDs", data.getString("blockedIDs"));
+                                    edit.putString("salutedIDs", data.getString("salutedIDs"));
+                                    edit.putString("flaggedIDs", data.getString("flaggedIDs"));
+                                    edit.putString("main_backdrop", data.getString("one"));
+                                    edit.putString("settings_backdrop", data.getString("two"));
+                                    edit.putInt("count", data.getInt("total_count"));
+                                    edit.putInt("salutes", data.getInt("salutes"));
+                                    edit.putBoolean("exiting", false);
+                                    edit.apply();
+                                    finish();
+                                    startForegroundService(new Intent(LoginActivity.this, RadioService.class));
+                                    launch_main_activity();
                                 }
-                            });
+                            } catch (JSONException e) {
+                                show_result("Login Error", e.getMessage());
+                                Logger.INSTANCE.e("google_login", e.getMessage());
+                            } finally {
+                                response.close();
+                            }
+                        });
+                    }
+                });
 
-                        }
-                    });
-                }
-            });
+            }));
         } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    post_text();
-                    showSnack(new Snack("There was an issue connected with Google Play"));
-                }
+            runOnUiThread(() -> {
+                post_text();
+                showSnack(new Snack("There was an issue connected with Google Play"));
             });
 
         }
@@ -463,18 +414,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         else return "";
     }
 
-    private void hideKeys() {
-        View view = this.getCurrentFocus();
-        if (view != null) {
-            InputMethodManager inputManager = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputManager.hideSoftInputFromWindow(view.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        }
-    }
-
-    public void vibrate() {
-        Rumble.once(15);
-    }
-
     public void showTerms() {
         FragmentManager manager = getSupportFragmentManager();
         TermsOfUse tdd = (TermsOfUse) manager.findFragmentByTag("tdd");
@@ -488,12 +427,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
     @Override
     public void rotate_logo() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                binding.spinner.startAnimation(rotate);
-            }
-        });
+        runOnUiThread(() -> binding.spinner.startAnimation(rotate));
     }
 
     @Override
@@ -503,51 +437,35 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
     @Override
     public void welcome(final String text, final String profileLink) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toaster.online(LoginActivity.this, "Welcome " + text, profileLink);
-            }
-        });
+        runOnUiThread(() -> Toaster.online(LoginActivity.this, "Welcome " + text, profileLink));
     }
 
     @Override
     public void show_result(final String title, final String content) {
         if (isFinishing()) return;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                post_text();
-                final Bundle helpbundle = new Bundle();
-                helpbundle.putString("title", title);
-                helpbundle.putString("content", content);
-                final Blank bdf = new Blank();
-                bdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.mydialog);
-                bdf.setArguments(helpbundle);
-                bdf.show(getSupportFragmentManager(), "bdf");
-            }
+        runOnUiThread(() -> {
+            post_text();
+            final Bundle helpbundle = new Bundle();
+            helpbundle.putString("title", title);
+            helpbundle.putString("content", content);
+            final Blank bdf = new Blank();
+            bdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.mydialog);
+            bdf.setArguments(helpbundle);
+            bdf.show(getSupportFragmentManager(), "bdf");
         });
     }
 
     @Override
     public void post_text() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                binding.tvStatus.setText(R.string.TM);
-                binding.spinner.clearAnimation();
-            }
+        runOnUiThread(() -> {
+            binding.tvStatus.setText(R.string.TM);
+            binding.spinner.clearAnimation();
         });
     }
 
     @Override
     public void pre_text(final String text) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                binding.tvStatus.setText(text);
-            }
-        });
+        runOnUiThread(() -> binding.tvStatus.setText(text));
     }
 
     @Override

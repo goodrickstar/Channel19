@@ -7,7 +7,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -45,13 +44,10 @@ public class LongFlagFragment extends DialogFragment {
         binding.captiontext.setText("Courtesy of " + requireArguments().getString("data"));
         binding.birdView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.bird));
         flipCard(binding.birdView);
-        binding.close2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.vibrate(v);
-                context.getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("flagDue", false).apply();
-                dismiss();
-            }
+        binding.close2.setOnClickListener(v -> {
+            Utils.vibrate(v);
+            context.getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("flagDue", false).apply();
+            dismiss();
         });
     }
 
