@@ -15,14 +15,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "266162092275-f0vj45o1d689n40q4cqk123bemv836ij.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.cb3g.channel19",
-            "certificate_hash": "9ec54141b5b620059971b32de71a7461c61f1b7e"
-          }
-        },
-        {
           "client_id": "266162092275-delnl1l56rimhvsfohkmhpbhq70mj3ig.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -31,17 +23,33 @@
           }
         },
         {
-          "client_id": "266162092275-6dblphi7nnumdnp5jnrbbpr70mit1ivp.apps.googleusercontent.com",
+          "client_id": "266162092275-jerglujc5897q04sm8g4cs79j59t5j29.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.cb3g.channel19",
-            "certificate_hash": "e1aaad07c5a9cb4f67aa9647c494b22edfd63c82"
+            "certificate_hash": "1ca78f9e4bab13a1f2eba3aeab8e1778b1f54082"
+          }
+        },
+        {
+          "client_id": "266162092275-pth9n4l1q9jnl2b9n88os1m5d9s9oajc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "f3756a65b650c63a4a9fcaecbf734e052074d239"
+          }
+        },
+        {
+          "client_id": "266162092275-sjt13emii7l2fbg6pqfmd5poi3qdue4d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "9ec54141b5b620059971b32de71a7461c61f1b7e"
           }
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA5-wl0GbQWyzCFGDu0W9xOijac2rbmksE"
+          "current_key": "AIzaSyAZmdKXSMJ6VBwMu9KvwY9DBje8mGs1VoY"
         }
       ],
       "services": {

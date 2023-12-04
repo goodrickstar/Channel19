@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,14 +44,13 @@ import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
+
 public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private final RecyclerViewAdapter adapter = new RecyclerViewAdapter();
     private Context context;
     private List<String> savedIds = new ArrayList<>();
     private final List<User> working = new ArrayList<>();
-    private RecyclerView recyclerView;
     private String uri;
-    private TextView send;
     private ImageView preview;
     private RadioButton selector;
     private MI MI;
@@ -64,8 +64,6 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final Window window = requireDialog().getWindow();
-        if (window != null) window.setGravity(Gravity.CENTER);
         return inflater.inflate(R.layout.mass_photo, container, false);
     }
 
@@ -82,18 +80,25 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         Glide.with(this).load(uri).into(preview);
         Set<String> set = context.getSharedPreferences("settings", Context.MODE_PRIVATE).getStringSet("massIds", null);
         if (set != null) savedIds = new ArrayList<>(set);
-        recyclerView = view.findViewById(R.id.multi_select);
+        RecyclerView recyclerView = view.findViewById(R.id.multi_select);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(adapter);
         recyclerView.setAlpha(0);
-        send = view.findViewById(R.id.close);
+        TextView send = view.findViewById(R.id.close);
         final TextView cancel = view.findViewById(R.id.cancel);
         cancel.setOnClickListener(this);
         send.setVisibility(View.GONE);
         send.setOnClickListener(this);
         selector.setOnClickListener(this);
+        for (UserListEntry entry : RadioService.users){
+            working.add(convertUserListEntryToUser(entry));
+        }
+        adapter.notifyDataSetChanged();
+        recyclerView.animate().alpha(1.0f).setDuration(800);
+        preview.animate().alpha(.3f).setDuration(800);
+        send.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -127,58 +132,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         } else dismiss();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("channel", Objects.requireNonNull(RadioService.operator.getChannel()).getChannel())
-                .claim("userId", RadioService.operator.getUser_id())
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_mass_photo_list.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response.isSuccessful() && isAdded()) {
-                    assert response.body() != null;
-                    final String data = response.body().string();
-                    recyclerView.post(() -> {
-                        try {
-                            working.clear();
-                            JSONArray users = new JSONArray(data);
-                            for (int x = 0; x < users.length(); x++) {
-                                JSONObject user = users.getJSONObject(x);
-                                final String userId = user.getString("user_id");
-                                if (!userIsGhost(userId))
-                                    working.add(new User(userId, user.getString("radio_hanlde"), user.getString("profileLink"), savedIds.contains(userId)));
-                            }
-                            adapter.notifyDataSetChanged();
-                            recyclerView.post(() -> {
-                                recyclerView.animate().alpha(1.0f).setDuration(1200);
-                                send.setVisibility(View.VISIBLE);
-                            });
-                        } catch (JSONException e) {
-                            LOG.e(e.getMessage());
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    private boolean userIsGhost(String id) {
-        for (FBentry entry : RadioService.ghostUsers) {
-            if (entry.getUserId().equals(id)) return true;
-        }
-        return false;
+    private User convertUserListEntryToUser(UserListEntry entry) {
+        return new User(entry.getUser_id(), entry.getRadio_hanlde(), entry.getProfileLink(), savedIds.contains(entry.getUser_id()));
     }
 
     @Override
@@ -257,6 +212,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             }
         }
     }
+
     private static class User {
         private final String id;
         private final String handle;

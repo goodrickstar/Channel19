@@ -1,20 +1,20 @@
 package com.cb3g.channel19;
 
 public class UserOption {
-    int id;
+    ListOption option;
     String description;
 
-    public UserOption(int id, String description) {
-        this.id = id;
+    public UserOption(ListOption option, String description) {
+        this.option = option;
         this.description = description;
     }
 
-    public int getId() {
-        return id;
+    public ListOption getOption() {
+        return option;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setOption(ListOption option) {
+        this.option = option;
     }
 
     public String getDescription() {

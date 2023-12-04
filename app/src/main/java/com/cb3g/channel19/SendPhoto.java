@@ -30,13 +30,6 @@ public class SendPhoto extends DialogFragment {
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = SendPhotoBinding.inflate(inflater);
         return binding.getRoot();

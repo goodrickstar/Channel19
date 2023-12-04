@@ -16,19 +16,20 @@
 		android:padding="@dimen/default_padding"
 		android:text="@string/message_history"
 		android:textAppearance="@style/title_font"/>
-	
+
 	<androidx.recyclerview.widget.RecyclerView
 		android:id="@+id/history"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_weight="1"
+		android:alpha="0"
 		android:background="@null"
 		android:listSelector="@drawable/listview_selector"
 		android:scrollbarSize="1dp"
 		android:scrollbarStyle="outsideOverlay"
 		android:scrollbarThumbVertical="@drawable/scrollbar"
 		android:scrollbars="vertical"
-		android:verticalScrollbarPosition="left"/>
+		android:verticalScrollbarPosition="left" />
 	
 	<TextView
 		android:id="@+id/close"

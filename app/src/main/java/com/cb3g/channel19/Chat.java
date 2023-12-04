@@ -61,10 +61,14 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private boolean launchHistory = false;
     private ImageView starIV;
     private int screenWidth = 0;
-    private UserListEntry user;
+    private final UserListEntry user;
     private ProgressBar loading;
 
     private ChatBinding binding;
+
+    public Chat(UserListEntry user) {
+        this.user = user;
+    }
 
 
     @Override
@@ -159,7 +163,6 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-        user = RadioService.gson.fromJson(requireArguments().getString("data"), UserListEntry.class);
         final TextView title = v.findViewById(R.id.handle);
         final ImageView profile = v.findViewById(R.id.option_image_view);
         loading = v.findViewById(R.id.loading);
@@ -261,7 +264,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             final ChatRow chatRow = list.get(position);
             switch (holder.getItemViewType()) {
-                case 0:
+                case 0 -> {
                     ChatTextHolder textHolder = (ChatTextHolder) holder;
                     textHolder.text.setText(chatRow.getText());
                     textHolder.text.setOnLongClickListener(v -> {
@@ -272,7 +275,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         popupMenu.setOnMenuItemClickListener(item -> {
                             Utils.vibrate(v);
                             int id = item.getItemId();
-                            if (id == R.id.delete_message){
+                            if (id == R.id.delete_message) {
                                 delete_message(chatRow.getMessage_id(), null);
                             } else if (id == R.id.copy_text) {
                                 final String handle = chatRow.getF_handle();
@@ -297,8 +300,8 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     }
                     textHolder.border.setPadding(25, 25, 25, 25);
                     textHolder.border.setLayoutParams(params);
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     ChatPhotoHolder photoHolder = (ChatPhotoHolder) holder;
                     final int new_height = (int) (((chatRow.getHeight() * screenWidth) / chatRow.getWidth()) * .8);
                     final int new_width = (int) (screenWidth * .8);
@@ -318,7 +321,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         popupMenu.setOnMenuItemClickListener(item -> {
                             Utils.vibrate(v);
                             int id = item.getItemId();
-                            if (id == R.id.delete_message){
+                            if (id == R.id.delete_message) {
                                 delete_message(chatRow.getMessage_id(), chatRow.getUrl());
                             } else if (id == R.id.copy_text) {
                                 context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", chatRow.getUrl()));
@@ -337,7 +340,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         layoutParams.setMargins(25, 40, 150, 0);
                     }
                     photoHolder.border.setLayoutParams(layoutParams);
-                    break;
+                }
             }
         }
 

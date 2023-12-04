@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,12 +36,11 @@ import com.google.android.material.snackbar.Snackbar;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
 public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeListener, View.OnTouchListener, View.OnLongClickListener, CheckBox.OnCheckedChangeListener {
-    private String[] recordPermissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
+    private final String[] recordPermissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
     final private AlphaAnimation fadeOut = new AlphaAnimation(1, 0);
     final private AlphaAnimation fadeIn = new AlphaAnimation(0, 1);
     private TextView location, handle, quetv, carrier, title;
@@ -99,25 +97,22 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         quetv = view.findViewById(R.id.quetv);
         muteIv = view.findViewById(R.id.mute);
         progressBar = view.findViewById(R.id.pbar);
-        progressBar.getProgressDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        progressBar.getThumb().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        progressBar.getProgressDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+        progressBar.getThumb().setColorFilter(Utils.colorFilter(Color.WHITE));
         talkback = view.findViewById(R.id.talkback);
         settings = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
         talkback.setChecked(settings.getBoolean("talkback", true));
         profile.setOnLongClickListener(this);
         progressBar.setMax(queueMax);
         progressBar.setOnSeekBarChangeListener(this);
-        muteIv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (MI != null) {
-                    if (!RadioService.mute) {
-                        muteIv.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.muted_set));
-                    } else {
-                        muteIv.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.muter));
-                    }
-                    context.sendBroadcast(new Intent("muteChannelNineTeen"));
+        muteIv.setOnClickListener(view1 -> {
+            if (MI != null) {
+                if (!RadioService.mute) {
+                    muteIv.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.muted_set));
+                } else {
+                    muteIv.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.muter));
                 }
+                context.sendBroadcast(new Intent("muteChannelNineTeen"));
             }
         });
         talkback.setOnCheckedChangeListener(this);
@@ -143,33 +138,30 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
                     .build();
             showcaseView.setButtonPosition(tps);
             showcaseView.show();
-            showcaseView.overrideButtonClick(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Utils.vibrate(v);
-                    tutorial_count++;
-                    settings.edit().putInt("tutorial", tutorial_count).apply();
-                    switch (tutorial_count) {
-                        case 1:
-                            showcaseView.setTarget(new ViewTarget(R.id.quetv, getActivity()));
-                            showcaseView.forceTextPosition(ShowcaseView.BELOW_SHOWCASE);
-                            showcaseView.setContentTitle("NO BREAK 1-9 NEEDED");
-                            showcaseView.setContentText("Simultaneous transmissions are added to the queue");
-                            break;
-                        case 2:
-                            showcaseView.setContentText("You will not be able to transmit when your queue goes over 9");
-                            break;
-                        case 3:
-                            showcaseView.forceTextPosition(ShowcaseView.ABOVE_SHOWCASE);
-                            showcaseView.setTarget(new ViewTarget(R.id.talkback, getActivity()));
-                            showcaseView.setContentTitle("TALK BACK");
-                            showcaseView.setContentText("Repeats your transmission back to you if enabled");
-                            break;
-                        case 4:
-                            showcaseView.hide();
-                            if (MI != null) MI.finishTutorial(tutorial_count);
-                            break;
-                    }
+            showcaseView.overrideButtonClick(v -> {
+                Utils.vibrate(v);
+                tutorial_count++;
+                settings.edit().putInt("tutorial", tutorial_count).apply();
+                switch (tutorial_count) {
+                    case 1:
+                        showcaseView.setTarget(new ViewTarget(R.id.quetv, getActivity()));
+                        showcaseView.forceTextPosition(ShowcaseView.BELOW_SHOWCASE);
+                        showcaseView.setContentTitle("NO BREAK 1-9 NEEDED");
+                        showcaseView.setContentText("Simultaneous transmissions are added to the queue");
+                        break;
+                    case 2:
+                        showcaseView.setContentText("You will not be able to transmit when your queue goes over 9");
+                        break;
+                    case 3:
+                        showcaseView.forceTextPosition(ShowcaseView.ABOVE_SHOWCASE);
+                        showcaseView.setTarget(new ViewTarget(R.id.talkback, getActivity()));
+                        showcaseView.setContentTitle("TALK BACK");
+                        showcaseView.setContentText("Repeats your transmission back to you if enabled");
+                        break;
+                    case 4:
+                        showcaseView.hide();
+                        if (MI != null) MI.finishTutorial(tutorial_count);
+                        break;
                 }
             });
         }
@@ -269,12 +261,9 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             recorder.setAudioSamplingRate(44100);
             recorder.setAudioEncodingBitRate(96000);
             recorder.setMaxDuration(recordTime);
-            recorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
-                @Override
-                public void onInfo(MediaRecorder mr, int what, int extra) {
-                    if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
-                        stopRecorder(true);
-                }
+            recorder.setOnInfoListener((mr, what, extra) -> {
+                if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED)
+                    stopRecorder(true);
             });
             recorder.prepare();
             recorder.start();
@@ -294,7 +283,6 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             recorder = null;
             if (pass) {
                 final String fileUrl = Utils.formatLocalAudioFileLocation(saveDirectory, msgCount);
-                File file = new File(fileUrl);
                 long loggedTime = (Instant.now().getEpochSecond() - msgCount);
                 if (loggedTime >= 2) {
                     Utils.vibrate(ring);
@@ -371,14 +359,11 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         } else {
             profile.setVisibility(View.VISIBLE);
             new GlideImageLoader(context, profile).load(array[5], RadioService.profileOptions);
-            profile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Utils.vibrate(v);
-                    context.sendBroadcast(new Intent("nineteenBoxSound"));
-                    if (MI != null)
-                        MI.streamFile(array[5]);
-                }
+            profile.setOnClickListener(v -> {
+                Utils.vibrate(v);
+                context.sendBroadcast(new Intent("nineteenBoxSound"));
+                if (MI != null)
+                    MI.streamFile(array[5]);
             });
         }
     }

@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
@@ -37,7 +38,6 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.LoginBinding;
-import com.framgia.android.emulator.EmulatorDetector;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -94,7 +94,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private final int RC_SIGN_IN = 777;
     private final Object serial = "unknown";
     private BillingUtils billingUtils;
-    private boolean isEmulator = false;
 
     @Override
     public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
@@ -127,7 +126,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         } else if (id == R.id.loginIntoServerWithGoogleButton) {
             if (googleUser != null) {
                 login(googleUser);
-            } else showSnack(new Snack("First log in with Google", Snackbar.LENGTH_SHORT));
+            } else logInWithGoogle();
         }
     }
 
@@ -221,6 +220,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         Logger.INSTANCE.i("Activity Created");
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onStart() {
         super.onStart();
@@ -229,42 +229,49 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
                 if (action != null && KEY != null && SITE_URL != null) {
-                    if ("nineteenSendProfileToServer".equals(action)) {
-                        click_sound();
-                        rotate_logo();
-                        pre_text("Creating Profile...");
-                        final String compactJws = Jwts.builder()
-                                .setHeader(header)
-                                .claim("userId", googleUser.getUid())
-                                .claim("radio_handle", intent.getStringExtra("handle"))
-                                .claim("carrier", intent.getStringExtra("carrier"))
-                                .claim("title", intent.getStringExtra("title"))
-                                .claim("hometown", intent.getStringExtra("town"))
-                                .setIssuedAt(new Date(System.currentTimeMillis()))
-                                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                .signWith(SignatureAlgorithm.HS256, KEY)
-                                .compact();
-                        final Request request = new Request.Builder()
-                                .url(SITE_URL + "user_create_profile.php")
-                                .post(new FormBody.Builder().add("data", compactJws).build())
-                                .build();
-                        okClient.newCall(request).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                show_result("Network Error", e.getMessage());
-                            }
+                    switch (action) {
+                        case "nineteenProve" -> {
+                            Log.i("logging", "google user is " + googleUser);
+                            login(googleUser);
+                        }
+                        case "nineteenSendProfileToServer" -> {
+                            click_sound();
+                            rotate_logo();
+                            pre_text("Creating Profile...");
+                            final String compactJws = Jwts.builder()
+                                    .setHeader(header)
+                                    .claim("userId", googleUser.getUid())
+                                    .claim("radio_handle", intent.getStringExtra("handle"))
+                                    .claim("carrier", intent.getStringExtra("carrier"))
+                                    .claim("title", intent.getStringExtra("title"))
+                                    .claim("hometown", intent.getStringExtra("town"))
+                                    .setIssuedAt(new Date(System.currentTimeMillis()))
+                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                                    .signWith(SignatureAlgorithm.HS256, KEY)
+                                    .compact();
+                            final Request request = new Request.Builder()
+                                    .url(SITE_URL + "user_create_profile.php")
+                                    .post(new FormBody.Builder().add("data", compactJws).build())
+                                    .build();
+                            okClient.newCall(request).enqueue(new Callback() {
+                                @Override
+                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                                    show_result("Network Error", e.getMessage());
+                                }
 
-                            @Override
-                            public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                login(googleUser);
-                            }
-                        });
+                                @Override
+                                public void onResponse(@NotNull Call call, @NotNull Response response) {
+                                    login(googleUser);
+                                }
+                            });
+                        }
                     }
                 }
             }
         };
         final IntentFilter filter = new IntentFilter();
         filter.addAction("nineteenSendProfileToServer");
+        filter.addAction("nineteenProve");
         registerReceiver(receiver, filter);
         mAuth.addAuthStateListener(this);
     }
@@ -272,10 +279,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     @Override
     protected void onResume() {
         super.onResume();
-        if (!settings.getBoolean("accepted", false)) showTerms();
         binding.version.setText("v(" + getVersionName() + ")");
         if (serviceAlive() && !settings.getBoolean("exiting", false)) launch_main_activity();
-        detectEmulator();
     }
 
     @Override
@@ -284,31 +289,28 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         unregisterReceiver(receiver);
     }
 
-    private void detectEmulator() {
-        EmulatorDetector.with(this)
-                .addPackageName("com.bluestacks")
-                .setDebug(true)
-                .detect(isEmulator -> LoginActivity.this.isEmulator = isEmulator);
-    }
-
     private void launch_main_activity() {
         startActivity(new Intent(LoginActivity.this, MainActivity.class));
         finish();
     }
 
     private void login(FirebaseUser user) {
+        if (!settings.getBoolean("accepted", false)) {
+            showTerms();
+            return;
+        }
         if (KEY == null || SITE_URL == null || TOKEN == null) return;
         pre_text("Logging in..");
         rotate_logo();
         if (billingUtils.isConnected) {
             billingUtils.queryActiveSubscriptions((billingResult, subscriptions) -> DeviceName.with(LoginActivity.this).request((info, error) -> {
-                @SuppressLint("HardwareIds") String compactJws = Jwts.builder()
+                String compactJws = Jwts.builder()
                         .setHeader(header)
                         .claim("userId", user.getUid())
                         .claim("email", user.getEmail())
                         .claim("name", user.getDisplayName())
                         .claim("reg_id", TOKEN)
-                        .claim("deviceId", getDeviceId())
+                        .claim("deviceId", deviceId())
                         .claim("gsf", returnGSF())
                         .claim("imei", "")
                         .claim("serial", serial)
@@ -408,7 +410,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         return (float) sliderValue / 100;
     }
 
-    private String getDeviceId() {
+    private String deviceId() {
         @SuppressLint("HardwareIds") final String devId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         if (devId != null) return devId;
         else return "";
@@ -418,7 +420,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         FragmentManager manager = getSupportFragmentManager();
         TermsOfUse tdd = (TermsOfUse) manager.findFragmentByTag("tdd");
         if (tdd == null) {
-            tdd = new TermsOfUse();
+            tdd = new TermsOfUse(true);
             tdd.setCancelable(false);
             tdd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             tdd.show(manager, "tdd");

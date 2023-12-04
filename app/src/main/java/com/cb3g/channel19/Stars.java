@@ -61,13 +61,6 @@ public class Stars extends DialogFragment {
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
-    }
-
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = StarSelectionBinding.inflate(inflater);
         return binding.getRoot();

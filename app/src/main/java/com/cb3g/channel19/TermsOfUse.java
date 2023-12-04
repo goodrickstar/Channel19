@@ -6,6 +6,7 @@ import static android.content.Context.MODE_PRIVATE;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.TermsDisplayBinding;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -35,39 +37,46 @@ import okhttp3.Response;
 public class TermsOfUse extends DialogFragment {
     private final recycler_adapter adapter = new recycler_adapter();
     ArrayList<Term> terms = new ArrayList<>();
+    private final boolean required;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
+    private TermsDisplayBinding binding;
+
+    public TermsOfUse(boolean required) {
+        this.required = required;
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.terms_display, container, false);
+        binding = TermsDisplayBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final TextView ok = view.findViewById(R.id.ok);
-        ok.setOnClickListener(v -> {
+        binding.ok.setOnClickListener(v -> {
+            Utils.vibrate(v);
             getContext().getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("accepted", true).apply();
             getContext().sendBroadcast(new Intent("nineteenProve"));
             dismiss();
         });
-        final RecyclerView userlist = view.findViewById(R.id.recyclerView);
-        userlist.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
-        userlist.setHasFixedSize(true);
-        userlist.setAdapter(adapter);
+        if (required){
+            binding.declineTerms.setVisibility(View.VISIBLE);
+            binding.declineTerms.setOnClickListener(v ->{
+               Utils.vibrate(v);
+               dismiss();
+            });
+        }
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
+        binding.recyclerView.setHasFixedSize(true);
+        binding.recyclerView.setAdapter(adapter);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         OkHttpClient client = new OkHttpClient();
-        client.newCall(new Request.Builder().url("http://truckradiosystem.com/~channel1/terms.php").build())
+        client.newCall(new Request.Builder().url("http://23.111.159.2/~channel1/terms.php").build())
                 .enqueue(new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -77,13 +86,15 @@ public class TermsOfUse extends DialogFragment {
                     public void onResponse(@NonNull Call call, @NonNull final Response response) {
                         if (response.isSuccessful()) {
                             try {
-                                terms = new Gson().fromJson(response.body().string(), new TypeToken<ArrayList<Term>>() {
+                                String data = response.body().string();
+                                Log.i("logging", data);
+                                terms = new Gson().fromJson(data, new TypeToken<ArrayList<Term>>() {
                                 }.getType());
                                 Activity activity = getActivity();
                                 if (activity != null)
                                     activity.runOnUiThread(adapter::notifyDataSetChanged);
                             } catch (IOException e) {
-                                LOG.e("http://truckradiosystem.com/~channel1/terms.php", e.getMessage());
+                                LOG.e("http://23.111.159.2/~channel1/terms.php", e.getMessage());
                             }
                         }
                         response.close();

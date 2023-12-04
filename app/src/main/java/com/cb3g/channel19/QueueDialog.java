@@ -53,8 +53,6 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         return inflater.inflate(R.layout.que_dialog, container, false);
     }
 

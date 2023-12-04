@@ -51,11 +51,6 @@ public class MessageHistory extends DialogFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-        final Window window = requireDialog().getWindow();
-        if (window != null) {
-            window.setGravity(Gravity.CENTER);
-            window.getAttributes().windowAnimations = R.style.photoAnimation;
-        }
     }
 
     @Override
@@ -122,6 +117,7 @@ public class MessageHistory extends DialogFragment {
                                 list.add(entry);
                             }
                             adapter.notifyDataSetChanged();
+                            history.animate().alpha(1.0f).setDuration(500);
                         } catch (JSONException e) {
                             Logger.INSTANCE.e(String.valueOf(e));
                         }

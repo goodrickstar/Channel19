@@ -27,11 +27,13 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        /*
         Window window = requireDialog().getWindow();
         if (window != null) {
             window.getAttributes().windowAnimations = R.style.pmAnimation;
             window.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         }
+         */
         return inflater.inflate(R.layout.show_pm, container, false);
     }
 

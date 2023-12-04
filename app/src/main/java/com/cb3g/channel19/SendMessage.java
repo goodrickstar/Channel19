@@ -27,11 +27,6 @@ public class SendMessage extends DialogFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = requireDialog().getWindow();
-        if (window != null) {
-            window.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-            window.getAttributes().windowAnimations = R.style.pmAnimation;
-        }
         return inflater.inflate(R.layout.send_pm, container, false);
     }
 

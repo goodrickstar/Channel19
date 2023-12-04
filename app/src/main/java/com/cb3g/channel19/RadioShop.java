@@ -57,8 +57,6 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = RadioShopBinding.inflate(inflater);
         tokenReference = Utils.getDatabase().getReference().child("tokens").child(RadioService.operator.getUser_id());
-        Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         return binding.getRoot();
     }
 

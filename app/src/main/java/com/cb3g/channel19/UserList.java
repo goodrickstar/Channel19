@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.UserListBinding;
@@ -115,7 +114,7 @@ public class UserList extends Fragment {
             else holder.mail.setVisibility(View.VISIBLE);
         }
 
-        private View.OnClickListener listener = new View.OnClickListener() {
+        private final View.OnClickListener listener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (MI == null) return;

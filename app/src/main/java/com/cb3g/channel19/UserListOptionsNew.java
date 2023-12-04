@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +23,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.ListOptionNewBinding;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
@@ -36,29 +34,13 @@ public class UserListOptionsNew extends DialogFragment {
     private Context context;
     private MI MI;
     private ListOptionNewBinding binding;
-    private UserListEntry user = new UserListEntry();
+    private final UserListEntry user;
     private Coordinates coordinates = null;
     private final ArrayList<UserOption> options = new ArrayList<>();
-    private final int cancel = 0;
-    private final int text = 1;
-    private final int photo = 2;
-    private final int locate = 3;
-    private final int history = 4;
-    private final int salute = 5;
-    private final int block = 6;
-    private final int flag = 7;
-    private final int silence = 8;
-    private final int unsilence = 9;
-    private final int autoskip = 10;
-    private final int blockR = 11;
-    private final int blockT = 12;
-    private final int blockP = 13;
-    private final int info = 14;
-    private final int flagOut = 15;
-    private final int bann = 16;
-    private final int pauseOrplay = 17;
-    private final int kickUser = 18;
-    private final int longflag = 19;
+
+    public UserListOptionsNew(UserListEntry user) {
+        this.user = user;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,7 +52,6 @@ public class UserListOptionsNew extends DialogFragment {
     public void onViewCreated(@NotNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
         RadioService.occupied.set(true);
-        user = new Gson().fromJson(requireArguments().getString("user"), UserListEntry.class);
         View.OnClickListener dismisser = v1 -> {
             Utils.vibrate(v1);
             dismiss();
@@ -82,8 +63,8 @@ public class UserListOptionsNew extends DialogFragment {
         else binding.timeOnline.setText("Offline");
         binding.deviceName.setText(user.getDeviceName());
         new GlideImageLoader(context, binding.largeProfile).load(user.getProfileLink(), RadioService.largeProfileOptions);
-        binding.nearbyLimitBar.getProgressDrawable().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
-        binding.nearbyLimitBar.getThumb().setColorFilter(Color.WHITE, PorterDuff.Mode.SRC_ATOP);
+        binding.nearbyLimitBar.getProgressDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+        binding.nearbyLimitBar.getThumb().setColorFilter(Utils.colorFilter(Color.WHITE));
         if (MI != null)
             binding.nearbyLimitBar.setProgress(MI.returnUserVolume(user.getUser_id()) - 50);
         binding.nearbyLimitBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -122,56 +103,56 @@ public class UserListOptionsNew extends DialogFragment {
     private void buildOptions() {
         options.clear();
         if ((RadioService.operator.getCount() > 49 && RadioService.operator.getBlocking()) || RadioService.operator.getAdmin()) {
-            options.add(new UserOption(block, "Block"));
+            options.add(new UserOption(ListOption.BLOCK, "Block"));
         }
         if (!RadioService.operator.getHinderTexts()) {
-            options.add(new UserOption(text, "Send Message"));
+            options.add(new UserOption(ListOption.TEXT, "Send Message"));
         }
         if (!RadioService.operator.getHinderPhotos()) {
-            options.add(new UserOption(photo, "Send Photo"));
+            options.add(new UserOption(ListOption.PHOTO, "Send Photo"));
         }
         if (!RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts()) {
-            options.add(new UserOption(history, "Chat History"));
+            options.add(new UserOption(ListOption.HISTORY, "Chat History"));
         }
         if (RadioService.operator.getSalutes() > 79) {
             if (!Utils.alreadySaluted(user.getUser_id()) && findPaused(user.getUser_id()) == null)
-                options.add(new UserOption(salute, "Salute"));
+                options.add(new UserOption(ListOption.SALUTE, "Salute"));
             if (!Utils.alreadyFlagged(user.getUser_id()) && !RadioService.operator.getFlagsEnabled()) {
-                options.add(new UserOption(flag, "Flag"));
+                options.add(new UserOption(ListOption.FLAG, "Flag"));
                 if (RadioService.operator.getSalutes() > 2000) {
-                    options.add(new UserOption(longflag, "Long Flag"));
+                    options.add(new UserOption(ListOption.LONG_FLAG, "Long Flag"));
                 }
             }
         }
         if ((RadioService.operator.getSalutes() > 159 && RadioService.operator.getSilencing()) || RadioService.operator.getAdmin()) {
-            if (!user.getSilenced()) options.add(new UserOption(silence, "Silence"));
-            else options.add(new UserOption(unsilence, "Un-Silence"));
+            if (!user.getSilenced()) options.add(new UserOption(ListOption.SILENCE, "Silence"));
+            else options.add(new UserOption(ListOption.UNSILENCE, "Un-Silence"));
         }
         if ((RadioService.operator.getSubscribed()) || RadioService.operator.getAdmin()) {
             if (!RadioService.autoSkip.contains(user.getUser_id()))
-                options.add(new UserOption(autoskip, "Start Auto Skip"));
-            else options.add(new UserOption(autoskip, "Stop Auto Skip"));
+                options.add(new UserOption(ListOption.AUTOSKIP, "Start Auto Skip"));
+            else options.add(new UserOption(ListOption.AUTOSKIP, "Stop Auto Skip"));
         }
         for (Coordinates x : RadioService.coordinates) {
             if (x.getUserId().equals(user.getUser_id())) coordinates = x;
         }
-        if (coordinates != null) options.add(new UserOption(locate, "Show On Map"));
+        if (coordinates != null) options.add(new UserOption(ListOption.LOCATE, "Show On Map"));
         optionsAdapter.notifyDataSetChanged();
     }
 
     private void buildBlockingOptions() {
         options.clear();
-        options.add(new UserOption(cancel, "Cancel"));
-        options.add(new UserOption(blockR, "Block Radio"));
-        options.add(new UserOption(blockT, "Block Messages"));
-        options.add(new UserOption(blockP, "Block Photos"));
+        options.add(new UserOption(ListOption.CANCEL, "Cancel"));
+        options.add(new UserOption(ListOption.BLOCK_RADIO, "Block Radio"));
+        options.add(new UserOption(ListOption.BLOCK_TEXT, "Block Messages"));
+        options.add(new UserOption(ListOption.BLOCK_PHOTOS, "Block Photos"));
 //Admin Options
         if (RadioService.operator.getAdmin()) {
-            options.add(new UserOption(info, "User Info"));
-            options.add(new UserOption(pauseOrplay, "Pause Or Play"));
-            options.add(new UserOption(kickUser, "Kick User"));
-            options.add(new UserOption(flagOut, "Flag Out"));
-            options.add(new UserOption(bann, "Ban User"));
+            options.add(new UserOption(ListOption.INFO, "User Info"));
+            options.add(new UserOption(ListOption.PAUSE_OR_PLAY, "Pause Or Play"));
+            options.add(new UserOption(ListOption.KICK_USER, "Kick User"));
+            options.add(new UserOption(ListOption.FLAG_OUT, "Flag Out"));
+            options.add(new UserOption(ListOption.BANN_USER, "Ban User"));
         }
         optionsAdapter.notifyDataSetChanged();
     }
@@ -212,7 +193,6 @@ public class UserListOptionsNew extends DialogFragment {
         context.sendBroadcast(new Intent("checkForMessages"));
     }
 
-
     private void showSnack(Snack snack) {
         Snackbar snackbar = Snackbar.make(binding.topLevel, snack.getMessage(), snack.getLength());
         View view = snackbar.getView();
@@ -235,58 +215,24 @@ public class UserListOptionsNew extends DialogFragment {
         public void onBindViewHolder(@NonNull options_adapter.MyViewHolder holder, int i) {
             UserOption option = options.get(i);
             holder.description.setText(option.getDescription());
-            switch (option.getId()) {
-                case text:
-                case blockT:
-                    holder.icon.setImageResource(R.drawable.messages);
-                    break;
-                case photo:
-                case blockP:
-                    holder.icon.setImageResource(R.drawable.photo);
-                    break;
-                case history:
-                    holder.icon.setImageResource(R.drawable.history);
-                    break;
-                case block:
-                    holder.icon.setImageResource(R.drawable.block);
-                    break;
-                case silence:
-                    holder.icon.setImageResource(R.drawable.silence);
-                    break;
-                case unsilence:
-                    holder.icon.setImageResource(R.drawable.unsilence);
-                    break;
-                case autoskip:
-                    holder.icon.setImageResource(R.drawable.autoskip);
-                    break;
-                case locate:
-                    holder.icon.setImageResource(R.drawable.gps);
-                    break;
-                case salute:
-                    holder.icon.setImageResource(R.drawable.like);
-                    break;
-                case flag:
-                    holder.icon.setImageResource(R.drawable.flag);
-                    break;
-                case blockR:
-                    holder.icon.setImageResource(R.drawable.radio);
-                    break;
-                case cancel:
-                    holder.icon.setImageResource(R.drawable.back);
-                    break;
+            switch (option.getOption()) {
+                case TEXT, BLOCK_TEXT -> holder.icon.setImageResource(R.drawable.messages);
+                case PHOTO, BLOCK_PHOTOS -> holder.icon.setImageResource(R.drawable.photo);
+                case HISTORY -> holder.icon.setImageResource(R.drawable.history);
+                case BLOCK -> holder.icon.setImageResource(R.drawable.block);
+                case SILENCE -> holder.icon.setImageResource(R.drawable.silence);
+                case UNSILENCE -> holder.icon.setImageResource(R.drawable.unsilence);
+                case AUTOSKIP -> holder.icon.setImageResource(R.drawable.autoskip);
+                case LOCATE -> holder.icon.setImageResource(R.drawable.gps);
+                case SALUTE -> holder.icon.setImageResource(R.drawable.like);
+                case FLAG -> holder.icon.setImageResource(R.drawable.flag);
+                case BLOCK_RADIO -> holder.icon.setImageResource(R.drawable.radio);
+                case CANCEL -> holder.icon.setImageResource(R.drawable.back);
 //Admin Actions
-                case info:
-                    holder.icon.setImageResource(R.drawable.info);
-                    break;
-                case flagOut:
-                case kickUser:
-                case pauseOrplay:
-                case longflag:
-                    holder.icon.setImageResource(R.drawable.flag_red);
-                    break;
-                case bann:
-                    holder.icon.setImageResource(R.drawable.delete_red);
-                    break;
+                case INFO -> holder.icon.setImageResource(R.drawable.info);
+                case FLAG_OUT, KICK_USER, PAUSE_OR_PLAY, LONG_FLAG ->
+                        holder.icon.setImageResource(R.drawable.flag_red);
+                case BANN_USER -> holder.icon.setImageResource(R.drawable.delete_red);
             }
             holder.itemView.setTag(holder.itemView.getId(), option);
             holder.itemView.setOnClickListener(listener);
@@ -301,38 +247,36 @@ public class UserListOptionsNew extends DialogFragment {
                 context.sendBroadcast(new Intent("nineteenBoxSound"));
                 if (MI == null) return;
                 UserOption option = (UserOption) v.getTag(v.getId());
-                switch (option.getId()) {
-                    case cancel:
-                        buildOptions();
-                        break;
-                    case block:
+                switch (option.getOption()) {
+                    case CANCEL -> buildOptions();
+                    case BLOCK -> {
                         if (user.getSilenced() && !RadioService.operator.getAdmin()) {
                             showSnack(new Snack("You can not block_b a silenced user", Snackbar.LENGTH_LONG));
                             return;
                         }
                         buildBlockingOptions();
-                        break;
-                    case text:
+                    }
+                    case TEXT -> {
                         MI.createPm(user);
                         dismiss();
-                        break;
-                    case photo:
+                    }
+                    case PHOTO -> {
                         MI.sendPhoto(user.getUser_id(), user.getRadio_hanlde());
                         dismiss();
-                        break;
-                    case history:
+                    }
+                    case HISTORY -> {
                         MI.displayChat(user, false, false);
                         dismiss();
-                        break;
-                    case silence:
+                    }
+                    case SILENCE -> {
                         MI.silence(user);
                         dismiss();
-                        break;
-                    case unsilence:
+                    }
+                    case UNSILENCE -> {
                         MI.unsilence(user);
                         dismiss();
-                        break;
-                    case autoskip:
+                    }
+                    case AUTOSKIP -> {
                         if (RadioService.autoSkip.contains(user.getUser_id()))
                             databaseReference.child("autoSkip").child(RadioService.operator.getUser_id()).child(user.getUser_id()).removeValue();
                         else {
@@ -340,56 +284,56 @@ public class UserListOptionsNew extends DialogFragment {
                             context.sendBroadcast(new Intent("purgeUser").putExtra("data", user.getUser_id()));
                         }
                         dismiss();
-                        break;
-                    case locate:
+                    }
+                    case LOCATE -> {
                         dismiss();
                         MI.findUser(coordinates);
-                        break;
-                    case salute:
+                    }
+                    case SALUTE -> {
                         MI.saluteThisUser(user);
                         dismiss();
-                        break;
-                    case flag:
+                    }
+                    case FLAG -> {
                         MI.flagThisUser(user);
                         dismiss();
-                        break;
-                    case longflag:
+                    }
+                    case LONG_FLAG -> {
                         MI.longFlagUser(user);
                         dismiss();
-                        break;
-                    case blockR:
+                    }
+                    case BLOCK_RADIO -> {
                         MI.blockThisUser(user.getUser_id(), user.getRadio_hanlde(), true);
                         dismiss();
-                        break;
-                    case blockP:
+                    }
+                    case BLOCK_PHOTOS -> {
                         MI.blockPhoto(user.getUser_id(), user.getRadio_hanlde(), true);
                         dismiss();
-                        break;
-                    case blockT:
+                    }
+                    case BLOCK_TEXT -> {
                         MI.blockText(user.getUser_id(), user.getRadio_hanlde(), true);
                         dismiss();
-                        break;
+                    }
                     //Admin Actions
-                    case info:
+                    case INFO -> {
                         context.sendBroadcast(new Intent("fetchInformation").putExtra("data", user.getUser_id()));
                         dismiss();
-                        break;
-                    case flagOut:
+                    }
+                    case FLAG_OUT -> {
                         MI.flagOut(user.getUser_id());
                         dismiss();
-                        break;
-                    case pauseOrplay:
+                    }
+                    case PAUSE_OR_PLAY -> {
                         MI.pauseOrPlay(user);
                         dismiss();
-                        break;
-                    case kickUser:
+                    }
+                    case KICK_USER -> {
                         MI.kickUser(user);
                         dismiss();
-                        break;
-                    case bann:
+                    }
+                    case BANN_USER -> {
                         MI.banUser(user.getUser_id());
                         dismiss();
-                        break;
+                    }
                 }
             }
         };

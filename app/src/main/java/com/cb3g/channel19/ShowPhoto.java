@@ -34,8 +34,6 @@ public class ShowPhoto extends DialogFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Window window = requireDialog().getWindow();
-        if (window != null) window.getAttributes().windowAnimations = R.style.photoAnimation;
         binding = ShowPhotoBinding.inflate(inflater);
         return binding.getRoot();
     }

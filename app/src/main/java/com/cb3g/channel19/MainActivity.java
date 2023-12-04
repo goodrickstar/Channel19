@@ -1138,7 +1138,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (cdf == null) {
             Bundle bundle = new Bundle();
             bundle.putString("user", new Gson().toJson(user));
-            cdf = new UserListOptionsNew();
+            cdf = new UserListOptionsNew(user);
             cdf.setArguments(bundle);
             cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             cdf.show(fragmentManager, "options");
@@ -1168,7 +1168,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             Bundle bundle = new Bundle();
             bundle.putString("data", RadioService.gson.toJson(user));
             bundle.putBoolean("launch", launch);
-            chat_dialog = new Chat();
+            chat_dialog = new Chat(user);
             chat_dialog.setArguments(bundle);
             chat_dialog.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             chat_dialog.show(fragmentManager, "chatD");

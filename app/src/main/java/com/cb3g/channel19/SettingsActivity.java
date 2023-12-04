@@ -808,7 +808,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         clickSound();
         TermsOfUse tdd = (TermsOfUse) manager.findFragmentByTag("tdd");
         if (tdd == null) {
-            tdd = new TermsOfUse();
+            tdd = new TermsOfUse(false);
             tdd.setCancelable(false);
             tdd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             tdd.show(manager, "tdd");
