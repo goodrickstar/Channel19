@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -79,7 +80,7 @@ public class Blocked extends DialogFragment {
         count.setText(String.valueOf(ids.size()));
         View.OnClickListener listener = v -> {
             int id = v.getId();
-            if (id == R.id.order){
+            if (id == R.id.order) {
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
             } else if (id == R.id.save) {
@@ -121,7 +122,7 @@ public class Blocked extends DialogFragment {
             Utils.vibrate(v);
             String id = (String) v.getTag();
             int x = v.getId();
-            if (x == R.id.photo){
+            if (x == R.id.photo) {
                 for (int i = 0; i < photo.size(); i++) {
                     if (photo.get(i).getI().equals(id)) photo.remove(i);
                     adapter.notifyItemChanged(ids.indexOf(id));

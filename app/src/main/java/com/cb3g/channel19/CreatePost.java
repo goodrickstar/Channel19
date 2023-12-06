@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -22,6 +23,7 @@ import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 
 import java.net.MalformedURLException;
+
 public class CreatePost extends DialogFragment implements View.OnClickListener {
     private Context context;
     private RI RI;

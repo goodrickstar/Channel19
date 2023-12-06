@@ -4,6 +4,7 @@ object Logger {
     fun e(msg: String) {
         println("I: !! $msg")
     }
+
     fun e(tag: String, text: String?) {
         println("E !! $tag : $text")
     }
@@ -23,7 +24,7 @@ object Logger {
     fun i(tag: String, varible: Float) {
         println("I: !! : $tag $varible")
     }
-    
+
     fun i(tag: String, b: Boolean) {
         println("I: !! : $tag $b")
     }

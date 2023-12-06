@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -54,10 +55,11 @@ public class EnterPassword extends DialogFragment {
         binding.accept.setOnClickListener(v -> {
             Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound"));
-            if (binding.pinEt.getText().length() > 0){
+            if (binding.pinEt.getText().length() > 0) {
                 if (Integer.parseInt(binding.pinEt.getText().toString().trim().replace(" ", "")) - channel.getPin() == 0) {
                     SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);
-                    List<Integer> channels = RadioService.gson.fromJson(saved.getString("channels", "[]"), new TypeToken<List<Integer>>() {}.getType());
+                    List<Integer> channels = RadioService.gson.fromJson(saved.getString("channels", "[]"), new TypeToken<List<Integer>>() {
+                    }.getType());
                     if (channels == null) channels = new ArrayList<>();
                     channels.add(channel.getChannel());
                     saved.edit().putString("channels", RadioService.gson.toJson(channels)).apply();
@@ -65,7 +67,7 @@ public class EnterPassword extends DialogFragment {
                     dismiss();
                 } else
                     binding.pinEt.setError("incorrect");
-            }else binding.pinEt.setError("enter pin");
+            } else binding.pinEt.setError("enter pin");
         });
         binding.cancel.setOnClickListener(v -> {
             Utils.vibrate(v);

@@ -67,15 +67,15 @@ public class PhotoPicker extends DialogFragment implements View.OnClickListener 
     public void onClick(View v) {
         Utils.vibrate(v);
         int id = v.getId();
-        if (id == R.id.accept){
+        if (id == R.id.accept) {
             if (!gif.getUrl().equals(RadioService.operator.getProfileLink()) && SI != null)
                 SI.photoChosen(gif, upload);
             dismiss();
-        }else if (id == R.id.cancel){
+        } else if (id == R.id.cancel) {
             dismiss();
-        }else if (id == R.id.fromDisk){
+        } else if (id == R.id.fromDisk) {
             if (SI != null) SI.selectFromDisk();
-        }else if (id == R.id.fromGiphy){
+        } else if (id == R.id.fromGiphy) {
             if (SI != null) SI.launchSearch(gif.getId());
         }
     }
@@ -100,7 +100,7 @@ public class PhotoPicker extends DialogFragment implements View.OnClickListener 
                     if (photo.getHeight() == 0 || photo.getWidth() == 0) {
                         gif.setHeight(resource.getIntrinsicHeight());
                         gif.setWidth(resource.getIntrinsicWidth());
-                    }else {
+                    } else {
                         gif.setHeight(photo.getHeight());
                         gif.setWidth(photo.getWidth());
                     }

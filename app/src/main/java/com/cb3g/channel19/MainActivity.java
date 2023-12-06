@@ -9,13 +9,16 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.format.DateUtils;
@@ -34,6 +37,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -62,6 +66,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
@@ -76,6 +82,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -548,6 +555,27 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         backDrop = findViewById(R.id.backdrop);
         MobileAds.initialize(this, initializationStatus -> {
         });
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED){
+            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Notifications");
+                builder.setMessage("In order for Channel 19 to properly operate in the background, a persistant notification is needed");
+                builder.setPositiveButton("Sure!", (dialogInterface, i) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
+                    }
+                });
+                builder.setNegativeButton("No Thanks", (dialogInterface, i) -> {
+                    //TODO: vibrate
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
+                }
+            }
+        }
     }
 
     @Override
@@ -1072,7 +1100,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public boolean onLongClick(View v) {
         delay = true;
         int id = v.getId();
-        if (id == R.id.massButton){
+        if (id == R.id.massButton) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             MassPast massPast = new MassPast();
@@ -1539,16 +1567,19 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     class locationCallback extends LocationCallback {
+
         @Override
-        public void onLocationResult(@NotNull LocationResult locationResult) {
+        public void onLocationResult(@NonNull LocationResult locationResult) {
             super.onLocationResult(locationResult);
             for (Location location : locationResult.getLocations()) {
                 if (RS != null) RS.locationUpdated(location);
                 if (RadioService.operator.getSharing())
                     databaseReference.child("locations").child(RadioService.operator.getUser_id()).setValue(new Coordinates(RadioService.operator.getUser_id(), RadioService.operator.getHandle(), RadioService.operator.getProfileLink(), location.getLatitude(), location.getLongitude(), location.getBearing(), location.getSpeed(), location.getAltitude()));
+
             }
         }
     }
+
     static class DeveloperPayload {
         String id;
         String handle;

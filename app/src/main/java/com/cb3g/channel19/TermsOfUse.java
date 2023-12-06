@@ -60,11 +60,11 @@ public class TermsOfUse extends DialogFragment {
             getContext().sendBroadcast(new Intent("nineteenProve"));
             dismiss();
         });
-        if (required){
+        if (required) {
             binding.declineTerms.setVisibility(View.VISIBLE);
-            binding.declineTerms.setOnClickListener(v ->{
-               Utils.vibrate(v);
-               dismiss();
+            binding.declineTerms.setOnClickListener(v -> {
+                Utils.vibrate(v);
+                dismiss();
             });
         }
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));

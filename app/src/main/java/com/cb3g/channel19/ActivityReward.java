@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.os.Bundle;
 import android.view.View;
 
@@ -33,40 +34,40 @@ public class ActivityReward extends AppCompatActivity {
         tokens = getIntent().getIntExtra("tokens", 0);
         AdRequest adRequest = new AdRequest.Builder().build();
         RewardedAd.load(this, "ca-app-pub-4635898093945616/6794827659", adRequest, new RewardedAdLoadCallback() {
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                Logger.INSTANCE.i("onAdFailedToLoad()", loadAdError.getMessage());
+                binding.adProgressBar.setVisibility(View.INVISIBLE);
+            }
+
+            @Override
+            public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+                Logger.INSTANCE.e("onAdLoaded()", "onAdLoaded");
+                rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                     @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        Logger.INSTANCE.i("onAdFailedToLoad()", loadAdError.getMessage());
+                    public void onAdShowedFullScreenContent() {
+                        Logger.INSTANCE.i("onAdShowedFullScreenContent()", "Ad was shown");
                         binding.adProgressBar.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
-                    public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                        Logger.INSTANCE.e("onAdLoaded()", "onAdLoaded");
-                        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                Logger.INSTANCE.i("onAdShowedFullScreenContent()", "Ad was shown");
-                                binding.adProgressBar.setVisibility(View.INVISIBLE);
-                            }
+                    public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
+                        Logger.INSTANCE.i("onAdFailedToShowFullScreenContent()", "Ad failed to show");
+                        binding.adProgressBar.setVisibility(View.INVISIBLE);
+                    }
 
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
-                                Logger.INSTANCE.i("onAdFailedToShowFullScreenContent()", "Ad failed to show");
-                                binding.adProgressBar.setVisibility(View.INVISIBLE);
-                            }
-
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                onBackPressed();
-                                Logger.INSTANCE.i("onAdDismissedFullScreenContent()", "Ad was dismissed");
-                            }
-                        });
-                        rewardedAd.show(ActivityReward.this, rewardItem -> {
-                            Logger.INSTANCE.i("reward " + (tokens + 1));
-                            Utils.getTokens(userId).setValue(tokens + 1);
-                        });
+                    @Override
+                    public void onAdDismissedFullScreenContent() {
+                        onBackPressed();
+                        Logger.INSTANCE.i("onAdDismissedFullScreenContent()", "Ad was dismissed");
                     }
                 });
+                rewardedAd.show(ActivityReward.this, rewardItem -> {
+                    Logger.INSTANCE.i("reward " + (tokens + 1));
+                    Utils.getTokens(userId).setValue(tokens + 1);
+                });
+            }
+        });
     }
 
 

@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -287,6 +288,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             TextView name, count;
             RecyclerView profileRecyclerView;
             ImageView lock;
+
             public ChannelViewHolder(@NonNull View itemView) {
                 super(itemView);
                 name = itemView.findViewById(R.id.sideband_name);

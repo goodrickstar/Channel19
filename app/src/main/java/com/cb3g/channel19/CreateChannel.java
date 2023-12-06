@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -121,7 +122,7 @@ public class CreateChannel extends DialogFragment {
                     try {
                         assert response.body() != null;
                         final JSONObject data = new JSONObject(response.body().string());
-                       requireActivity().runOnUiThread(() -> {
+                        requireActivity().runOnUiThread(() -> {
                             try {
                                 if (data.getBoolean("success")) {
                                     SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);

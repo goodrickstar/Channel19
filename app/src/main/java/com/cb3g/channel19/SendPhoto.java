@@ -45,12 +45,12 @@ public class SendPhoto extends DialogFragment {
             Utils.vibrate(v1);
             context.sendBroadcast(new Intent("nineteenClickSound"));
             int id = v1.getId();
-            if (id == R.id.send){
+            if (id == R.id.send) {
                 context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", binding.captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", binding.image.getHeight()).putExtra("width", binding.image.getWidth()));
                 dismiss();
-            }else if (id == R.id.order){
+            } else if (id == R.id.order) {
                 dismiss();
-            }else if (id == R.id.plus){
+            } else if (id == R.id.plus) {
                 context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", binding.captionTV.getText().toString()));
             }
         };

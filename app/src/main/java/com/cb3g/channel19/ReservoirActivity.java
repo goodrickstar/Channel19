@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -68,6 +69,7 @@ import java.util.regex.Pattern;
 
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnCompressListener;
+
 @SuppressWarnings("ALL")
 public class ReservoirActivity extends AppCompatActivity implements ChildEventListener, RI {
     static int screen_width;
@@ -928,6 +930,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 loading = v.findViewById(R.id.loading);
             }
         }
+
         class PollHolder extends RecyclerView.ViewHolder {
             TextView caption, poster_profile_name, posting_stamp, add_option;
             ImageView poster_profile_pic, menu;
@@ -950,6 +953,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 add = v.findViewById(R.id.add_button);
             }
         }
+
         class PollOptionHolder extends RecyclerView.ViewHolder {
             TextView label, count;
             ImageView like;

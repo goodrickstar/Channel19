@@ -92,7 +92,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         send.setVisibility(View.GONE);
         send.setOnClickListener(this);
         selector.setOnClickListener(this);
-        for (UserListEntry entry : RadioService.users){
+        for (UserListEntry entry : RadioService.users) {
             working.add(convertUserListEntryToUser(entry));
         }
         adapter.notifyDataSetChanged();

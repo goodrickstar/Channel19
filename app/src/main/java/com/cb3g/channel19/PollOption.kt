@@ -7,7 +7,6 @@ class PollOption {
     var votes = ArrayList<String>()
 
 
-
     constructor(label: String, votes: ArrayList<String>) {
         this.label = label
         this.votes = votes

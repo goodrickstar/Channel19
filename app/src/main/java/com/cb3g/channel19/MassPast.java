@@ -144,9 +144,9 @@ public class MassPast extends DialogFragment implements ValueEventListener {
                 Utils.vibrate(v);
                 Photo photo = (Photo) v.getTag();
                 int id = v.getId();
-                if (id == R.id.image){
+                if (id == R.id.image) {
                     MI.streamFile(photo.getUrl());
-                }else if (id == R.id.save){
+                } else if (id == R.id.save) {
                     context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
                 }
             }

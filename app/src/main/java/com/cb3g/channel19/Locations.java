@@ -110,7 +110,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
                 if (entry.getUser_id().equals(selected.getUserId()))
                     location.setText(entry.getHometown().replace(EmojiParser.parseToUnicode(" :globe_with_meridians:"), "").trim());
             }
-            altitude.setText("Altitude: " + Math.round(selected.getAlititude() * 3.28084) + "ft");
+            altitude.setText("Altitude: " + Math.round(selected.getAltitude() * 3.28084) + "ft");
             speed.setText("Speed: " + Math.round(selected.getSpeed() * 2.2369f) + " mph");
             direction.setText("Bearing: " + getBearing(selected.getBearing()) + " - " + selected.getBearing() + "°");
             if (myLocation != null)
@@ -146,9 +146,9 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
             follow = isChecked;
             if (isChecked) {
                 trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
-                if (follow) moveCamera(selected.getLatitude(), selected.getLongitude(), map.getCameraPosition().zoom);
-            }
-            else trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.BLACK));
+                if (follow)
+                    moveCamera(selected.getLatitude(), selected.getLongitude(), map.getCameraPosition().zoom);
+            } else trace.getTrackDrawable().setColorFilter(Utils.colorFilter(Color.BLACK));
         });
         zoomBar = findViewById(R.id.zoomBar);
         zoomBar.getProgressDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
@@ -157,7 +157,8 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser) {
-                    if (follow) moveCamera(selected.getLatitude(), selected.getLongitude(), (float) progress);
+                    if (follow)
+                        moveCamera(selected.getLatitude(), selected.getLongitude(), (float) progress);
                     else map.moveCamera(CameraUpdateFactory.zoomTo(progress));
                 }
             }
@@ -289,7 +290,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
     @Override
     public void onCameraMove() {
         zoomBar.setProgress((int) map.getCameraPosition().zoom);
-        for (Marker marker : markers){
+        for (Marker marker : markers) {
             if (selected == null) marker.hideInfoWindow();
         }
     }

@@ -33,5 +33,6 @@ interface RI {
     void createNewPoll(String caption, String postId);
 
     DatabaseReference databaseReference();
+
     StorageReference storageReference();
 }

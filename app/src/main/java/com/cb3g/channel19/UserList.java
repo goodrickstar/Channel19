@@ -122,19 +122,19 @@ public class UserList extends Fragment {
                 context.sendBroadcast(new Intent("nineteenBoxSound"));
                 UserListEntry user = (UserListEntry) v.getTag(v.getId());
                 int id = v.getId();
-                if (id ==  R.id.mail){
+                if (id == R.id.mail) {
                     if (RadioService.operator.getSilenced()) {
                         MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
                         return;
                     }
                     MI.createPm(user);
-                }else if (id ==  R.id.clickPoint){
+                } else if (id == R.id.clickPoint) {
                     if (RadioService.operator.getSilenced()) {
                         MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
                         return;
                     }
                     MI.showListOptions(user);
-                }else if (id ==  R.id.option_image_view){
+                } else if (id == R.id.option_image_view) {
                     MI.streamFile(user.getProfileLink());
                 }
             }

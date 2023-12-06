@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
+
 public class
 ShowMessage extends DialogFragment implements View.OnClickListener {
     private boolean replying = false;

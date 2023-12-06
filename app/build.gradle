@@ -23,8 +23,8 @@ android {
         minSdk 31
         //noinspection OldTargetApi
         targetSdkVersion 33
-        versionCode 4913
-        versionName "2.0.0"
+        versionCode 4916
+        versionName "2.0.2"
         multiDexEnabled true
     }
     compileSdk 34
@@ -95,8 +95,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-installations'
 
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.android.gms:play-services-auth:20.7.0'
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
 
     implementation 'com.google.android.gms:play-services-base:18.2.0'

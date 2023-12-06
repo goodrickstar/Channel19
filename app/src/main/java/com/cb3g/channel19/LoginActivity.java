@@ -25,6 +25,7 @@ import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,18 +39,12 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.LoginBinding;
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
+import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -77,10 +72,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, ValueEventListener, View.OnClickListener, FirebaseAuth.AuthStateListener {
-    private GoogleSignInClient mGoogleSignInClient;
-    private FirebaseUser googleUser;
-    private FirebaseAuth mAuth;
+public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, ValueEventListener, View.OnClickListener {
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private OkHttpClient okClient;
     private SharedPreferences settings;
     private String SITE_URL, TOKEN, KEY;
@@ -91,24 +84,29 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private RotateAnimation rotate;
     private BroadcastReceiver receiver;
     private Map<String, Object> header;
-    private final int RC_SIGN_IN = 777;
     private final Object serial = "unknown";
     private BillingUtils billingUtils;
 
-    @Override
-    public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-        googleUser = firebaseAuth.getCurrentUser();
-        if (googleUser == null) {
-            Glide.with(this).load(R.drawable.googlelogo).circleCrop().into(binding.googleButton);
-            binding.profileName.setText(getString(R.string.click_to_login));
-            binding.emailAddress.setText("");
-            settings.edit().putString("userId", "0").apply();
+    private FirebaseUser user;
+
+    private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(new FirebaseAuthUIActivityResultContract(), (result) -> {
+        if (result.getResultCode() == RESULT_OK) {
+            showSnack(new Snack("Login succesful", Snackbar.LENGTH_SHORT));
         } else {
-            Glide.with(this).load(googleUser.getPhotoUrl().toString().replace("96", "400")).circleCrop().into(binding.googleButton);
-            binding.profileName.setText(googleUser.getDisplayName());
-            binding.emailAddress.setText(googleUser.getEmail());
-            settings.edit().putString("userId", googleUser.getUid()).apply();
+            showSnack(new Snack("Google sign in failed", Snackbar.LENGTH_LONG));
+            Log.e("Firebase Auth Error", "Login error code" + result.getResultCode());
         }
+        authDisplay(auth.getCurrentUser());
+    });
+
+    private void startSignIn() {
+        Intent signInIntent = AuthUI.getInstance()
+                .createSignInIntentBuilder()
+                .setTheme(R.style.mytheme)
+                .setAvailableProviders(List.of(new AuthUI.IdpConfig.GoogleBuilder().build()))
+                .build();
+
+        signInLauncher.launch(signInIntent);
     }
 
     @Override
@@ -116,58 +114,21 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         Utils.vibrate(v);
         int id = v.getId();
         if (id == R.id.googleButton || id == R.id.profileName) {
-            if (googleUser == null) {
-                logInWithGoogle();
+            if (user == null) {
+                startSignIn();
             }
         } else if (id == R.id.logout) {
-            if (googleUser != null) {
+            if (user != null) {
                 logOutWithGoogle();
             }
         } else if (id == R.id.loginIntoServerWithGoogleButton) {
-            if (googleUser != null) {
-                login(googleUser);
-            } else logInWithGoogle();
+            login();
         }
-    }
-
-    private void logInWithGoogle() {
-        startActivityForResult(mGoogleSignInClient.getSignInIntent(), RC_SIGN_IN);
     }
 
     private void logOutWithGoogle() {
-        if (mAuth != null) mAuth.signOut();
-        if (mGoogleSignInClient != null) mGoogleSignInClient.signOut();
+        auth.signOut();
         showSnack(new Snack("Logged Out", Snackbar.LENGTH_SHORT));
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                Logger.INSTANCE.i("firebaseAuthWithGoogle:" + account.getId());
-                firebaseAuthWithGoogle(account.getIdToken());
-            } catch (ApiException e) {
-                Logger.INSTANCE.e("Google sign in failed", e.getLocalizedMessage());
-                showSnack(new Snack("Google sign in failed", Snackbar.LENGTH_LONG));
-            }
-        }
-
-    }
-
-    private void firebaseAuthWithGoogle(String idToken) {
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        showSnack(new Snack("Login succesful", Snackbar.LENGTH_SHORT));
-                    } else {
-                        showSnack(new Snack("Firebase Authentification failed", Snackbar.LENGTH_LONG));
-                        Logger.INSTANCE.e("Firebase Authentification failed", task.getException().getMessage());
-                    }
-                });
     }
 
     @Override
@@ -192,13 +153,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         rotate.setDuration(650);
         rotate.setRepeatCount(-1);
         rotate.setInterpolator(new LinearInterpolator());
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.web_client_id))
-                .requestEmail()
-                .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-        mAuth = FirebaseAuth.getInstance();
-        googleUser = mAuth.getCurrentUser();
         binding.profileName.setOnClickListener(this);
         binding.googleButton.setOnClickListener(this);
         binding.loginIntoServerWithGoogleButton.setOnClickListener(this);
@@ -206,8 +160,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         SITE_URL = settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/");
         KEY = settings.getString("keychain", null);
         TOKEN = settings.getString("token", null);
-        Utils.getDatabase().getReference().child("keychain").addValueEventListener(this);
-        Utils.getDatabase().getReference().child("siteUrl").addValueEventListener(this);
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -217,7 +169,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                         showSnack(new Snack("There was an issue registering this device with Firebase"));
                     }
                 });
-        Logger.INSTANCE.i("Activity Created");
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -230,17 +181,14 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                 String action = intent.getAction();
                 if (action != null && KEY != null && SITE_URL != null) {
                     switch (action) {
-                        case "nineteenProve" -> {
-                            Log.i("logging", "google user is " + googleUser);
-                            login(googleUser);
-                        }
+                        case "nineteenProve" -> login();
                         case "nineteenSendProfileToServer" -> {
                             click_sound();
                             rotate_logo();
                             pre_text("Creating Profile...");
                             final String compactJws = Jwts.builder()
                                     .setHeader(header)
-                                    .claim("userId", googleUser.getUid())
+                                    .claim("userId", user.getUid())
                                     .claim("radio_handle", intent.getStringExtra("handle"))
                                     .claim("carrier", intent.getStringExtra("carrier"))
                                     .claim("title", intent.getStringExtra("title"))
@@ -261,7 +209,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
                                 @Override
                                 public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                    login(googleUser);
+                                    login();
                                 }
                             });
                         }
@@ -273,7 +221,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         filter.addAction("nineteenSendProfileToServer");
         filter.addAction("nineteenProve");
         registerReceiver(receiver, filter);
-        mAuth.addAuthStateListener(this);
+        Utils.getDatabase().getReference().child("keychain").addValueEventListener(this);
+        Utils.getDatabase().getReference().child("siteUrl").addValueEventListener(this);
     }
 
     @Override
@@ -281,12 +230,30 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         super.onResume();
         binding.version.setText("v(" + getVersionName() + ")");
         if (serviceAlive() && !settings.getBoolean("exiting", false)) launch_main_activity();
+        authDisplay(auth.getCurrentUser());
+    }
+
+    public void authDisplay(FirebaseUser user) {
+        this.user = user;
+        if (user == null) {
+            Glide.with(this).load(R.drawable.googlelogo).circleCrop().into(binding.googleButton);
+            binding.profileName.setText(getString(R.string.click_to_login));
+            binding.emailAddress.setText("");
+            settings.edit().putString("userId", "0").apply();
+        } else {
+            Glide.with(this).load(user.getPhotoUrl().toString().replace("96", "400")).circleCrop().into(binding.googleButton);
+            binding.profileName.setText(user.getDisplayName());
+            binding.emailAddress.setText(user.getEmail());
+            settings.edit().putString("userId", user.getUid()).apply();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         unregisterReceiver(receiver);
+        Utils.getDatabase().getReference().child("keychain").removeEventListener(this);
+        Utils.getDatabase().getReference().child("siteUrl").removeEventListener(this);
     }
 
     private void launch_main_activity() {
@@ -294,12 +261,17 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         finish();
     }
 
-    private void login(FirebaseUser user) {
+    private void login() {
+        if (user == null) {
+            startSignIn();
+            return;
+        }
+        if (KEY == null || SITE_URL == null || TOKEN == null)
+            return;
         if (!settings.getBoolean("accepted", false)) {
             showTerms();
             return;
         }
-        if (KEY == null || SITE_URL == null || TOKEN == null) return;
         pre_text("Logging in..");
         rotate_logo();
         if (billingUtils.isConnected) {
@@ -554,15 +526,18 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+        Log.i("logging", "onDataChange " + dataSnapshot.getKey());
         switch (dataSnapshot.getKey()) {
-            case "siteUrl":
+            case "siteUrl" -> {
                 SITE_URL = dataSnapshot.getValue(String.class);
+                Log.i("logging", "SITE_URL UPDATED TO " + SITE_URL);
                 settings.edit().putString("siteUrl", SITE_URL).apply();
-                break;
-            case "keychain":
+            }
+            case "keychain" -> {
                 KEY = dataSnapshot.getValue(String.class);
+                Log.i("logging", "KEYCHAIN UPDATED TO " + KEY);
                 settings.edit().putString("keychain", KEY).apply();
-                break;
+            }
         }
     }
 

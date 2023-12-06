@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import java.io.Serializable;
 
 import android.os.Parcel;
@@ -6,6 +7,7 @@ import android.os.Parcelable;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+
 public class AdImage implements Serializable, Parcelable {
     @SerializedName("url")
     @Expose

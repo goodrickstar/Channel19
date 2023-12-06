@@ -1,5 +1,6 @@
 package com.cb3g.channel19
-class SidebandData{
+
+class SidebandData {
     var user_id = ""
     var profileLink = ""
     var channel_name = ""

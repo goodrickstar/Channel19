@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,7 +18,7 @@ public class Buffering extends DialogFragment {
     public TextView percent;
     private Context context;
 
-    public void setPercent(int percent){
+    public void setPercent(int percent) {
         if (this.percent != null) this.percent.setText(percent + "%");
     }
 

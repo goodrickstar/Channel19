@@ -52,17 +52,20 @@ public class ShowPhoto extends DialogFragment {
             context.sendBroadcast(new Intent("nineteenClickSound"));
             Utils.vibrate(v);
             int id = v.getId();
-            if (id == R.id.ok){
+            if (id == R.id.ok) {
                 context.sendBroadcast(new Intent("nineteenShowMessages"));
                 dismiss();
-            }if (id == R.id.save){
+            }
+            if (id == R.id.save) {
                 if (saved) return;
                 saved = true;
                 context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
-            }if (id == R.id.image){
+            }
+            if (id == R.id.image) {
                 if (MI != null)
                     MI.streamFile(photo.getUrl());
-            }if (id == R.id.history){
+            }
+            if (id == R.id.history) {
                 for (UserListEntry user : RadioService.users) {
                     if (user.getUser_id().equals(photo.getSenderId()) && MI != null) {
                         MI.displayChat(user, false, false);

@@ -35,6 +35,6 @@ class Post {
 
     var webLink = "none"
     var webDescription = "none"
-    var options : List<PollOption> = ArrayList()
+    var options: List<PollOption> = ArrayList()
 
 }

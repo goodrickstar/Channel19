@@ -2,7 +2,7 @@ package com.cb3g.channel19
 
 import androidx.databinding.ObservableBoolean
 
-class User internal constructor(){
+class User internal constructor() {
     var key = ""
     var user_id = ""
     var handle = ""
@@ -26,7 +26,7 @@ class User internal constructor(){
     var purgeLimit = 50
     var nearbyLimit = 50
     var admin = false
-    var channel : Channel? = Channel()
+    var channel: Channel? = Channel()
     var hinderTexts = false
     var hinderPhotos = false
     var flagsEnabled = true

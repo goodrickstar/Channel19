@@ -9,7 +9,7 @@ public class LOG {
         System.out.println("!!I " + tag + ": " + message);
     }
 
-    static void i(String  message) {
+    static void i(String message) {
         System.out.println("!!I " + message);
     }
 

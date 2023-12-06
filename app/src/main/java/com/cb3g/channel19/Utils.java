@@ -54,24 +54,25 @@ import java.util.Locale;
 
 class Utils {
 
-    static ColorFilter colorFilter(int color){
+    static ColorFilter colorFilter(int color) {
         return new BlendModeColorFilter(color, BlendMode.SRC_ATOP);
     }
 
-    static boolean alreadyFlagged(String userId){
+    static boolean alreadyFlagged(String userId) {
         return RadioService.flaggedIds.contains(userId);
     }
-    static boolean alreadySaluted(String userId){
+
+    static boolean alreadySaluted(String userId) {
         return RadioService.salutedIds.contains(userId);
     }
 
-    static void launchUrl(Context context, String url){
+    static void launchUrl(Context context, String url) {
         Intent i = new Intent(Intent.ACTION_VIEW);
         i.setData(Uri.parse(url));
         context.startActivity(i);
     }
 
-    static Bitmap fetchImage(String url){
+    static Bitmap fetchImage(String url) {
         Bitmap image = null;
         try {
             InputStream inputStream = new URL(url).openStream();
@@ -103,7 +104,7 @@ class Utils {
         return new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
     }
 
-    static void requestPermission(Activity activity, String[] permissionSet, int requestCode){
+    static void requestPermission(Activity activity, String[] permissionSet, int requestCode) {
         ActivityCompat.requestPermissions(activity, permissionSet, requestCode);
     }
 

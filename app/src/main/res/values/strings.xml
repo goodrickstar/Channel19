@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="default_web_client_id" translatable="false">266162092275-tu7qo2v6lt4vk1lh91d393r9mspgikib.apps.googleusercontent.com</string>
     <string name="GIPHY_API_KEY">&amp;api_key=8pMHB2U478qdwh89RkHf9Lg4onHDh22M</string>
     <string name="GIPHY_SEARCH">http://api.giphy.com/v1/gifs/search?q=</string>
     <string name="GIPHY_TRENDING">http://api.giphy.com/v1/gifs/trending?</string>
@@ -9,7 +10,6 @@
     <string name="AD_MOB_AD_ID">ca-app-pub-4635898093945616/9306913108</string>
     <string name="AD_MOB_AD_TEST_ID">ca-app-pub-3940256099942544/5224354917</string>
     <string name="facebook_app_id">126934527886750</string>
-    <string name="web_client_id" translatable="false">266162092275-tu7qo2v6lt4vk1lh91d393r9mspgikib.apps.googleusercontent.com</string>
     <string name="comments">Comments</string>
     <string name="comment">Comment</string>
     <string name="leave_a_remark">Leave A Comment..</string>

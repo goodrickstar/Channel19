@@ -131,7 +131,7 @@
             android:layout_marginTop="8dp"
             android:drawableLeft="@drawable/switch_w"
             android:drawablePadding="@dimen/half_margin"
-            android:text="@string/switch_account"
+            android:text="@string/logout"
             android:textAppearance="@style/medium_font"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/dunno2" />

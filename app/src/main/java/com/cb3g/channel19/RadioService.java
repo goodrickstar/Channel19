@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
@@ -970,13 +971,13 @@ public class RadioService extends Service implements ValueEventListener {
                     .build();
             UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
             uploadTask.continueWithTask(task -> {
-                if (!task.isSuccessful()) {
-                    if (MI != null)
-                        MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
-                    throw task.getException();
-                }
-                return reference.getDownloadUrl();
-            })
+                        if (!task.isSuccessful()) {
+                            if (MI != null)
+                                MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
+                            throw task.getException();
+                        }
+                        return reference.getDownloadUrl();
+                    })
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             List<String> blockList = new ArrayList<>();
@@ -1075,34 +1076,23 @@ public class RadioService extends Service implements ValueEventListener {
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
         switch (dataSnapshot.getKey()) {
-            case "locations":
+            case "locations" -> {
                 coordinates.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     coordinates.add(snapshot.getValue(Coordinates.class));
                 }
-                break;
-            case "blocking":
-                operator.setBlocking(dataSnapshot.getValue(Boolean.class));
-                break;
-            case "flagsEnabled":
-                operator.setFlagsEnabled(dataSnapshot.getValue(Boolean.class));
-                break;
-            case "ghostModeAvailible":
-                operator.setGhostModeAvailible(dataSnapshot.getValue(Boolean.class));
-                break;
-            case "radioShopOpen":
-                operator.setRadioShopOpen(dataSnapshot.getValue(Boolean.class));
-                break;
-            case "silencing":
-                operator.setSilencing(dataSnapshot.getValue(Boolean.class));
-                break;
-            case "siteUrl":
-                SITE_URL = dataSnapshot.getValue(String.class);
-                break;
-            case "keychain":
+            }
+            case "blocking" -> operator.setBlocking(dataSnapshot.getValue(Boolean.class));
+            case "flagsEnabled" -> operator.setFlagsEnabled(dataSnapshot.getValue(Boolean.class));
+            case "ghostModeAvailible" ->
+                    operator.setGhostModeAvailible(dataSnapshot.getValue(Boolean.class));
+            case "radioShopOpen" -> operator.setRadioShopOpen(dataSnapshot.getValue(Boolean.class));
+            case "silencing" -> operator.setSilencing(dataSnapshot.getValue(Boolean.class));
+            case "siteUrl" -> SITE_URL = dataSnapshot.getValue(String.class);
+            case "keychain" -> {
                 operator.setKey(dataSnapshot.getValue(String.class));
                 settings.edit().putString("keychain", operator.getKey()).apply();
-                break;
+            }
         }
     }
 
@@ -1278,6 +1268,7 @@ public class RadioService extends Service implements ValueEventListener {
         if (!playing || paused) return new int[]{0, 0};
         else return new int[]{getDuration(), player.getCurrentPosition()};
     }
+
     UserListEntry returnTalkerEntry() {
         if (!inbounds.isEmpty()) {
             Inbound inbound = inbounds.get(0);
@@ -1481,11 +1472,11 @@ public class RadioService extends Service implements ValueEventListener {
                         final StorageReference newRef = ref;
                         UploadTask uploadTask = newRef.putFile(Uri.fromFile(file));
                         uploadTask.continueWithTask(task -> {
-                            if (!task.isSuccessful()) {
-                                throw task.getException();
-                            }
-                            return newRef.getDownloadUrl();
-                        })
+                                    if (!task.isSuccessful()) {
+                                        throw task.getException();
+                                    }
+                                    return newRef.getDownloadUrl();
+                                })
                                 .addOnCompleteListener(task -> {
                                     if (task.isSuccessful()) {
                                         final String downloadUri = task.getResult().toString();
@@ -1854,11 +1845,11 @@ public class RadioService extends Service implements ValueEventListener {
 
     private void removeListeners() {
         if (operator.getChannel() != null)
-            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener( audioListener);
-        databaseReference.child("blocking").removeEventListener( this);
+            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
+        databaseReference.child("blocking").removeEventListener(this);
         databaseReference.child("ghostModeAvailible").removeEventListener(this);
-        databaseReference.child("flagsEnabled").removeEventListener( this);
-        databaseReference.child("radioShopOpen").removeEventListener( this);
+        databaseReference.child("flagsEnabled").removeEventListener(this);
+        databaseReference.child("radioShopOpen").removeEventListener(this);
         databaseReference.child("silencing").removeEventListener(this);
         databaseReference.child("keychain").removeEventListener(this);
         databaseReference.child("siteUrl").removeEventListener(this);
@@ -2072,6 +2063,7 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction("android.intent.action.PHONE_STATE");
         return filter;
     }
+
     void makePoor(final boolean poor) {
         this.poor = poor;
         if (!poor) {// good signal

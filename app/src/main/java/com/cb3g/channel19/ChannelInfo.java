@@ -1,6 +1,8 @@
 package com.cb3g.channel19;
+
 import java.util.ArrayList;
 import java.util.List;
+
 public class ChannelInfo {
     Channel channel;
     List<String> profiles = new ArrayList<>();

@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ExecutorUtils {
 
-    public static void shutdown(ExecutorService executorService){
+    public static void shutdown(ExecutorService executorService) {
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(800, TimeUnit.MILLISECONDS)) {
@@ -20,7 +20,7 @@ public class ExecutorUtils {
         }
     }
 
-    public static ExecutorService newSingleThreadExecutor(){
+    public static ExecutorService newSingleThreadExecutor() {
         return Executors.newSingleThreadExecutor();
     }
 

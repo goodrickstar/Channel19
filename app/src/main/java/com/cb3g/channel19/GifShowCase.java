@@ -14,7 +14,7 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.R;
 
-public class GifShowCase extends DialogFragment implements View.OnClickListener{
+public class GifShowCase extends DialogFragment implements View.OnClickListener {
     private Context context;
 
     @Override

@@ -1,4 +1,5 @@
 package com.cb3g.channel19;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.android.multidex.myapplication.databinding.CaptionBinding;
+
 public class Caption extends DialogFragment {
     private Context context;
     private String caption;

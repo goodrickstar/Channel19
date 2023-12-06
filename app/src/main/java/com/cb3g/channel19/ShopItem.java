@@ -19,7 +19,8 @@ public class ShopItem {
         this.version = version;
     }
 
-    public ShopItem(){}
+    public ShopItem() {
+    }
 
     public int getId() {
         return id;
