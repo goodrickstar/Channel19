@@ -101,8 +101,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private Transmitter transmitFragment;
     private SharedPreferences settings;
     private Timer timer;
-    private TimerTask clockTask, blackTask;
-    private Locale locale;
+    private TimerTask blackTask;
     private int tutorial_count = 0;
     private Snackbar snackbar;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -210,7 +209,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         setContentView(binding.getRoot());
         settings = getSharedPreferences("settings", MODE_PRIVATE);
         billingUtils = new BillingUtils(this, this);
-        locale = Locale.getDefault();
         findById();
         RotateAnimation rotate = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         rotate.setDuration(1000);
@@ -309,11 +307,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     protected void onPause() {
         super.onPause();
-        if (clockTask != null) clockTask.cancel();
         if (blackTask != null) blackTask.cancel();
         if (timer != null) timer.purge();
         blackTask = null;
-        clockTask = null;
         timer = null;
         lockOthers(false);
     }
@@ -327,16 +323,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             return;
         }
         timer = new Timer();
-        clockTask = new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(() -> {
-                    sendBroadcast(new Intent("fetch_users"));
-                    updateClock();
-                });
-            }
-        };
-        timer.schedule(clockTask, DateUtils.MINUTE_IN_MILLIS - System.currentTimeMillis() % DateUtils.MINUTE_IN_MILLIS, 60000);
         int black = settings.getInt("black", 10);
         if (black != 0) {
             black = (black * 3500) + 10000;
@@ -356,7 +342,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         overrideDown = settings.getBoolean("overidedown", false);
         tutorial_count = settings.getInt("tutorial", 0);
         if (tutorial_count == 5) finishTutorial(tutorial_count);
-        updateClock();
         sendBroadcast(new Intent("checkForMessages"));
         if (settings.getBoolean("custom", false)) {
             changeBackground(settings.getString("background", "default"));
@@ -725,19 +710,19 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void adjustColors(boolean poor) {
         runOnUiThread(() -> {
             if (poor) {
-                binding.blackDateTv.setTextColor(Color.RED);
-                binding.blackClockTv.setTextColor(Color.RED);
+                //binding.blackDateTv.setTextColor(Color.RED);
+                //binding.blackClockTv.setTextColor(Color.RED);
                 binding.blackQueueTv.setTextColor(Color.RED);
-                binding.blackLocationTv.setTextColor(Color.RED);
+                //binding.blackLocationTv.setTextColor(Color.RED);
                 binding.blackTitleTv.setTextColor(Color.RED);
                 binding.blackDurationTv.setTextColor(Color.RED);
                 if (dark)
                     binding.maTimer.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.red_bar));
             } else {
-                binding.blackDateTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                binding.blackClockTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                //binding.blackDateTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                //binding.blackClockTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackQueueTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                binding.blackLocationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                //binding.blackLocationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackTitleTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackDurationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 if (dark)
@@ -784,9 +769,15 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void updateLocationDisplay(String location) {
-        binding.blackLocationTv.setText(location);
-        if (location.equals("")) binding.maLocatoinTv.setText(R.string.location_unknown);
-        else binding.maLocatoinTv.setText(location);
+        if (location.equals("")) {
+            binding.maLocatoinTv.setText(R.string.location_unknown);
+            //binding.blackLocationTv.setVisibility(View.INVISIBLE);
+        }
+        else {
+            binding.maLocatoinTv.setText(location);
+            //binding.blackLocationTv.setVisibility(View.VISIBLE);
+            //binding.blackLocationTv.setText(location);
+        }
     }
 
     @Override
@@ -1059,6 +1050,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 } else darkChange(false);
             }
         } else if (id == R.id.blackOut) {
+            darkChange(false);
+        }else if (id == R.id.black_profile_picture_iv) {
             darkChange(false);
         } else if (id == R.id.ma_skip_button) {
             Utils.vibrate(v);
@@ -1412,22 +1405,25 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             binding.blackHandleTv.setText(" ");
         else binding.blackHandleTv.setText(display[0]);
         binding.blackCarrierTv.setText(display[1]);
-        binding.blackLocationTv.setText(display[2]);
+        //binding.blackLocationTv.setText(display[2]);
         binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
         if (display[3].equals("0") || display[3].isEmpty()) binding.blackDurationTv.setText("");
         else binding.blackDurationTv.setText(display[3] + "s");
         new GlideImageLoader(this, binding.blackStarIv).load(Utils.parseRankUrl(display[4]));
         if (display[5].equals("none")) {
             binding.blackProfilePictureIv.setImageDrawable(null);
-            binding.blackProfilePictureIv.setOnClickListener(null);
+            //binding.blackProfilePictureIv.setOnClickListener(null);
         } else {
             binding.blackProfilePictureIv.setVisibility(View.VISIBLE);
-            new GlideImageLoader(this, binding.blackStarIv).load(display[5], RadioService.profileOptions);
+            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display[5], RadioService.largeProfileOptions);
+            /*
             binding.blackProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenBoxSound"));
                 streamFile(display[5]);
             });
+             */
+            /*
             binding.blackProfilePictureIv.setOnLongClickListener(v -> {
                 UserListEntry user = returnTalkerEntry();
                 if (user != null) {
@@ -1438,15 +1434,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 }
                 return false;
             });
+             */
         }
-    }
-
-    private void updateClock() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd", locale);
-        Date d = new Date();
-        binding.blackDateTv.setText(sdf.format(d));
-        binding.blackClockTv.setText(String.format("%tR", System.currentTimeMillis()));
-        if (RS != null) RS.checkForMessages();
     }
 
     @Override
@@ -1496,6 +1485,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maMapButton.setOnClickListener(this);
         binding.maPauseButton.setOnClickListener(this);
         binding.blackQueueTv.setOnClickListener(this);
+        binding.blackProfilePictureIv.setOnClickListener(this);
 
         //LongPress
         binding.maUserListButton.setOnLongClickListener(this);
