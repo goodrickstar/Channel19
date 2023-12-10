@@ -8,7 +8,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -63,7 +62,7 @@ public class MessageHistory extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        history = view.findViewById(R.id.history);
+        history = view.findViewById(R.id.ma_chat_history_button);
         history.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         history.setHasFixedSize(true);
         history.setAdapter(adapter);
@@ -201,7 +200,7 @@ public class MessageHistory extends DialogFragment {
                 Utils.vibrate(v);
                 History history = (History) v.getTag(v.getId());
                 int id = v.getId();
-                if (id == R.id.option_image_view) {
+                if (id == R.id.black_profile_picture_iv) {
                     context.sendBroadcast(new Intent("nineteenClickSound"));
                     if (MI != null) MI.streamFile(history.getProfileLink());
                 } else if (id == R.id.menu) {
@@ -240,7 +239,7 @@ public class MessageHistory extends DialogFragment {
             if (object.getPhoto() == 0) holder.text.setText(object.getText());
             else holder.text.setText(R.string.sent);
             holder.menu.setTag(R.id.menu, object);
-            holder.profile.setTag(R.id.option_image_view, object);
+            holder.profile.setTag(R.id.black_profile_picture_iv, object);
             holder.clickPoint.setTag(R.id.clickPoint, object);
             holder.menu.setOnClickListener(listener);
             holder.profile.setOnClickListener(listener);
@@ -264,9 +263,9 @@ public class MessageHistory extends DialogFragment {
 
             MyViewHolder(View v) {
                 super(v);
-                handle = v.findViewById(R.id.handle);
+                handle = v.findViewById(R.id.black_handle_tv);
                 text = v.findViewById(R.id.text);
-                profile = v.findViewById(R.id.option_image_view);
+                profile = v.findViewById(R.id.black_profile_picture_iv);
                 menu = v.findViewById(R.id.menu);
                 clickPoint = v.findViewById(R.id.clickPoint);
                 lastOnline = v.findViewById(R.id.last_online);

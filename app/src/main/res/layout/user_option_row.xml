@@ -12,7 +12,7 @@
     app:layout_constraintTop_toTopOf="parent">
 
     <ImageView
-        android:id="@+id/option_image_view"
+        android:id="@+id/black_profile_picture_iv"
         android:layout_width="50dp"
         android:layout_height="50dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -30,7 +30,7 @@
         android:textSize="@dimen/large_text"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/option_image_view"
+        app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

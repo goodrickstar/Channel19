@@ -11,7 +11,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/banner"
+            android:id="@+id/black_banner_tv"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0"

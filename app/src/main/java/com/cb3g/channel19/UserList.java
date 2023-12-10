@@ -103,7 +103,7 @@ public class UserList extends Fragment {
             holder.carrier.setText(entry.getCarrier());
             new GlideImageLoader(context, holder.profile).load(entry.getProfileLink(), RadioService.profileOptions);
             new GlideImageLoader(context, holder.starsIm).loadRank(entry.getRank());
-            holder.profile.setTag(R.id.option_image_view, entry);
+            holder.profile.setTag(R.id.black_profile_picture_iv, entry);
             holder.clickPoint.setTag(R.id.clickPoint, entry);
             holder.mail.setTag(R.id.mail, entry);
             holder.profile.setOnClickListener(listener);
@@ -134,7 +134,7 @@ public class UserList extends Fragment {
                         return;
                     }
                     MI.showListOptions(user);
-                } else if (id == R.id.option_image_view) {
+                } else if (id == R.id.black_profile_picture_iv) {
                     MI.streamFile(user.getProfileLink());
                 }
             }
@@ -155,12 +155,12 @@ public class UserList extends Fragment {
                 super(itemView);
                 clickPoint = itemView.findViewById(R.id.clickPoint);
                 title = itemView.findViewById(R.id.countdown);
-                handle = itemView.findViewById(R.id.handle);
-                location = itemView.findViewById(R.id.banner);
-                carrier = itemView.findViewById(R.id.carrier);
-                starsIm = itemView.findViewById(R.id.starIV);
+                handle = itemView.findViewById(R.id.black_handle_tv);
+                location = itemView.findViewById(R.id.black_banner_tv);
+                carrier = itemView.findViewById(R.id.black_carrier_tv);
+                starsIm = itemView.findViewById(R.id.black_star_iv);
                 mail = itemView.findViewById(R.id.mail);
-                profile = itemView.findViewById(R.id.option_image_view);
+                profile = itemView.findViewById(R.id.black_profile_picture_iv);
             }
         }
     }

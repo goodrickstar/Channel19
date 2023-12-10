@@ -79,21 +79,21 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public void onViewCreated(@NotNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         locale = Locale.getDefault();
-        profile = view.findViewById(R.id.option_image_view);
-        blurr = view.findViewById(R.id.blurr);
+        profile = view.findViewById(R.id.black_profile_picture_iv);
+        blurr = view.findViewById(R.id.ma_blurr_iv);
         key = view.findViewById(R.id.key);
         pin = view.findViewById(R.id.pin);
         pin.setImageResource(R.drawable.pinned_white);
         key.setImageResource(R.drawable.center_white);
         ring = view.findViewById(R.id.ring);
         ring.setImageResource(R.drawable.ring_white);
-        rank = view.findViewById(R.id.starIV);
+        rank = view.findViewById(R.id.black_star_iv);
         tooth = view.findViewById(R.id.tooth);
         tooth.setImageResource(R.drawable.tooth);
-        handle = view.findViewById(R.id.handle);
-        carrier = view.findViewById(R.id.carrier);
+        handle = view.findViewById(R.id.black_handle_tv);
+        carrier = view.findViewById(R.id.black_carrier_tv);
         title = view.findViewById(R.id.countdown);
-        location = view.findViewById(R.id.banner);
+        location = view.findViewById(R.id.black_banner_tv);
         quetv = view.findViewById(R.id.quetv);
         muteIv = view.findViewById(R.id.mute);
         progressBar = view.findViewById(R.id.pbar);

@@ -8,7 +8,7 @@
     android:padding="@dimen/default_padding">
 
     <ImageView
-        android:id="@+id/option_image_view"
+        android:id="@+id/black_profile_picture_iv"
         android:layout_width="70dp"
         android:layout_height="70dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -16,15 +16,15 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/handle"
+        android:id="@+id/black_handle_tv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/default_padding"
         android:textAppearance="@style/title_font"
         android:textColor="@drawable/white_to_black_text"
         app:layout_constraintEnd_toStartOf="@+id/menu"
-        app:layout_constraintStart_toEndOf="@+id/option_image_view"
-        app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+        app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
+        app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
     <TextView
         android:id="@+id/text"
@@ -35,10 +35,10 @@
         android:maxLines="2"
         android:textAppearance="@style/small_italic"
         android:textColor="@drawable/white_to_black_text"
-        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
         app:layout_constraintEnd_toStartOf="@+id/last_online"
-        app:layout_constraintStart_toStartOf="@+id/handle"
-        app:layout_constraintTop_toBottomOf="@+id/handle" />
+        app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
+        app:layout_constraintTop_toBottomOf="@+id/black_handle_tv" />
 
     <TextView
         android:id="@+id/last_online"
@@ -48,18 +48,18 @@
         android:maxLines="2"
         android:textAppearance="@style/tiny_font"
         android:textColor="@drawable/white_to_black_text"
-        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/handle" />
+        app:layout_constraintTop_toBottomOf="@+id/black_handle_tv" />
 
     <View
         android:id="@+id/clickPoint"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
         app:layout_constraintEnd_toStartOf="@+id/menu"
-        app:layout_constraintStart_toStartOf="@+id/handle"
-        app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+        app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
+        app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
     <ImageView
         android:id="@+id/menu"
@@ -70,7 +70,7 @@
         android:paddingRight="5dp"
         android:scaleType="fitCenter"
         android:src="@drawable/menu"
-        app:layout_constraintBottom_toBottomOf="@+id/handle"
+        app:layout_constraintBottom_toBottomOf="@+id/black_handle_tv"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/handle" />
+        app:layout_constraintTop_toTopOf="@+id/black_handle_tv" />
 </androidx.constraintlayout.widget.ConstraintLayout>

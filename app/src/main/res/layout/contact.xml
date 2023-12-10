@@ -6,7 +6,7 @@
                 android:padding="15dp">
 	
 	<TextView
-		android:id="@+id/banner"
+		android:id="@+id/black_banner_tv"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
@@ -23,7 +23,7 @@
 		android:layout_alignBottom="@+id/titleLayout"
 		android:layout_alignStart="@+id/titleLayout"
 		android:layout_alignEnd="@+id/titleLayout"
-		android:layout_below="@+id/banner"
+		android:layout_below="@+id/black_banner_tv"
 		android:layout_marginLeft="35dp"
 		android:layout_marginRight="35dp"
 		android:background="@color/main_blue"/>
@@ -32,7 +32,7 @@
 		android:id="@+id/titleLayout"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:layout_below="@+id/banner"
+		android:layout_below="@+id/black_banner_tv"
 		android:layout_marginLeft="35dp"
 		android:layout_marginRight="35dp"
 		android:orientation="vertical">

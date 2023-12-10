@@ -8,7 +8,7 @@
     android:background="@drawable/black_box_white_outline_slight_transparent">
 
     <TextView
-        android:id="@+id/banner"
+        android:id="@+id/black_banner_tv"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/blue_box_white_outline_transparent"
@@ -32,7 +32,7 @@
         app:layout_constraintBottom_toTopOf="@+id/ok"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/banner">
+        app:layout_constraintTop_toBottomOf="@+id/black_banner_tv">
 
     </androidx.recyclerview.widget.RecyclerView>
 

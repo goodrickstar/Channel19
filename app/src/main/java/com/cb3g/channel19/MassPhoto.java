@@ -6,8 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,24 +24,12 @@ import com.example.android.multidex.myapplication.R;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private final RecyclerViewAdapter adapter = new RecyclerViewAdapter();
@@ -207,8 +193,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
 
             private Holder(View itemView) {
                 super(itemView);
-                handle = itemView.findViewById(R.id.handle);
-                profile = itemView.findViewById(R.id.option_image_view);
+                handle = itemView.findViewById(R.id.black_handle_tv);
+                profile = itemView.findViewById(R.id.black_profile_picture_iv);
             }
         }
     }

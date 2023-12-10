@@ -39,7 +39,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/handle"
+        android:id="@+id/black_handle_tv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -53,13 +53,13 @@
         app:layout_constraintTop_toTopOf="@+id/profile_pic" />
 
     <ImageView
-        android:id="@+id/starIV"
+        android:id="@+id/black_star_iv"
         android:layout_width="@dimen/star_width"
         android:layout_height="@dimen/star_height"
         android:layout_marginStart="4dp"
         android:scaleType="fitStart"
-        app:layout_constraintStart_toStartOf="@+id/handle"
-        app:layout_constraintTop_toBottomOf="@+id/handle" />
+        app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
+        app:layout_constraintTop_toBottomOf="@+id/black_handle_tv" />
 
     <TextView
         android:id="@+id/stamp"

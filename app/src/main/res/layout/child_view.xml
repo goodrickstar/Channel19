@@ -6,7 +6,7 @@
     android:padding="@dimen/default_padding">
 
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/black_title_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/default_margin"

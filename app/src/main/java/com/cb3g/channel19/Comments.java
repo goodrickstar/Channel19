@@ -149,7 +149,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final TextView title = view.findViewById(R.id.title);
+        final TextView title = view.findViewById(R.id.black_title_tv);
         final ImageView back = view.findViewById(R.id.back);
         title.setText(R.string.comments);
         back.setImageResource(R.drawable.upbutton);

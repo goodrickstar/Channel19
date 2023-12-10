@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -31,14 +30,11 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
@@ -51,6 +47,7 @@ import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.MainLayoutBinding;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.gms.ads.AdError;
@@ -66,8 +63,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.dialog.MaterialDialogs;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.play.core.review.ReviewInfo;
 import com.google.android.play.core.review.ReviewManager;
@@ -82,7 +77,6 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -93,6 +87,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends FragmentActivity implements MI, View.OnClickListener, View.OnLongClickListener, PurchasesUpdatedListener, ValueEventListener {
+    public MainLayoutBinding binding;
     public final String SILENCE = "silence";
     public final String UNSILENCE = "unsilence";
     boolean isBound = false;
@@ -102,17 +97,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private BillingUtils billingUtils;
     private boolean delay = true, longPressed = false, dark = false, overrideUp = false, overrideDown = false;
     private String photoToHandle = "", photoToId = "";
-    private TextView day, clock, upper_location_view, handle, carrier, location, title, queueCount, gpsLocation, duration, cancel;
-    private ImageView icon, gear, skipper, rank, auto, reservoir, profile, backDrop, locationButton, massPhoto, history, blur;
     private UserList userFragment;
     private Transmitter transmitFragment;
     private SharedPreferences settings;
-    private ConstraintLayout blackout;
-    private ProgressBar timeBar;
     private Timer timer;
     private TimerTask clockTask, blackTask;
     private Locale locale;
-    private TextView channelName;
     private int tutorial_count = 0;
     private Snackbar snackbar;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -125,12 +115,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             String action = intent.getAction();
             if (action == null) return;
             switch (action) {
-                case "advertise":
-                    showRewardAd();
-                    break;
-                case "review":
+                case "advertise" -> showRewardAd();
+                case "review" -> {
                     ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
-                    com.google.android.play.core.tasks.Task<ReviewInfo> request = manager.requestReviewFlow();
+                    Task<ReviewInfo> request = manager.requestReviewFlow();
                     request.addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             ReviewInfo reviewInfo = task.getResult();
@@ -139,98 +127,252 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                             });
                         }
                     });
-                    break;
-                case "nineteenGifChosen":
-                    launchPicker(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
-                    break;
-                case "show_result":
+                }
+                case "nineteenGifChosen" ->
+                        launchPicker(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
+                case "show_result" -> {
                     if (!isFinishing())
                         showResult(intent.getStringExtra("title"), intent.getStringExtra("content"));
-                    break;
-                case "nineteenPickProfile":
-                    photo_picker(3456);
-                    break;
-                case "exitChannelNineTeen":
-                    finish();
-                    break;
-                case "nineteenLockButtons":
-                    lockOthers(intent.getBooleanExtra("data", false));
-                    break;
-                case "nineteenAddCaption":
+                }
+                case "nineteenPickProfile" -> photo_picker(3456);
+                case "exitChannelNineTeen" -> finish();
+                case "nineteenLockButtons" -> lockOthers(intent.getBooleanExtra("data", false));
+                case "nineteenAddCaption" -> {
                     if (!isFinishing()) {
                         Bundle data = new Bundle();
                         data.putString("data", intent.getStringExtra("data"));
                         Caption cd = new Caption();
-                        cd.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                        cd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                         cd.setArguments(data);
                         cd.show(fragmentManager, "cd");
                     }
-                    break;
-                case "nineteenUpdateCaption":
+                }
+                case "nineteenUpdateCaption" -> {
                     SendPhoto sendF = (SendPhoto) fragmentManager.findFragmentByTag("sendF");
                     if (sendF != null)
                         sendF.updateCaption(intent.getStringExtra("data"));
-                    break;
-                case "nineteenSetPauseProgress":
+                }
+                case "nineteenSetPauseProgress" -> {
                     int[] set = intent.getIntArrayExtra("data");
-                    timeBar.clearAnimation();
-                    timeBar.setMax(set[0]);
-                    timeBar.setProgress(set[0] - set[1]);
-                    break;
-                case "switchToPause":
+                    binding.maTimer.clearAnimation();
+                    binding.maTimer.setMax(set[0]);
+                    binding.maTimer.setProgress(set[0] - set[1]);
+                }
+                case "switchToPause" -> {
                     if (transmitFragment.isAdded() && RS != null)
                         transmitFragment.updateque(RS.getQueue(), RadioService.paused);
-                    auto.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.pause_set));
-                    break;
-                case "switchToPlay":
+                    binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.pause_set));
+                }
+                case "switchToPlay" -> {
                     if (transmitFragment.isAdded() && RS != null)
                         transmitFragment.updateque(RS.getQueue(), RadioService.paused);
-                    auto.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.resume_set));
-                    break;
-                case "bird":
+                    binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.resume_set));
+                }
+                case "bird" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) {
                         transmitFragment.stopRecorder(false);
                         if (RS != null) RS.keyUpWasInterupted(intent.getStringExtra("userId"));
                     }
                     Toaster.flipDaBird(MainActivity.this);
-                    break;
-                case "nineteenToast":
+                }
+                case "nineteenToast" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) return;
                     Toaster.toastlow(MainActivity.this, intent.getStringExtra("data"));
-                    break;
-                case "toasting":
+                }
+                case "toasting" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) return;
                     Toaster.labelTwo(MainActivity.this, intent.getStringExtra("data"));
-                    break;
-                case "nineteenAlert":
+                }
+                case "nineteenAlert" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) return;
                     Toaster.online(MainActivity.this, intent.getStringExtra("data"), intent.getStringExtra("profileLink"));
-                    break;
-                case "setMute":
-                    setMuteFromOutside(intent.getBooleanExtra("data", false));
-                    break;
-                case "recordFromMain":
-                    recordFromMain();
-                    break;
-                case "tooth":
-                    setTooth(intent.getBooleanExtra("data", false));
-                    break;
-                case "nineteenAllow":
-                    ActivityCompat.requestPermissions(MainActivity.this, Utils.getAudioPermissions(), 1);
-                    break;
-                case "nineteenCamera":
-                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 3);
-                    break;
-                case "nineteenCheck":
-                    Toaster.checkMark(MainActivity.this);
-                    break;
-                case "nineteenCross":
-                    Toaster.fail(MainActivity.this);
-                    break;
+                }
+                case "setMute" -> setMuteFromOutside(intent.getBooleanExtra("data", false));
+                case "recordFromMain" -> recordFromMain();
+                case "tooth" -> setTooth(intent.getBooleanExtra("data", false));
+                case "nineteenAllow" ->
+                        ActivityCompat.requestPermissions(MainActivity.this, Utils.getAudioPermissions(), 1);
+                case "nineteenCamera" ->
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 3);
+                case "nineteenCheck" -> Toaster.checkMark(MainActivity.this);
+                case "nineteenCross" -> Toaster.fail(MainActivity.this);
             }
         }
     };
     private ExecutorService executor;
+
+    @SuppressLint("SourceLockedOrientationActivity")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(null);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        binding = MainLayoutBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        settings = getSharedPreferences("settings", MODE_PRIVATE);
+        billingUtils = new BillingUtils(this, this);
+        locale = Locale.getDefault();
+        findById();
+        RotateAnimation rotate = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        rotate.setDuration(1000);
+        rotate.setRepeatCount(1);
+        rotate.setInterpolator(new LinearInterpolator());
+        userFragment = new UserList();
+        transmitFragment = new Transmitter();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.ma_bottom_frame, transmitFragment, "tf");
+        transaction.commit();
+        MobileAds.initialize(this, initializationStatus -> {
+        });
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Notifications");
+                builder.setMessage("In order for Channel 19 to properly operate in the background, a persistant notification is needed");
+                builder.setPositiveButton("Sure!", (dialogInterface, i) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
+                    }
+                });
+                builder.setNegativeButton("No Thanks", (dialogInterface, i) -> {
+                    //TODO: vibrate
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
+                }
+            }
+        }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!RadioService.operator.getAdmin())
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        SC = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                RadioService.LocalBinder binder = (RadioService.LocalBinder) service;
+                RS = binder.getService();
+                RS.main_activity_callbacks(MainActivity.this);
+                RS.listenForCoordinates(true);
+                setMuteFromOutside(RS.updateMute());
+                updateDisplay(RS.getlatest(), RS.getQueue(), RS.getDuration(), RS.returnedPaused(), RS.returnPoor(), RS.getlatestStamp());
+                if (RadioService.paused)
+                    binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.resume_set));
+                else {
+                    binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.pause_set));
+                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                }
+                updateLocationDisplay(RS.returnLocation());
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+            }
+        };
+        isBound = bindService(new Intent(this, RadioService.class), SC, BIND_IMPORTANT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, returnFilter(), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(receiver, returnFilter());
+        }
+        delay = true;
+        if (settings.getBoolean("exiting", false)) {
+            startActivity(new Intent(this, LoginActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            finishAffinity();
+        }
+        binding.maSettingsButton.setEnabled(true);
+        startOrStopGPS(true);
+        executor = ExecutorUtils.newSingleThreadExecutor();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        startOrStopGPS(false);
+        if (RS != null) {
+            RS.listenForCoordinates(false);
+            RS.main_activity_callbacks(null);
+        }
+        if (isBound) unbindService(SC);
+        RS = null;
+        unregisterReceiver(receiver);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        binding.maSettingsButton.setEnabled(false);
+        ExecutorUtils.shutdown(executor);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (clockTask != null) clockTask.cancel();
+        if (blackTask != null) blackTask.cancel();
+        if (timer != null) timer.purge();
+        blackTask = null;
+        clockTask = null;
+        timer = null;
+        lockOthers(false);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (RadioService.operator == null) {
+            longPressed = true;
+            onBackPressed();
+            return;
+        }
+        timer = new Timer();
+        clockTask = new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(() -> {
+                    sendBroadcast(new Intent("fetch_users"));
+                    updateClock();
+                });
+            }
+        };
+        timer.schedule(clockTask, DateUtils.MINUTE_IN_MILLIS - System.currentTimeMillis() % DateUtils.MINUTE_IN_MILLIS, 60000);
+        int black = settings.getInt("black", 10);
+        if (black != 0) {
+            black = (black * 3500) + 10000;
+            blackTask = new TimerTask() {
+                @Override
+                public void run() {
+                    if (dark || (transmitFragment.isAdded() && RadioService.recording)) return;
+                    if (!delay && RadioService.operator.getChannel() != null) {
+                        runOnUiThread(() -> darkChange(true));
+                    }
+                    delay = false;
+                }
+            };
+            timer.schedule(blackTask, black, black);
+        }
+        overrideUp = settings.getBoolean("overideup", false);
+        overrideDown = settings.getBoolean("overidedown", false);
+        tutorial_count = settings.getInt("tutorial", 0);
+        if (tutorial_count == 5) finishTutorial(tutorial_count);
+        updateClock();
+        sendBroadcast(new Intent("checkForMessages"));
+        if (settings.getBoolean("custom", false)) {
+            changeBackground(settings.getString("background", "default"));
+        } else changeBackground(settings.getString("main_backdrop", ""));
+        if (RadioService.operator.getChannel() != null) {
+            binding.maChannelsButton.setText(RadioService.operator.getChannel().getChannel_name());
+        } else {
+            binding.maChannelsButton.setText(this.getString(R.string.select_channel));
+            if (tutorial_count > 5) {
+                selectChannel(false);
+            }
+        }
+        if (settings.getBoolean("flagDue", false)) {
+            displayLongFlag(settings.getString("flagSenderId", "Unknown"), settings.getString("flagSenderHandle", "Unknown"));
+        }
+    }
 
     @Override
     public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
@@ -239,14 +381,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
                     billingUtils.handlePurchase(purchase, (billingResult1, s) -> {
                         switch (purchase.getProducts().get(0)) {
-                            case SILENCE:
+                            case SILENCE -> {
                                 finishSilence(silencePayload);
                                 silencePayload = null;
-                                break;
-                            case UNSILENCE:
+                            }
+                            case UNSILENCE -> {
                                 finishUnsilence(unSilencePayload);
                                 unSilencePayload = null;
-                                break;
+                            }
                         }
                     });
                 }
@@ -383,12 +525,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && data != null) {
             switch (requestCode) {
-                case 1111:
+                case 1111 -> {
                     Gif gif = new Gif();
                     gif.setUrl(data.getData().toString());
                     launchPicker(gif, true);
-                    break;
-                case 3737:
+                }
+                case 3737 -> {
                     if (!isFinishing()) {
                         MassPhoto mass = (MassPhoto) fragmentManager.findFragmentByTag("mass");
                         if (mass == null) {
@@ -396,16 +538,16 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                             Bundle bundle = new Bundle();
                             bundle.putString("data", String.valueOf(data.getData()));
                             mass.setArguments(bundle);
-                            mass.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                            mass.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                             mass.show(fragmentManager, "mass");
                         }
                     }
-                    break;
-                default:
+                }
+                default -> {
                     sendBroadcast(new Intent("upload").putExtra("uri", String.valueOf(data.getData())).putExtra("mode", requestCode).putExtra("caption", "").putExtra("sendToId", photoToId).putExtra("sendToHandle", photoToHandle));
                     photoToHandle = "";
                     photoToId = "";
-                    break;
+                }
             }
         }
     }
@@ -443,7 +585,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void launchChannel(Channel channel) {
         if (RadioService.operator.getChannel() != null)
             if (RadioService.operator.getChannel().getChannel() == channel.getChannel()) return;
-        channelName.setText(channel.getChannel_name());
+        binding.maChannelsButton.setText(channel.getChannel_name());
         delay = true;
         resetAnimation();
         if (!RadioService.operator.getAdmin()) {
@@ -498,9 +640,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void showSnack(Snack snack) {
-        if (dark) snackbar = Snackbar.make(blackout, snack.getMessage(), snack.getLength());
+        if (dark) snackbar = Snackbar.make(binding.blackOut, snack.getMessage(), snack.getLength());
         else
-            snackbar = Snackbar.make(findViewById(R.id.bottomframe), snack.getMessage(), snack.getLength());
+            snackbar = Snackbar.make(findViewById(R.id.ma_bottom_frame), snack.getMessage(), snack.getLength());
         View view = snackbar.getView();
         TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
         tv.setTextColor(ContextCompat.getColor(this, R.color.main_white));
@@ -532,178 +674,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         snackbar.show();
     }
 
-    @SuppressLint("SourceLockedOrientationActivity")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(null);
-        settings = getSharedPreferences("settings", MODE_PRIVATE);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setContentView(R.layout.main_layout);
-        billingUtils = new BillingUtils(this, this);
-        locale = Locale.getDefault();
-        findById();
-        RotateAnimation rotate = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-        rotate.setDuration(1000);
-        rotate.setRepeatCount(1);
-        rotate.setInterpolator(new LinearInterpolator());
-        skipper = findViewById(R.id.skip);
-        userFragment = new UserList();
-        transmitFragment = new Transmitter();
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.bottomframe, transmitFragment, "tf");
-        transaction.commit();
-        backDrop = findViewById(R.id.backdrop);
-        MobileAds.initialize(this, initializationStatus -> {
-        });
-        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED){
-            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("Notifications");
-                builder.setMessage("In order for Channel 19 to properly operate in the background, a persistant notification is needed");
-                builder.setPositiveButton("Sure!", (dialogInterface, i) -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
-                    }
-                });
-                builder.setNegativeButton("No Thanks", (dialogInterface, i) -> {
-                    //TODO: vibrate
-                });
-                AlertDialog dialog = builder.create();
-                dialog.show();
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
-                }
-            }
-        }
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (!RadioService.operator.getAdmin())
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-        SC = new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                RadioService.LocalBinder binder = (RadioService.LocalBinder) service;
-                RS = binder.getService();
-                RS.main_activity_callbacks(MainActivity.this);
-                RS.listenForCoordinates(true);
-                setMuteFromOutside(RS.updateMute());
-                updateDisplay(RS.getlatest(), RS.getQueue(), RS.getDuration(), RS.returnedPaused(), RS.returnPoor(), RS.getlatestStamp());
-                if (RadioService.paused)
-                    auto.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.resume_set));
-                else {
-                    auto.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.pause_set));
-                    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                }
-                updateLocationDisplay(RS.returnLocation());
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-            }
-        };
-        isBound = bindService(new Intent(this, RadioService.class), SC, BIND_IMPORTANT);
-        registerReceiver(receiver, returnFilter());
-        delay = true;
-        if (settings.getBoolean("exiting", false)) {
-            startActivity(new Intent(this, LoginActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
-            finishAffinity();
-        }
-        gear.setEnabled(true);
-        startOrStopGPS(true);
-        executor = ExecutorUtils.newSingleThreadExecutor();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        startOrStopGPS(false);
-        if (RS != null) {
-            RS.listenForCoordinates(false);
-            RS.main_activity_callbacks(null);
-        }
-        if (isBound) unbindService(SC);
-        RS = null;
-        unregisterReceiver(receiver);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        gear.setEnabled(false);
-        ExecutorUtils.shutdown(executor);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (clockTask != null) clockTask.cancel();
-        if (blackTask != null) blackTask.cancel();
-        if (timer != null) timer.purge();
-        blackTask = null;
-        clockTask = null;
-        timer = null;
-        lockOthers(false);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (RadioService.operator == null) {
-            longPressed = true;
-            onBackPressed();
-            return;
-        }
-        timer = new Timer();
-        clockTask = new TimerTask() {
-            @Override
-            public void run() {
-                runOnUiThread(() -> {
-                    sendBroadcast(new Intent("fetch_users"));
-                    updateClock();
-                });
-            }
-        };
-        timer.schedule(clockTask, DateUtils.MINUTE_IN_MILLIS - System.currentTimeMillis() % DateUtils.MINUTE_IN_MILLIS, 60000);
-        int black = settings.getInt("black", 10);
-        if (black != 0) {
-            black = (black * 3500) + 10000;
-            blackTask = new TimerTask() {
-                @Override
-                public void run() {
-                    if (dark || (transmitFragment.isAdded() && RadioService.recording)) return;
-                    if (!delay && RadioService.operator.getChannel() != null) {
-                        runOnUiThread(() -> darkChange(true));
-                    }
-                    delay = false;
-                }
-            };
-            timer.schedule(blackTask, black, black);
-        }
-        overrideUp = settings.getBoolean("overideup", false);
-        overrideDown = settings.getBoolean("overidedown", false);
-        tutorial_count = settings.getInt("tutorial", 0);
-        if (tutorial_count == 5) finishTutorial(tutorial_count);
-        updateClock();
-        sendBroadcast(new Intent("checkForMessages"));
-        if (settings.getBoolean("custom", false)) {
-            changeBackground(settings.getString("background", "default"));
-        } else changeBackground(settings.getString("main_backdrop", ""));
-        if (RadioService.operator.getChannel() != null) {
-            channelName.setText(RadioService.operator.getChannel().getChannel_name());
-        } else {
-            channelName.setText(this.getString(R.string.select_channel));
-            if (tutorial_count > 5) {
-                selectChannel(false);
-            }
-        }
-        if (settings.getBoolean("flagDue", false)) {
-            displayLongFlag(settings.getString("flagSenderId", "Unknown"), settings.getString("flagSenderHandle", "Unknown"));
-        }
-    }
-
     @Override
     public void changeBackground(String link) {
-        new GlideImageLoader(this, backDrop).load(link);
+        new GlideImageLoader(this, binding.backdrop).load(link);
     }
 
     @Override
@@ -739,12 +712,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void updateQueue(int count, boolean paused, boolean poor) {
         if (transmitFragment.isAdded()) transmitFragment.updateque(count, paused);
         if (count == 0 || paused) {
-            if (!timeBar.isIndeterminate()) timeBar.setIndeterminate(true);
+            if (!binding.maTimer.isIndeterminate()) binding.maTimer.setIndeterminate(true);
         } else {
-            if (timeBar.isIndeterminate()) timeBar.setIndeterminate(false);
+            if (binding.maTimer.isIndeterminate()) binding.maTimer.setIndeterminate(false);
         }
-        if (count > 0) queueCount.setText(String.valueOf(count));
-        else queueCount.setText(" ");
+        if (count > 0) binding.blackQueueTv.setText(String.valueOf(count));
+        else binding.blackQueueTv.setText(" ");
         adjustColors(poor);
     }
 
@@ -752,34 +725,34 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void adjustColors(boolean poor) {
         runOnUiThread(() -> {
             if (poor) {
-                day.setTextColor(Color.RED);
-                clock.setTextColor(Color.RED);
-                queueCount.setTextColor(Color.RED);
-                gpsLocation.setTextColor(Color.RED);
-                title.setTextColor(Color.RED);
-                duration.setTextColor(Color.RED);
+                binding.blackDateTv.setTextColor(Color.RED);
+                binding.blackClockTv.setTextColor(Color.RED);
+                binding.blackQueueTv.setTextColor(Color.RED);
+                binding.blackLocationTv.setTextColor(Color.RED);
+                binding.blackTitleTv.setTextColor(Color.RED);
+                binding.blackDurationTv.setTextColor(Color.RED);
                 if (dark)
-                    timeBar.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.red_bar));
+                    binding.maTimer.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.red_bar));
             } else {
-                day.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                clock.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                queueCount.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                gpsLocation.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                title.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                duration.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackDateTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackClockTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackQueueTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackLocationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackTitleTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
+                binding.blackDurationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 if (dark)
-                    timeBar.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.blue_bar));
+                    binding.maTimer.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.blue_bar));
             }
             if (!dark)
-                timeBar.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.white_bar));
-            if (timeBar.isIndeterminate()) {
+                binding.maTimer.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.white_bar));
+            if (binding.maTimer.isIndeterminate()) {
                 if (!dark)
-                    timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
+                    binding.maTimer.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
                 else {
                     if (poor)
-                        timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.RED));
+                        binding.maTimer.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(Color.RED));
                     else
-                        timeBar.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(ContextCompat.getColor(MainActivity.this, R.color.light_blue)));
+                        binding.maTimer.getIndeterminateDrawable().setColorFilter(Utils.colorFilter(ContextCompat.getColor(MainActivity.this, R.color.light_blue)));
                 }
             }
         });
@@ -799,11 +772,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     private void animateMax(int set) {
         if (set != 0) {
-            timeBar.setMax(set);
-            timeBar.setProgress(set);
-            ProgressAnimation anim = new ProgressAnimation(timeBar, set);
+            binding.maTimer.setMax(set);
+            binding.maTimer.setProgress(set);
+            ProgressAnimation anim = new ProgressAnimation(binding.maTimer, set);
             anim.setDuration(set + 300);
-            timeBar.startAnimation(anim);
+            binding.maTimer.startAnimation(anim);
         } else {
             resetAnimation();
         }
@@ -811,9 +784,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void updateLocationDisplay(String location) {
-        gpsLocation.setText(location);
-        if (location.equals("")) upper_location_view.setText(R.string.location_unknown);
-        else upper_location_view.setText(location);
+        binding.blackLocationTv.setText(location);
+        if (location.equals("")) binding.maLocatoinTv.setText(R.string.location_unknown);
+        else binding.maLocatoinTv.setText(location);
     }
 
     @Override
@@ -864,15 +837,15 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 RadioService.occupied.set(false);
                 AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
                 fadeIn.setDuration(200);
-                blur.setVisibility(View.VISIBLE);
-                cancel.setVisibility(View.VISIBLE);
-                blur.startAnimation(fadeIn);
-                cancel.startAnimation(fadeIn);
+                binding.maBlurrIv.setVisibility(View.VISIBLE);
+                binding.cancel.setVisibility(View.VISIBLE);
+                binding.maBlurrIv.startAnimation(fadeIn);
+                binding.cancel.startAnimation(fadeIn);
             } else {
-                blur.clearAnimation();
-                cancel.clearAnimation();
-                blur.setVisibility(View.GONE);
-                cancel.setVisibility(View.GONE);
+                binding.maBlurrIv.clearAnimation();
+                binding.cancel.clearAnimation();
+                binding.maBlurrIv.setVisibility(View.GONE);
+                binding.cancel.setVisibility(View.GONE);
             }
             lockOthers(recording);
         }
@@ -882,8 +855,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (tutorial_count < 6) return;
         dark = show;
         delay = true;
-        if (show) blackout.setVisibility(View.VISIBLE);
-        else blackout.setVisibility(View.GONE);
+        if (show) binding.blackOut.setVisibility(View.VISIBLE);
+        else binding.blackOut.setVisibility(View.GONE);
         if (snackbar != null) {
             if (snackbar.isShown()) {
                 snackbar.dismiss();
@@ -937,7 +910,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             super.onBackPressed();
             //stopService(new Intent(this, RadioService.class));
         } else {
-            Utils.vibrate(locationButton);
+            Utils.vibrate(binding.maMapButton);
             longPressed = true;
             executor.execute(() -> {
                 sleep(600);
@@ -950,19 +923,22 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
-            case KeyEvent.KEYCODE_MENU:
+            case KeyEvent.KEYCODE_MENU -> {
                 darkChange(!dark);
                 return true;
-            case KeyEvent.KEYCODE_VOLUME_UP:
+            }
+            case KeyEvent.KEYCODE_VOLUME_UP -> {
                 if (overrideUp) {
                     event.startTracking();
                     return true;
                 } else return super.onKeyDown(keyCode, event);
-            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            }
+            case KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (overrideDown) {
                     event.startTracking();
                     return true;
                 } else return super.onKeyDown(keyCode, event);
+            }
         }
         return super.onKeyDown(keyCode, event);
     }
@@ -1021,7 +997,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (id == R.id.cancel) {
             Utils.vibrate(v);
             if (transmitFragment.isAdded()) transmitFragment.stopRecorder(false);
-        } else if (id == R.id.quecount) {
+        } else if (id == R.id.black_queue_tv) {
             if (RadioService.operator.getChannel() != null) {
                 if (RS != null) {
                     if (RadioService.paused)
@@ -1031,7 +1007,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenPlayPause"));
             }
-        } else if (id == R.id.history) {
+        } else if (id == R.id.ma_chat_history_button) {
             if (RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts())
                 return;
             Utils.vibrate(v);
@@ -1042,7 +1018,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             sendBroadcast(new Intent("nineteenClickSound"));
             Utils.vibrate(v);
             display_message_history();
-        } else if (id == R.id.massButton) {
+        } else if (id == R.id.ma_mass_photo_button) {
             if (RadioService.operator.getChannel() == null || RadioService.operator.getHinderPhotos())
                 return;
             Utils.vibrate(v);
@@ -1052,22 +1028,22 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             }
             sendBroadcast(new Intent("nineteenClickSound"));
             photo_picker(3737);
-        } else if (id == R.id.channel_name) {
+        } else if (id == R.id.ma_channels_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             selectChannel(true);
-        } else if (id == R.id.locationButton) {
+        } else if (id == R.id.ma_map_button) {
             if (RadioService.operator.getChannel() == null) return;
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             this.startActivity(new Intent(MainActivity.this, Locations.class));
-        } else if (id == R.id.sideband) {
+        } else if (id == R.id.ma_reservoir_button) {
             if (RadioService.operator.getChannel() != null) {
                 sendBroadcast(new Intent("nineteenClickSound"));
                 Utils.vibrate(v);
                 startActivity(new Intent(MainActivity.this, ReservoirActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
             }
-        } else if (id == R.id.auto) {
+        } else if (id == R.id.ma_pause_button) {
             if (RadioService.operator.getChannel() == null) return;
             if (RS != null) {
                 if (RadioService.paused)
@@ -1075,7 +1051,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
             sendBroadcast(new Intent("nineteenPlayPause"));
-        } else if (id == R.id.blackSkip) {
+        } else if (id == R.id.black_skip_button) {
             if (RS != null) {
                 if (RS.getQueue() != 0) {
                     sendBroadcast(new Intent("nineteenSkip"));
@@ -1084,37 +1060,36 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             }
         } else if (id == R.id.blackOut) {
             darkChange(false);
-        } else if (id == R.id.skip) {
+        } else if (id == R.id.ma_skip_button) {
             Utils.vibrate(v);
             if (RadioService.operator.getChannel() == null) return;
             sendBroadcast(new Intent("nineteenSkip"));
-        } else if (id == R.id.gear) {
+        } else if (id == R.id.ma_settings_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenTabSound"));
             startActivity(new Intent(this, SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         }
     }
 
-    @SuppressLint("NonConstantResourceId")
     @Override
     public boolean onLongClick(View v) {
         delay = true;
         int id = v.getId();
-        if (id == R.id.massButton) {
+        if (id == R.id.ma_mass_photo_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
             MassPast massPast = new MassPast();
             massPast.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             massPast.show(fragmentManager, "massPast");
-        } else if (id == R.id.gear) {
+        } else if (id == R.id.ma_settings_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenStaticSound"));
             showSnack(new Snack("Rewind Five", Snackbar.LENGTH_SHORT));
             RotateAnimation counterClockwise = new RotateAnimation(360, 0, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             counterClockwise.setDuration(2000);
-            gear.startAnimation(counterClockwise);
+            binding.maSettingsButton.startAnimation(counterClockwise);
             if (RS != null) RS.rewind();
-        } else if (id == R.id.auto) {
+        } else if (id == R.id.ma_pause_button) {
             if (!isFinishing()) {
                 sendBroadcast(new Intent("nineteenClickSound"));
                 Utils.vibrate(v);
@@ -1125,17 +1100,17 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                     qd.show(fragmentManager, "qd");
                 }
             }
-        } else if (id == R.id.blackSkip) {
+        } else if (id == R.id.black_skip_button) {
             if (RS != null) {
                 if (RS.getQueue() != 0) {
                     sendBroadcast(new Intent("purgeNineTeen"));
                     Utils.vibrate(v);
                 } else darkChange(false);
             }
-        } else if (id == R.id.user) {
+        } else if (id == R.id.ma_user_list_button) {
             Utils.vibrate(v);
             darkChange(true);
-        } else if (id == R.id.gear) {
+        } else if (id == R.id.ma_skip_button) {
             if (RS != null)
                 if (RS.getQueue() != 0) {
                     Utils.vibrate(v);
@@ -1358,7 +1333,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         lps.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         lps.setMargins(margin, margin, margin, margin);
         ShowcaseView showcaseView = new ShowcaseView.Builder(this)
-                .setTarget(new ViewTarget(R.id.skip, this))
+                .setTarget(new ViewTarget(R.id.ma_skip_button, this))
                 .setContentTitle("SKIP BUTTON")
                 .setContentText("Skips the current transmission which consequently lowers the queue")
                 .setStyle(R.style.CustomShowcaseTheme)
@@ -1371,17 +1346,17 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             tutorial_count++;
             settings.edit().putInt("tutorial", tutorial_count).apply();
             switch (tutorial_count) {
-                case 5:
+                case 5 -> {
                     showcaseView.setButtonPosition(lps);
-                    showcaseView.setTarget(new ViewTarget(R.id.channel_name, MainActivity.this));
+                    showcaseView.setTarget(new ViewTarget(R.id.ma_channels_button, MainActivity.this));
                     showcaseView.setContentTitle("Current Channel");
                     showcaseView.setContentText("Unlimited public and private channels");
-                    break;
-                case 6:
+                }
+                case 6 -> {
                     showcaseView.hide();
                     selectChannel(false);
                     Toaster.toastlow(MainActivity.this, "Join a channel or create a new one");
-                    break;
+                }
             }
         });
     }
@@ -1392,11 +1367,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         else {
             int set = data[0] - data[1];
             if (set + 300 > 0) {
-                timeBar.setMax(data[0]);
-                timeBar.setProgress(set);
-                ProgressAnimation anim = new ProgressAnimation(timeBar, set);
+                binding.maTimer.setMax(data[0]);
+                binding.maTimer.setProgress(set);
+                ProgressAnimation anim = new ProgressAnimation(binding.maTimer, set);
                 anim.setDuration(set + 300);
-                timeBar.startAnimation(anim);
+                binding.maTimer.startAnimation(anim);
             }
         }
     }
@@ -1414,45 +1389,46 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     private void resetAnimation() {
-        timeBar.clearAnimation();
-        timeBar.setProgress(0);
+        binding.maTimer.clearAnimation();
+        binding.maTimer.setProgress(0);
     }
 
     @Override
     public void lockOthers(boolean lock) {
-        if (timeBar.isIndeterminate() && !lock) timeBar.setIndeterminate(false);
-        icon.setEnabled(!lock);
-        gear.setEnabled(!lock);
-        reservoir.setEnabled(!lock);
-        skipper.setEnabled(!lock);
-        auto.setEnabled(!lock);
-        locationButton.setEnabled(!lock);
-        massPhoto.setEnabled(!lock);
-        history.setEnabled(!lock);
-        channelName.setEnabled(!lock);
+        if (binding.maTimer.isIndeterminate() && !lock) binding.maTimer.setIndeterminate(false);
+        binding.maUserListButton.setEnabled(!lock);
+        binding.maReservoirButton.setEnabled(!lock);
+        binding.maSettingsButton.setEnabled(!lock);
+        binding.maSkipButton.setEnabled(!lock);
+        binding.maPauseButton.setEnabled(!lock);
+        binding.maMapButton.setEnabled(!lock);
+        binding.maMassPhotoButton.setEnabled(!lock);
+        binding.maChatHistoryButton.setEnabled(!lock);
+        binding.maChannelsButton.setEnabled(!lock);
     }
 
     private void updateDarkDisplay(String[] display, long stamp) {
-        if (display[0].contains("Online") || display[0].contains("Dead")) handle.setText(" ");
-        else handle.setText(display[0]);
-        carrier.setText(display[1]);
-        location.setText(display[2]);
-        title.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
-        if (display[3].equals("0") || display[3].isEmpty()) duration.setText("");
-        else duration.setText(display[3] + "s");
-        new GlideImageLoader(this, rank).load(Utils.parseRankUrl(display[4]));
+        if (display[0].contains("Online") || display[0].contains("Dead"))
+            binding.blackHandleTv.setText(" ");
+        else binding.blackHandleTv.setText(display[0]);
+        binding.blackCarrierTv.setText(display[1]);
+        binding.blackLocationTv.setText(display[2]);
+        binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
+        if (display[3].equals("0") || display[3].isEmpty()) binding.blackDurationTv.setText("");
+        else binding.blackDurationTv.setText(display[3] + "s");
+        new GlideImageLoader(this, binding.blackStarIv).load(Utils.parseRankUrl(display[4]));
         if (display[5].equals("none")) {
-            profile.setImageDrawable(null);
-            profile.setOnClickListener(null);
+            binding.blackProfilePictureIv.setImageDrawable(null);
+            binding.blackProfilePictureIv.setOnClickListener(null);
         } else {
-            profile.setVisibility(View.VISIBLE);
-            new GlideImageLoader(this, profile).load(display[5], RadioService.profileOptions);
-            profile.setOnClickListener(v -> {
+            binding.blackProfilePictureIv.setVisibility(View.VISIBLE);
+            new GlideImageLoader(this, binding.blackStarIv).load(display[5], RadioService.profileOptions);
+            binding.blackProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenBoxSound"));
                 streamFile(display[5]);
             });
-            profile.setOnLongClickListener(v -> {
+            binding.blackProfilePictureIv.setOnLongClickListener(v -> {
                 UserListEntry user = returnTalkerEntry();
                 if (user != null) {
                     Utils.vibrate(v);
@@ -1468,8 +1444,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private void updateClock() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd", locale);
         Date d = new Date();
-        day.setText(sdf.format(d));
-        clock.setText(String.format("%tR", System.currentTimeMillis()));
+        binding.blackDateTv.setText(sdf.format(d));
+        binding.blackClockTv.setText(String.format("%tR", System.currentTimeMillis()));
         if (RS != null) RS.checkForMessages();
     }
 
@@ -1500,60 +1476,36 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (RadioService.operator.getChannel() == null) return;
         sendBroadcast(new Intent("nineteenClickSound"));
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        if (transmitFragment.isAdded()) transaction.replace(R.id.bottomframe, userFragment);
-        else transaction.replace(R.id.bottomframe, transmitFragment);
+        if (transmitFragment.isAdded()) transaction.replace(R.id.ma_bottom_frame, userFragment);
+        else transaction.replace(R.id.ma_bottom_frame, transmitFragment);
         transaction.commit();
         delay = true;
     }
 
     private void findById() {
-        cancel = findViewById(R.id.cancel);
-        auto = findViewById(R.id.auto);
-        reservoir = findViewById(R.id.sideband);
-        profile = findViewById(R.id.option_image_view);
-        clock = findViewById(R.id.clock);
-        day = findViewById(R.id.day);
-        timeBar = findViewById(R.id.timeTimer);
-        icon = findViewById(R.id.user);
-        queueCount = findViewById(R.id.quecount);
-        gpsLocation = findViewById(R.id.gpsLocation);
-        duration = findViewById(R.id.duration);
-        upper_location_view = findViewById(R.id.subtitle);
-        gear = findViewById(R.id.gear);
-        skipper = findViewById(R.id.skip);
-        blackout = findViewById(R.id.blackOut);
-        View blackSkip = findViewById(R.id.blackSkip);
-        handle = findViewById(R.id.handle);
-        carrier = findViewById(R.id.carrier);
-        location = findViewById(R.id.banner);
-        title = findViewById(R.id.title);
-        title.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-        rank = findViewById(R.id.starIV);
-        auto.setVisibility(View.VISIBLE);
-        skipper.setVisibility(View.VISIBLE);
-        locationButton = findViewById(R.id.locationButton);
-        channelName = findViewById(R.id.channel_name);
-        history = findViewById(R.id.history);
-        massPhoto = findViewById(R.id.massButton);
-        history.setOnClickListener(this);
-        massPhoto.setOnClickListener(this);
-        massPhoto.setOnLongClickListener(this);
-        channelName.setOnClickListener(this);
-        reservoir.setOnClickListener(this);
-        icon.setOnLongClickListener(this);
-        blackout.setOnClickListener(this);
-        gear.setOnClickListener(this);
-        if (RadioService.operator.getSubscribed()) gear.setOnLongClickListener(this);
-        blackSkip.setOnClickListener(this);
-        blackSkip.setOnLongClickListener(this);
-        skipper.setOnClickListener(this);
-        skipper.setOnLongClickListener(this);
-        auto.setOnClickListener(this);
-        auto.setOnLongClickListener(this);
-        locationButton.setOnClickListener(this);
-        queueCount.setOnClickListener(this);
-        blur = findViewById(R.id.blurr);
-        cancel.setOnClickListener(this);
+        //OnClick
+        binding.maChatHistoryButton.setOnClickListener(this);
+        binding.maMassPhotoButton.setOnClickListener(this);
+        binding.maChannelsButton.setOnClickListener(this);
+        binding.maReservoirButton.setOnClickListener(this);
+        binding.blackOut.setOnClickListener(this);
+        binding.maSettingsButton.setOnClickListener(this);
+        binding.blackSkipButton.setOnClickListener(this);
+        binding.blackSkipButton.setOnClickListener(this);
+        binding.maSkipButton.setOnClickListener(this);
+        binding.maMapButton.setOnClickListener(this);
+        binding.maPauseButton.setOnClickListener(this);
+        binding.blackQueueTv.setOnClickListener(this);
+
+        //LongPress
+        binding.maUserListButton.setOnLongClickListener(this);
+        binding.blackSkipButton.setOnLongClickListener(this);
+        binding.blackSkipButton.setOnLongClickListener(this);
+        binding.maSkipButton.setOnLongClickListener(this);
+        binding.maMassPhotoButton.setOnLongClickListener(this);
+        binding.maPauseButton.setOnLongClickListener(this);
+        if (RadioService.operator.getSubscribed())
+            binding.maSettingsButton.setOnLongClickListener(this);
     }
 
     @Override

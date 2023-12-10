@@ -18,7 +18,7 @@
 			android:paddingTop="15dp">
 
 			<ImageView
-				android:id="@+id/profilePicture"
+				android:id="@+id/driver_profile_picture_iv"
 				android:layout_width="70dp"
 				android:layout_height="70dp"
 				android:layout_marginLeft="5dp"
@@ -26,50 +26,50 @@
 				android:scaleType="centerCrop"/>
 
 			<TextView
-				android:id="@+id/handle"
+				android:id="@+id/driver_handle_tv"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_toRightOf="@+id/profilePicture"
-				android:gravity="left"
+				android:layout_toEndOf="@+id/driver_profile_picture_iv"
+				android:gravity="start"
 				android:textColor="#fff"
 				android:textSize="20dp"
 				android:textStyle="bold" />
 
 			<TextView
-				android:id="@+id/carrier"
+				android:id="@+id/driver_carrier_tv"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_below="@+id/handle"
+				android:layout_below="@+id/driver_handle_tv"
 				android:layout_marginStart="@dimen/half_margin"
-				android:layout_toRightOf="@+id/profilePicture"
+				android:layout_toEndOf="@+id/driver_profile_picture_iv"
 				android:textColor="#fff"
 				android:textSize="16dp" />
 
 			<TextView
-				android:id="@+id/title"
+				android:id="@+id/driver_title_tv"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_alignParentRight="true"
-				android:layout_below="@+id/handle"
-				android:layout_marginRight="3dp"
+				android:layout_alignParentEnd="true"
+				android:layout_below="@+id/driver_handle_tv"
+				android:layout_marginEnd="3dp"
 				android:textSize="16dp"/>
 
 			<TextView
-				android:id="@+id/banner"
+				android:id="@+id/driver_banner_tv"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_alignParentRight="true"
-				android:layout_below="@+id/title"
-				android:layout_marginRight="3dp"
+				android:layout_alignParentEnd="true"
+				android:layout_below="@+id/driver_title_tv"
+				android:layout_marginEnd="3dp"
 				android:textSize="16dp"/>
 
 			<ImageView
-				android:id="@+id/starIm"
+				android:id="@+id/driver_star_iv"
 				android:layout_width="@dimen/star_width"
 				android:layout_height="@dimen/star_height"
-				android:layout_below="@+id/carrier"
+				android:layout_below="@+id/driver_carrier_tv"
 				android:layout_marginTop="@dimen/star_margin_top"
-				android:layout_toRightOf="@+id/profilePicture"
+				android:layout_toEndOf="@+id/driver_profile_picture_iv"
 				android:scaleType="fitStart" />
 
 		</RelativeLayout>
@@ -100,8 +100,8 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_below="@+id/update"
-				android:layout_alignLeft="@+id/update"
-				android:layout_alignRight="@+id/update"
+				android:layout_alignStart="@+id/update"
+				android:layout_alignEnd="@+id/update"
 				android:layout_centerHorizontal="true"
 				android:layout_marginTop="15dp"
 				android:background="@drawable/black_to_white_transparent_button"
@@ -116,8 +116,8 @@
 				android:id="@+id/stats"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_alignLeft="@+id/update"
-				android:layout_alignRight="@+id/update"
+				android:layout_alignStart="@+id/update"
+				android:layout_alignEnd="@+id/update"
 				android:layout_below="@+id/blocked"
 				android:layout_centerHorizontal="true"
 				android:layout_marginTop="15dp"
@@ -134,8 +134,8 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_below="@+id/stats"
-				android:layout_alignLeft="@+id/update"
-				android:layout_alignRight="@+id/update"
+				android:layout_alignStart="@+id/update"
+				android:layout_alignEnd="@+id/update"
 				android:layout_centerHorizontal="true"
 				android:layout_marginTop="15dp"
 				android:background="@drawable/black_to_white_transparent_button"

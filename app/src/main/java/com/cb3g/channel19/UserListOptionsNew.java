@@ -56,8 +56,8 @@ public class UserListOptionsNew extends DialogFragment {
             Utils.vibrate(v1);
             dismiss();
         };
-        binding.handle.setText(user.getRadio_hanlde());
-        binding.handle.setOnClickListener(dismisser);
+        binding.userListOptionHandleTv.setText(user.getRadio_hanlde());
+        binding.userListOptionHandleTv.setOnClickListener(dismisser);
         if (user.getStamp() != 0)
             binding.timeOnline.setText("Online: " + Utils.timeOnline(Utils.timeDifferance(user.getStamp())));
         else binding.timeOnline.setText("Offline");
@@ -349,7 +349,7 @@ public class UserListOptionsNew extends DialogFragment {
 
             MyViewHolder(View itemView) {
                 super(itemView);
-                icon = itemView.findViewById(R.id.option_image_view);
+                icon = itemView.findViewById(R.id.black_profile_picture_iv);
                 description = itemView.findViewById(R.id.option_name);
             }
         }

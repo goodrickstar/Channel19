@@ -35,7 +35,7 @@ public class BlockedByFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ArrayList<String> data = requireArguments().getStringArrayList("handles");
-        binding.title.setText("Blocked By " + data.size() + " Users");
+        binding.blockedByTv.setText("Blocked By " + data.size() + " Users");
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setAdapter(new recycler_adapter(data));
@@ -81,7 +81,7 @@ public class BlockedByFragment extends DialogFragment {
 
             MyViewHolder(View itemView) {
                 super(itemView);
-                handle = itemView.findViewById(R.id.handle);
+                handle = itemView.findViewById(R.id.black_handle_tv);
             }
         }
     }

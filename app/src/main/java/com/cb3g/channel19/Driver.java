@@ -53,7 +53,7 @@ public class Driver extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (!RadioService.operator.getDisableProfile()) {
-            binding.profilePicture.setOnClickListener(v -> {
+            binding.driverProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
                 if (SI != null) SI.launchPicker(null, false);
@@ -107,22 +107,22 @@ public class Driver extends Fragment {
     }
 
     public void updateProfilePicture() {
-        new GlideImageLoader(context, binding.profilePicture).load(RadioService.operator.getProfileLink(), RadioService.profileOptions);
+        new GlideImageLoader(context, binding.driverProfilePictureIv).load(RadioService.operator.getProfileLink(), RadioService.profileOptions);
     }
 
     public void setDriverInfo() {
-        binding.handle.setText(RadioService.operator.getHandle());
-        binding.carrier.setText(RadioService.operator.getCarrier());
-        binding.banner.setText(RadioService.operator.getTown());
+        binding.driverHandleTv.setText(RadioService.operator.getHandle());
+        binding.driverCarrierTv.setText(RadioService.operator.getCarrier());
+        binding.driverBannerTv.setText(RadioService.operator.getTown());
         if (RadioService.operator.getSubscribed())
-            binding.title.setText(EmojiParser.parseToUnicode(":heavy_plus_sign:"));
+            binding.driverTitleTv.setText(EmojiParser.parseToUnicode(":heavy_plus_sign:"));
         if (!RadioService.operator.getUserLocationString().isEmpty())
-            binding.banner.setText(RadioService.operator.getUserLocationString());
+            binding.driverBannerTv.setText(RadioService.operator.getUserLocationString());
     }
 
     public void setRankAndStamp() {
         if (isAdded())
-            new GlideImageLoader(context, binding.starIm).load(Utils.parseRankUrl(RadioService.operator.getRank()));
+            new GlideImageLoader(context, binding.driverStarIv).load(Utils.parseRankUrl(RadioService.operator.getRank()));
     }
 
     public void refreshRank() {
@@ -154,12 +154,12 @@ public class Driver extends Fragment {
                         if (isAdded()) {
                             new Handler(Looper.getMainLooper()).post(() -> {
                                 if (donations > 4)
-                                    binding.starIm.setOnClickListener(v -> {
+                                    binding.driverStarIv.setOnClickListener(v -> {
                                         Utils.vibrate(v);
                                         context.sendBroadcast(new Intent("nineteenClickSound"));
                                         Utils.vibrate(v);
                                     });
-                                else binding.starIm.setOnClickListener(null);
+                                else binding.driverStarIv.setOnClickListener(null);
                                 setRankAndStamp();
                             });
                         }

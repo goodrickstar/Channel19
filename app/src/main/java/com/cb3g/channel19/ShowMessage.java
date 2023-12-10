@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -43,10 +41,10 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        final TextView handle = view.findViewById(R.id.handle);
-        final ImageView starIV = view.findViewById(R.id.starIV);
-        final ImageView profile = view.findViewById(R.id.option_image_view);
-        final ImageView history = view.findViewById(R.id.history);
+        final TextView handle = view.findViewById(R.id.black_handle_tv);
+        final ImageView starIV = view.findViewById(R.id.black_star_iv);
+        final ImageView profile = view.findViewById(R.id.black_profile_picture_iv);
+        final ImageView history = view.findViewById(R.id.ma_chat_history_button);
         outbound = view.findViewById(R.id.messagebox);
         inbound = view.findViewById(R.id.inboundBox);
         left = view.findViewById(R.id.order);
@@ -111,7 +109,7 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
                     context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", message[0]).putExtra("text", output));
                 dismiss();
             } else dismiss();
-        } else if (id == R.id.history) {
+        } else if (id == R.id.ma_chat_history_button) {
             for (UserListEntry user : RadioService.users) {
                 if (user.getUser_id().equals(message[0]) && MI != null) {
                     MI.displayChat(user, false, false);

@@ -40,7 +40,7 @@ public class SendPhoto extends DialogFragment {
         super.onViewCreated(v, savedInstanceState);
         RadioService.occupied.set(true);
         final String[] photoArray = requireArguments().getStringArray("data");
-        binding.banner.setText(photoArray[2]);
+        binding.sendPhotoHandle.setText(photoArray[2]);
         final View.OnClickListener listener = v1 -> {
             Utils.vibrate(v1);
             context.sendBroadcast(new Intent("nineteenClickSound"));

@@ -194,7 +194,7 @@ public class Blocked extends DialogFragment {
 
             viewHolder(View itemView) {
                 super(itemView);
-                handle = itemView.findViewById(R.id.handle);
+                handle = itemView.findViewById(R.id.black_handle_tv);
                 photo = itemView.findViewById(R.id.photo);
                 text = itemView.findViewById(R.id.text);
                 radio = itemView.findViewById(R.id.radio);

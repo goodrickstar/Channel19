@@ -164,10 +164,10 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
-        final TextView title = v.findViewById(R.id.handle);
-        final ImageView profile = v.findViewById(R.id.option_image_view);
+        final TextView title = v.findViewById(R.id.black_handle_tv);
+        final ImageView profile = v.findViewById(R.id.black_profile_picture_iv);
         loading = v.findViewById(R.id.loading);
-        starIV = v.findViewById(R.id.starIV);
+        starIV = v.findViewById(R.id.black_star_iv);
         stamp = v.findViewById(R.id.stamp);
         new GlideImageLoader(context, profile).load(user.getProfileLink(), RadioService.profileOptions);
         chat_view = v.findViewById(R.id.chat_view);

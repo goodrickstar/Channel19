@@ -27,23 +27,14 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="2dp"
-        android:src="@drawable/black_box_white_outline_slight_transparent"
-        app:layout_constraintBottom_toBottomOf="@+id/sideband"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/sideband"
+        android:id="@+id/ma_reservoir_button"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="2dp"
         android:padding="12dp"
         android:scaleType="fitXY"
+        android:background="@drawable/black_box_white_outline_slight_transparent"
         android:src="@drawable/title_set"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -53,13 +44,13 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:src="@drawable/black_box_white_outline_slight_transparent"
-        app:layout_constraintBottom_toBottomOf="@+id/channel_name"
+        app:layout_constraintBottom_toBottomOf="@+id/ma_channels_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/channel_name" />
+        app:layout_constraintTop_toTopOf="@+id/ma_channels_button" />
 
     <ImageView
-        android:id="@+id/history"
+        android:id="@+id/ma_chat_history_button"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center"
@@ -69,12 +60,12 @@
         android:paddingBottom="@dimen/default_padding"
         android:scaleType="fitCenter"
         android:src="@drawable/inbox_set"
-        app:layout_constraintBottom_toBottomOf="@+id/channel_name"
+        app:layout_constraintBottom_toBottomOf="@+id/ma_channels_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/channel_name" />
+        app:layout_constraintTop_toTopOf="@+id/ma_channels_button" />
 
     <ImageView
-        android:id="@+id/massButton"
+        android:id="@+id/ma_mass_photo_button"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center"
@@ -84,12 +75,12 @@
         android:paddingBottom="@dimen/default_padding"
         android:scaleType="fitCenter"
         android:src="@drawable/video_set"
-        app:layout_constraintBottom_toBottomOf="@+id/channel_name"
+        app:layout_constraintBottom_toBottomOf="@+id/ma_channels_button"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/channel_name" />
+        app:layout_constraintTop_toTopOf="@+id/ma_channels_button" />
 
     <ImageView
-        android:id="@+id/gear"
+        android:id="@+id/ma_settings_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
@@ -101,41 +92,41 @@
         app:layout_constraintTop_toTopOf="@+id/imageView4" />
 
     <ImageView
-        android:id="@+id/locationButton"
+        android:id="@+id/ma_map_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
         android:scaleType="fitCenter"
         android:src="@drawable/location_button"
         app:layout_constraintBottom_toBottomOf="@+id/imageView4"
-        app:layout_constraintEnd_toStartOf="@+id/auto"
-        app:layout_constraintStart_toEndOf="@+id/gear"
+        app:layout_constraintEnd_toStartOf="@+id/ma_pause_button"
+        app:layout_constraintStart_toEndOf="@+id/ma_settings_button"
         app:layout_constraintTop_toTopOf="@+id/imageView4" />
 
     <ImageView
-        android:id="@+id/auto"
+        android:id="@+id/ma_pause_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:scaleType="fitCenter"
         android:src="@drawable/pause_set"
         app:layout_constraintBottom_toBottomOf="@+id/imageView4"
-        app:layout_constraintEnd_toStartOf="@+id/user"
-        app:layout_constraintStart_toEndOf="@+id/gear"
+        app:layout_constraintEnd_toStartOf="@+id/ma_user_list_button"
+        app:layout_constraintStart_toEndOf="@+id/ma_settings_button"
         app:layout_constraintTop_toTopOf="@+id/imageView4" />
 
     <ImageView
-        android:id="@+id/skip"
+        android:id="@+id/ma_skip_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:scaleType="fitXY"
         android:src="@drawable/skiper"
         app:layout_constraintBottom_toBottomOf="@+id/imageView4"
-        app:layout_constraintEnd_toStartOf="@+id/user"
-        app:layout_constraintStart_toEndOf="@+id/auto"
+        app:layout_constraintEnd_toStartOf="@+id/ma_user_list_button"
+        app:layout_constraintStart_toEndOf="@+id/ma_pause_button"
         app:layout_constraintTop_toTopOf="@+id/imageView4" />
 
     <ImageView
-        android:id="@+id/user"
+        android:id="@+id/ma_user_list_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginEnd="16dp"
@@ -147,7 +138,7 @@
         app:layout_constraintTop_toTopOf="@+id/imageView4" />
 
     <TextView
-        android:id="@+id/subtitle"
+        android:id="@+id/ma_locatoin_tv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -159,10 +150,10 @@
         android:textAppearance="@style/title_font"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sideband" />
+        app:layout_constraintTop_toBottomOf="@id/ma_reservoir_button" />
 
     <TextView
-        android:id="@+id/channel_name"
+        android:id="@+id/ma_channels_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -175,12 +166,12 @@
         android:text="@string/main_channel"
         android:textAppearance="@style/title_font"
         android:textColor="@drawable/white_to_black_text"
-        app:layout_constraintEnd_toStartOf="@+id/history"
-        app:layout_constraintStart_toEndOf="@+id/massButton"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle" />
+        app:layout_constraintEnd_toStartOf="@+id/ma_chat_history_button"
+        app:layout_constraintStart_toEndOf="@+id/ma_mass_photo_button"
+        app:layout_constraintTop_toBottomOf="@+id/ma_locatoin_tv" />
 
     <ImageView
-        android:id="@+id/blurr"
+        android:id="@+id/ma_blurr_iv"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="2dp"
@@ -202,17 +193,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/imageView4"
         app:layout_constraintStart_toStartOf="@+id/imageView4"
-        app:layout_constraintTop_toBottomOf="@+id/bottomframe" />
+        app:layout_constraintTop_toBottomOf="@+id/ma_bottom_frame" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/bottomframe"
+        android:id="@+id/ma_bottom_frame"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_weight="1"
         app:layout_constraintBottom_toTopOf="@+id/imageView4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/channel_name">
+        app:layout_constraintTop_toBottomOf="@+id/ma_channels_button">
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
@@ -230,99 +221,99 @@
 
 
         <ImageView
-            android:id="@+id/option_image_view"
+            android:id="@+id/black_profile_picture_iv"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginStart="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/day"
+            app:layout_constraintTop_toBottomOf="@id/black_date_tv"
             app:layout_constraintVertical_bias="0.19999999"
             tools:layout_conversion_absoluteHeight="70dp"
             tools:layout_conversion_absoluteWidth="70dp" />
 
         <ImageView
-            android:id="@+id/starIV"
+            android:id="@+id/black_star_iv"
             android:layout_width="@dimen/star_width"
             android:layout_height="@dimen/star_height"
             android:scaleType="fitStart"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-            app:layout_constraintStart_toStartOf="@+id/handle"
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+            app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
             tools:layout_conversion_absoluteHeight="14dp"
             tools:layout_conversion_absoluteWidth="91dp" />
 
         <TextView
-            android:id="@+id/handle"
+            android:id="@+id/black_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:textAppearance="@style/large_font"
-            app:layout_constraintStart_toEndOf="@+id/option_image_view"
-            app:layout_constraintTop_toTopOf="@+id/option_image_view"
+            app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
+            app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv"
             tools:layout_conversion_absoluteHeight="27dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/carrier"
+            android:id="@+id/black_carrier_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:textAppearance="@style/small_font"
-            app:layout_constraintStart_toStartOf="@+id/handle"
-            app:layout_constraintTop_toBottomOf="@+id/handle"
+            app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
+            app:layout_constraintTop_toBottomOf="@+id/black_handle_tv"
             tools:layout_conversion_absoluteHeight="22dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/title"
+            android:id="@+id/black_title_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:textAppearance="@style/small_font"
-            app:layout_constraintBottom_toTopOf="@+id/banner"
+            app:layout_constraintBottom_toTopOf="@+id/black_banner_tv"
             app:layout_constraintEnd_toEndOf="parent"
             tools:layout_conversion_absoluteHeight="22dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/duration"
+            android:id="@+id/black_duration_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:textAppearance="@style/small_font"
-            app:layout_constraintBottom_toTopOf="@+id/title"
+            app:layout_constraintBottom_toTopOf="@+id/black_title_tv"
             app:layout_constraintEnd_toEndOf="parent"
             tools:layout_conversion_absoluteHeight="22dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/banner"
+            android:id="@+id/black_banner_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:gravity="right"
             android:textAppearance="@style/small_font"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
             app:layout_constraintEnd_toEndOf="parent"
             tools:layout_conversion_absoluteHeight="22dp"
             tools:layout_conversion_absoluteWidth="226dp" />
 
 
         <TextView
-            android:id="@+id/day"
+            android:id="@+id/black_date_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:textColor="@color/light_blue"
             android:textSize="25dp"
-            app:layout_constraintEnd_toEndOf="@+id/clock"
-            app:layout_constraintStart_toStartOf="@+id/clock"
-            app:layout_constraintTop_toBottomOf="@+id/clock"
+            app:layout_constraintEnd_toEndOf="@+id/black_clock_tv"
+            app:layout_constraintStart_toStartOf="@+id/black_clock_tv"
+            app:layout_constraintTop_toBottomOf="@+id/black_clock_tv"
             tools:layout_conversion_absoluteHeight="34dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/clock"
+            android:id="@+id/black_clock_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -336,7 +327,7 @@
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/gpsLocation"
+            android:id="@+id/black_location_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -349,7 +340,7 @@
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <TextView
-            android:id="@+id/quecount"
+            android:id="@+id/black_queue_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -357,24 +348,24 @@
             android:textSize="40dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/option_image_view"
+            app:layout_constraintTop_toBottomOf="@+id/black_profile_picture_iv"
             tools:layout_conversion_absoluteHeight="54dp"
             tools:layout_conversion_absoluteWidth="0dp" />
 
         <View
-            android:id="@+id/blackSkip"
+            android:id="@+id/black_skip_button"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/option_image_view"
-            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+            app:layout_constraintStart_toEndOf="@id/black_profile_picture_iv"
+            app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ProgressBar
-        android:id="@+id/timeTimer"
+        android:id="@+id/ma_timer"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
         android:layout_width="0dp"
         android:layout_height="1dp"

@@ -7,13 +7,13 @@
     android:padding="@dimen/half_margin">
 
     <ImageView
-        android:id="@+id/option_image_view"
+        android:id="@+id/black_profile_picture_iv"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:layout_marginEnd="@dimen/half_margin" />
 
     <TextView
-        android:id="@+id/handle"
+        android:id="@+id/black_handle_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/default_padding"

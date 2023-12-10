@@ -45,7 +45,7 @@
         tools:layout_conversion_absoluteWidth="398dp">
 
         <ImageView
-            android:id="@+id/banner"
+            android:id="@+id/black_banner_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="@drawable/blue_box_white_outline_transparent"
@@ -81,7 +81,7 @@
             android:layout_marginBottom="16dp"
             app:layout_constraintBottom_toBottomOf="@+id/dunno2"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/banner"
+            app:layout_constraintTop_toBottomOf="@+id/black_banner_tv"
             app:srcCompat="@drawable/googlelogo" />
 
         <TextView
@@ -121,7 +121,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/banner" />
+            app:layout_constraintTop_toBottomOf="@+id/black_banner_tv" />
 
         <TextView
             android:id="@+id/logout"

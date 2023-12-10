@@ -18,7 +18,7 @@
 		android:textAppearance="@style/title_font"/>
 
 	<androidx.recyclerview.widget.RecyclerView
-		android:id="@+id/history"
+		android:id="@+id/ma_chat_history_button"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_weight="1"

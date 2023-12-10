@@ -44,7 +44,7 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="16dp"
-        android:id="@+id/starIV"
+        android:id="@+id/black_star_iv"
         android:scaleType="fitStart"
         android:layout_alignLeft="@+id/wcarrier"
         android:paddingTop="5dp"

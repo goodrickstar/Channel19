@@ -166,8 +166,8 @@ public class MassPast extends DialogFragment implements ValueEventListener {
                 super(itemView);
                 image = itemView.findViewById(R.id.image);
                 profile = itemView.findViewById(R.id.profile_pic);
-                rank = itemView.findViewById(R.id.starIV);
-                handle = itemView.findViewById(R.id.handle);
+                rank = itemView.findViewById(R.id.black_star_iv);
+                handle = itemView.findViewById(R.id.black_handle_tv);
                 stamp = itemView.findViewById(R.id.stamp);
                 progressBar = itemView.findViewById(R.id.loading);
                 save = itemView.findViewById(R.id.save);

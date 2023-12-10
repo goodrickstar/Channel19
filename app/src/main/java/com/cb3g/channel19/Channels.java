@@ -82,6 +82,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                         if (responseChannelInfo.isEmpty() || (!owned && !RadioService.operator.getSilenced() && RadioService.operator.getChannel() != null))
                             responseChannelInfo.add(0, new ChannelInfo(0));
                         binding.recyclerView.post(() -> binding.recyclerView.setAdapter(new SideBandAdapter(responseChannelInfo)));
+                        binding.recyclerView.animate().alpha(1.0f).setDuration(1000);
                     } catch (JSONException e) {
                         LOG.e("list_sidebands", e.getMessage());
                     }
@@ -352,7 +353,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
 
                 private ProfileHolder(View convertView) {
                     super(convertView);
-                    profile = convertView.findViewById(R.id.option_image_view);
+                    profile = convertView.findViewById(R.id.black_profile_picture_iv);
                 }
             }
         }

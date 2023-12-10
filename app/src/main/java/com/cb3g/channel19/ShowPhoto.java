@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -47,7 +46,7 @@ public class ShowPhoto extends DialogFragment {
             binding.photoCaption.setVisibility(View.VISIBLE);
             binding.photoCaption.setText(photo.getCaption());
         }
-        binding.banner.setText(photo.getHandle());
+        binding.showPhotoHandleTv.setText(photo.getHandle());
         final View.OnClickListener onClickListener = v -> {
             context.sendBroadcast(new Intent("nineteenClickSound"));
             Utils.vibrate(v);
@@ -65,7 +64,7 @@ public class ShowPhoto extends DialogFragment {
                 if (MI != null)
                     MI.streamFile(photo.getUrl());
             }
-            if (id == R.id.history) {
+            if (id == R.id.ma_chat_history_button) {
                 for (UserListEntry user : RadioService.users) {
                     if (user.getUser_id().equals(photo.getSenderId()) && MI != null) {
                         MI.displayChat(user, false, false);
@@ -76,7 +75,7 @@ public class ShowPhoto extends DialogFragment {
         };
         binding.ok.setOnClickListener(onClickListener);
         binding.save.setOnClickListener(onClickListener);
-        binding.history.setOnClickListener(onClickListener);
+        binding.showPhotoChatHistoryButton.setOnClickListener(onClickListener);
         binding.loading.setVisibility(View.VISIBLE);
         if (!photo.getUrl().contains(".gif")) {
             //gif

@@ -12,7 +12,7 @@
     app:layout_constraintTop_toTopOf="parent">
 
     <ImageView
-        android:id="@+id/option_image_view"
+        android:id="@+id/black_profile_picture_iv"
         android:layout_width="@dimen/profile_picture_size"
         android:layout_height="@dimen/profile_picture_size"
         android:layout_marginRight="@dimen/half_margin"
@@ -27,39 +27,39 @@
         android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/mail"
-        app:layout_constraintStart_toEndOf="@+id/option_image_view"
+        app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/handle"
+        android:id="@+id/black_handle_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="5dp"
         android:singleLine="true"
         android:textAppearance="@style/large_font"
-        app:layout_constraintLeft_toRightOf="@+id/option_image_view"
+        app:layout_constraintLeft_toRightOf="@+id/black_profile_picture_iv"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/carrier"
+        android:id="@+id/black_carrier_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:singleLine="true"
         android:textAppearance="@style/small_font"
-        app:layout_constraintBottom_toTopOf="@+id/banner"
-        app:layout_constraintLeft_toRightOf="@+id/option_image_view"
-        app:layout_constraintStart_toStartOf="@+id/handle"
-        app:layout_constraintTop_toBottomOf="@+id/handle" />
+        app:layout_constraintBottom_toTopOf="@+id/black_banner_tv"
+        app:layout_constraintLeft_toRightOf="@+id/black_profile_picture_iv"
+        app:layout_constraintStart_toStartOf="@+id/black_handle_tv"
+        app:layout_constraintTop_toBottomOf="@+id/black_handle_tv" />
 
     <ImageView
-        android:id="@+id/starIV"
+        android:id="@+id/black_star_iv"
         android:layout_width="@dimen/star_width"
         android:layout_height="@dimen/star_height"
         android:scaleType="fitStart"
-        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-        app:layout_constraintLeft_toRightOf="@+id/option_image_view"
-        app:layout_constraintStart_toStartOf="@+id/handle" />
+        app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+        app:layout_constraintLeft_toRightOf="@+id/black_profile_picture_iv"
+        app:layout_constraintStart_toStartOf="@+id/black_handle_tv" />
 
     <ImageView
         android:id="@+id/mail"
@@ -77,16 +77,16 @@
         android:singleLine="true"
         android:textAppearance="@style/small_font"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/handle" />
+        app:layout_constraintTop_toBottomOf="@+id/black_handle_tv" />
 
     <TextView
-        android:id="@+id/banner"
+        android:id="@+id/black_banner_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="bottom|right"
         android:singleLine="true"
         android:textAppearance="@style/small_font"
-        app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
+        app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
         app:layout_constraintRight_toRightOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

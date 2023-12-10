@@ -164,7 +164,14 @@ public class RadioService extends Service implements ValueEventListener {
         public void onReceive(final Context context, final Intent intent) {
             switch (intent.getAction()) {
                 case "token"://TODO: update token on server
-
+                    break;
+                case "listUpdate":
+                    final String flagData = intent.getStringExtra("data");
+                    Log.i("logging", flagData);
+                    flaggedIds.clear();
+                    flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
+                    }.getType());
+                    settings.edit().putString("flaggedIDs", flagData).apply();
                     break;
                 case "longFlag":
                     String flagSenderId = intent.getStringExtra("userId");
@@ -420,14 +427,14 @@ public class RadioService extends Service implements ValueEventListener {
                     break;
                 case AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED:
                     switch (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_DISCONNECTED)) {
-                        case AudioManager.SCO_AUDIO_STATE_CONNECTED:
+                        case AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
                             if (MI != null) {
                                 MI.startTransmit();
                             }
-                            break;
-                        case AudioManager.SCO_AUDIO_STATE_DISCONNECTED:
+                        }
+                        case AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
                             if (MI != null) MI.stopRecorder(false);
-                            break;
+                        }
                     }
                     break;
             }
@@ -871,7 +878,8 @@ public class RadioService extends Service implements ValueEventListener {
         removeZeros();
         if (operator.getChannel() != null) {
             databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
-            enterStamp = Instant.now().getEpochSecond() - 300;
+            if (operator.getAdmin()) enterStamp = Instant.now().getEpochSecond() - 300000;
+            else enterStamp = Instant.now().getEpochSecond() - 300;
             databaseReference.child("audio").child(operator.getChannel().getChannel_name()).addChildEventListener(audioListener);
         }
         if (paused) resumePlayback();
@@ -2006,6 +2014,7 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        filter.addAction("listUpdate");
         filter.addAction("token");
         filter.addAction("confirmInterrupt");
         filter.addAction("longFlag");
@@ -2114,8 +2123,8 @@ public class RadioService extends Service implements ValueEventListener {
             color = Color.parseColor("#990000");
         int led = 0;
         mBuilder.setLights(color, led, 0);
-        notifyview.setTextViewText(R.id.handle, handle);
-        notifyview.setTextViewText(R.id.carrier, carrier);
+        notifyview.setTextViewText(R.id.black_handle_tv, handle);
+        notifyview.setTextViewText(R.id.black_carrier_tv, carrier);
         mBuilder.setNumber(inbounds.size());
         startForeground(19, mBuilder.build());
     }
@@ -2147,7 +2156,7 @@ public class RadioService extends Service implements ValueEventListener {
         PendingIntent pausing = PendingIntent.getBroadcast(this, 0, new Intent("nineteenPlayPause"), PendingIntent.FLAG_IMMUTABLE);
         PendingIntent opench19 = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
         notifyview.setOnClickPendingIntent(R.id.skipping, skipping);
-        notifyview.setTextViewText(R.id.handle, onlineStatus);
+        notifyview.setTextViewText(R.id.black_handle_tv, onlineStatus);
         notifyview.setOnClickPendingIntent(R.id.exitstrategy, pausing);
         mBuilder.setContentIntent(opench19);
         mBuilder.setSmallIcon(R.drawable.nineteen);

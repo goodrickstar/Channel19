@@ -124,9 +124,9 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.map_layout);
         infoTab = findViewById(R.id.info_tab);
-        profile = findViewById(R.id.option_image_view);
-        handle = findViewById(R.id.handle);
-        location = findViewById(R.id.banner);
+        profile = findViewById(R.id.black_profile_picture_iv);
+        handle = findViewById(R.id.black_handle_tv);
+        location = findViewById(R.id.black_banner_tv);
         speed = findViewById(R.id.speed);
         altitude = findViewById(R.id.altitude);
         direction = findViewById(R.id.direction);

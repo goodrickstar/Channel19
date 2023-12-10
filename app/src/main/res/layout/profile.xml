@@ -5,7 +5,7 @@
     android:padding="3dp">
 
     <ImageView
-        android:id="@+id/option_image_view"
+        android:id="@+id/black_profile_picture_iv"
         android:layout_width="@dimen/profile_picture_size"
         android:layout_height="@dimen/profile_picture_size"
         android:scaleType="fitCenter" />

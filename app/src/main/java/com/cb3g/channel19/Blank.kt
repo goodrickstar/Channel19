@@ -28,7 +28,7 @@ class Blank : DialogFragment(), View.OnClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val content = view.findViewById<View>(R.id.content) as TextView
-        title = view.findViewById<View>(R.id.banner) as TextView
+        title = view.findViewById<View>(R.id.black_banner_tv) as TextView
         val ok = view.findViewById<View>(R.id.ok) as TextView
         content.text = arguments?.getString("content")
         title?.text = arguments?.getString("title")

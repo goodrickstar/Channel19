@@ -21,7 +21,7 @@
             android:padding="@dimen/default_padding">
 
             <ImageView
-                android:id="@+id/option_image_view"
+                android:id="@+id/black_profile_picture_iv"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 android:layout_marginEnd="@dimen/default_padding"
@@ -29,21 +29,21 @@
                 android:scaleType="centerCrop" />
 
             <TextView
-                android:id="@+id/handle"
+                android:id="@+id/black_handle_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/option_image_view"
+                android:layout_toEndOf="@+id/black_profile_picture_iv"
                 android:background="@null"
                 android:textAppearance="@style/title_font" />
 
             <ImageView
-                android:id="@+id/starIV"
+                android:id="@+id/black_star_iv"
                 android:layout_width="@dimen/star_width"
                 android:layout_height="@dimen/star_height"
-                android:layout_below="@+id/handle"
+                android:layout_below="@+id/black_handle_tv"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
-                android:layout_toRightOf="@+id/option_image_view"
+                android:layout_toRightOf="@+id/black_profile_picture_iv"
                 android:scaleType="fitStart" />
 
         </RelativeLayout>

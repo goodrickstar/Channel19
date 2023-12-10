@@ -34,11 +34,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/follow"
-            app:layout_constraintEnd_toEndOf="@+id/banner"
+            app:layout_constraintEnd_toEndOf="@+id/black_banner_tv"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
-            android:id="@+id/option_image_view"
+            android:id="@+id/black_profile_picture_iv"
             android:layout_width="@dimen/profile_picture_size"
             android:layout_height="@dimen/profile_picture_size"
             android:layout_marginTop="5dp"
@@ -49,23 +49,23 @@
             app:srcCompat="@drawable/hand" />
 
         <TextView
-            android:id="@+id/handle"
+            android:id="@+id/black_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:textSize="16dp"
             android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@+id/option_image_view"
-            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+            app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
+            app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
         <TextView
-            android:id="@+id/banner"
+            android:id="@+id/black_banner_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:textSize="14dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/handle" />
+            app:layout_constraintTop_toTopOf="@+id/black_handle_tv" />
 
         <TextView
             android:id="@+id/speed"
@@ -73,9 +73,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:textSize="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-            app:layout_constraintStart_toEndOf="@+id/option_image_view"
-            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+            app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
+            app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
         <TextView
             android:id="@+id/direction"
@@ -83,8 +83,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:textSize="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-            app:layout_constraintStart_toEndOf="@+id/option_image_view"
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+            app:layout_constraintStart_toEndOf="@+id/black_profile_picture_iv"
             app:layout_constraintTop_toBottomOf="@+id/speed" />
 
         <TextView
@@ -92,17 +92,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-            app:layout_constraintEnd_toEndOf="@+id/banner"
-            app:layout_constraintTop_toTopOf="@+id/option_image_view" />
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+            app:layout_constraintEnd_toEndOf="@+id/black_banner_tv"
+            app:layout_constraintTop_toTopOf="@+id/black_profile_picture_iv" />
 
         <TextView
             android:id="@+id/altitude"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/option_image_view"
-            app:layout_constraintEnd_toEndOf="@+id/banner"
+            app:layout_constraintBottom_toBottomOf="@+id/black_profile_picture_iv"
+            app:layout_constraintEnd_toEndOf="@+id/black_banner_tv"
             app:layout_constraintTop_toBottomOf="@+id/distance" />
 
         <SeekBar
@@ -113,7 +113,7 @@
             android:max="16"
             app:layout_constraintBottom_toBottomOf="@+id/follow"
             app:layout_constraintEnd_toStartOf="@+id/follow"
-            app:layout_constraintStart_toStartOf="@+id/option_image_view"
+            app:layout_constraintStart_toStartOf="@+id/black_profile_picture_iv"
             app:layout_constraintTop_toTopOf="@+id/follow" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

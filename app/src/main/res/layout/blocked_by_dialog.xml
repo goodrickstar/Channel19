@@ -9,7 +9,7 @@
 
 
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/blocked_by_tv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/blue_box_white_outline"
@@ -38,7 +38,7 @@
         app:layout_constraintBottom_toTopOf="@+id/okay"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title" />
+        app:layout_constraintTop_toBottomOf="@+id/blocked_by_tv" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"

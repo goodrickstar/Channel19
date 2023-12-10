@@ -18,7 +18,7 @@
 		tools:ignore="SpeakableTextPresentCheck" />
 
 	<ImageView
-		android:id="@+id/starIV"
+		android:id="@+id/black_star_iv"
 		android:layout_width="0dp"
 		android:layout_height="26dp"
 		android:layout_alignBottom="@id/muting"
@@ -28,7 +28,7 @@
 		android:scaleType="fitStart" />
 
 	<TextView
-		android:id="@+id/banner"
+		android:id="@+id/black_banner_tv"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
 		android:layout_alignTop="@id/muting"

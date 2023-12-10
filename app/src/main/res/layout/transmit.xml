@@ -15,34 +15,34 @@
         android:padding="@dimen/default_padding">
 
         <ImageView
-            android:id="@+id/option_image_view"
+            android:id="@+id/black_profile_picture_iv"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginEnd="@dimen/half_margin" />
 
         <TextView
-            android:id="@+id/handle"
+            android:id="@+id/black_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toStartOf="@+id/tooth"
-            android:layout_toEndOf="@+id/option_image_view"
+            android:layout_toEndOf="@+id/black_profile_picture_iv"
             android:textAppearance="@style/large_font" />
 
         <TextView
-            android:id="@+id/carrier"
+            android:id="@+id/black_carrier_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/handle"
+            android:layout_below="@+id/black_handle_tv"
             android:layout_marginStart="@dimen/half_margin"
-            android:layout_toEndOf="@+id/option_image_view"
+            android:layout_toEndOf="@+id/black_profile_picture_iv"
             android:textAppearance="@style/small_font" />
 
         <ImageView
-            android:id="@+id/starIV"
+            android:id="@+id/black_star_iv"
             android:layout_width="@dimen/star_width"
             android:layout_height="@dimen/star_height"
-            android:layout_alignBottom="@+id/option_image_view"
-            android:layout_toEndOf="@+id/option_image_view"
+            android:layout_alignBottom="@+id/black_profile_picture_iv"
+            android:layout_toEndOf="@+id/black_profile_picture_iv"
             android:scaleType="fitStart" />
 
         <TextView
@@ -50,16 +50,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_below="@+id/handle"
+            android:layout_below="@+id/black_handle_tv"
             android:textAppearance="@style/small_font" />
 
         <TextView
-            android:id="@+id/banner"
+            android:id="@+id/black_banner_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/option_image_view"
+            android:layout_alignBottom="@+id/black_profile_picture_iv"
             android:layout_alignParentEnd="true"
-            android:layout_toEndOf="@+id/starIV"
+            android:layout_toEndOf="@+id/black_star_iv"
             android:gravity="right"
             android:textAppearance="@style/small_font" />
 
@@ -130,7 +130,7 @@
 
 
     <ImageView
-        android:id="@+id/blurr"
+        android:id="@+id/ma_blurr_iv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@color/main_black_transparent_light"

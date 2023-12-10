@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
@@ -320,7 +319,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
             TextView title, count;
 
             private GroupViewHolder(View group) {
-                title = group.findViewById(R.id.title);
+                title = group.findViewById(R.id.black_title_tv);
                 count = group.findViewById(R.id.count);
             }
         }
@@ -329,7 +328,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
             TextView title, count;
 
             private ChildViewHolder(View group) {
-                title = group.findViewById(R.id.title);
+                title = group.findViewById(R.id.black_title_tv);
                 count = group.findViewById(R.id.count);
             }
         }
