@@ -182,7 +182,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/cancel"
+        android:id="@+id/ma_cancel_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@drawable/black_box_white_outline"
@@ -257,7 +257,6 @@
                 android:id="@+id/black_handle_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Handle"
                 android:textAppearance="@style/large_font"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -269,7 +268,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="carrier"
                 android:textAppearance="@style/small_font"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/black_handle_tv"
@@ -280,7 +278,6 @@
                 android:id="@+id/black_title_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="title"
                 android:textAppearance="@style/small_font"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/black_duration_tv"
@@ -291,7 +288,6 @@
                 android:id="@+id/black_duration_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="duration"
                 android:textAppearance="@style/small_font"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"

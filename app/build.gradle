@@ -23,8 +23,8 @@ android {
         minSdk 31
         //noinspection OldTargetApi
         targetSdkVersion 33
-        versionCode 4917
-        versionName "2.0.3"
+        versionCode 4919
+        versionName "2.0.5"
         multiDexEnabled true
     }
     compileSdk 34

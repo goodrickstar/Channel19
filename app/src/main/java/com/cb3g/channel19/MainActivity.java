@@ -829,14 +829,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
                 fadeIn.setDuration(200);
                 binding.maBlurrIv.setVisibility(View.VISIBLE);
-                binding.cancel.setVisibility(View.VISIBLE);
+                binding.maCancelButton.setVisibility(View.VISIBLE);
                 binding.maBlurrIv.startAnimation(fadeIn);
-                binding.cancel.startAnimation(fadeIn);
+                binding.maCancelButton.startAnimation(fadeIn);
             } else {
                 binding.maBlurrIv.clearAnimation();
-                binding.cancel.clearAnimation();
+                binding.maCancelButton.clearAnimation();
                 binding.maBlurrIv.setVisibility(View.GONE);
-                binding.cancel.setVisibility(View.GONE);
+                binding.maCancelButton.setVisibility(View.GONE);
             }
             lockOthers(recording);
         }
@@ -1414,8 +1414,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             binding.blackProfilePictureIv.setImageDrawable(null);
             //binding.blackProfilePictureIv.setOnClickListener(null);
         } else {
-            binding.blackProfilePictureIv.setVisibility(View.VISIBLE);
-            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display[5], RadioService.largeProfileOptions);
+            if (!dark) return;
+            //binding.blackProfilePictureIv.setVisibility(View.VISIBLE);
+            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display[5]);
             /*
             binding.blackProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
@@ -1486,6 +1487,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maPauseButton.setOnClickListener(this);
         binding.blackQueueTv.setOnClickListener(this);
         binding.blackProfilePictureIv.setOnClickListener(this);
+        binding.maCancelButton.setOnClickListener(this);
 
         //LongPress
         binding.maUserListButton.setOnLongClickListener(this);

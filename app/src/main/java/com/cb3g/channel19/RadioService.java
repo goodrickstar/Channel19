@@ -108,7 +108,7 @@ import okhttp3.Response;
 public class RadioService extends Service implements ValueEventListener {
     static final OkHttpClient client = new OkHttpClient();
     private final List<String> nearby = new ArrayList<>();
-    static String SITE_URL;
+    static final String SITE_URL = "http://23.111.159.2/~channel1/";
     static RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
     static RequestOptions largeProfileOptions = new RequestOptions().centerInside().error(R.drawable.error);
     static boolean phoneIdle = true, paused = false, recording = false, bluetoothEnabled = false, mute = false;
@@ -463,7 +463,6 @@ public class RadioService extends Service implements ValueEventListener {
         storage = FirebaseStorage.getInstance();
         databaseReference = Utils.getDatabase().getReference();
         databaseReference.child("reservoir").keepSynced(true);
-        SITE_URL = settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/");
         operator.setKey(settings.getString("keychain", null));
         operator.setUser_id(settings.getString("userId", "0"));
         operator.setHandle(settings.getString("handle", "default"));
@@ -488,7 +487,6 @@ public class RadioService extends Service implements ValueEventListener {
         if (operator.getSubscribed()) blockLimit = 30;
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
         databaseReference.child("keychain").addValueEventListener(this);
-        databaseReference.child("siteUrl").addValueEventListener(this);
         databaseReference.child("blocking").addValueEventListener(this);
         databaseReference.child("ghostModeAvailible").addValueEventListener(this);
         databaseReference.child("flagsEnabled").addValueEventListener(this);
@@ -1096,7 +1094,6 @@ public class RadioService extends Service implements ValueEventListener {
                     operator.setGhostModeAvailible(dataSnapshot.getValue(Boolean.class));
             case "radioShopOpen" -> operator.setRadioShopOpen(dataSnapshot.getValue(Boolean.class));
             case "silencing" -> operator.setSilencing(dataSnapshot.getValue(Boolean.class));
-            case "siteUrl" -> SITE_URL = dataSnapshot.getValue(String.class);
             case "keychain" -> {
                 operator.setKey(dataSnapshot.getValue(String.class));
                 settings.edit().putString("keychain", operator.getKey()).apply();
@@ -1860,7 +1857,6 @@ public class RadioService extends Service implements ValueEventListener {
         databaseReference.child("radioShopOpen").removeEventListener(this);
         databaseReference.child("silencing").removeEventListener(this);
         databaseReference.child("keychain").removeEventListener(this);
-        databaseReference.child("siteUrl").removeEventListener(this);
         databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
         listenForCoordinates(false);

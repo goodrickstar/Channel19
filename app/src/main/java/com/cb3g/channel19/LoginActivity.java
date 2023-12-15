@@ -72,11 +72,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, ValueEventListener, View.OnClickListener {
+public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, View.OnClickListener {
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
     private OkHttpClient okClient;
     private SharedPreferences settings;
-    private String SITE_URL, TOKEN, KEY;
+    private final String SITE_URL = "http://23.111.159.2/~channel1/";
+    private String TOKEN;
     private LoginBinding binding;
     private float volumeE;
     private SoundPool sp;
@@ -96,7 +97,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             showSnack(new Snack("Google sign in failed", Snackbar.LENGTH_LONG));
             Log.e("Firebase Auth Error", "Login error code" + result.getResultCode());
         }
-        authDisplay(auth.getCurrentUser());
+        handleAuth(auth.getCurrentUser());
     });
 
     private void startSignIn() {
@@ -157,8 +158,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         binding.googleButton.setOnClickListener(this);
         binding.loginIntoServerWithGoogleButton.setOnClickListener(this);
         binding.logout.setOnClickListener(this);
-        SITE_URL = settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/");
-        KEY = settings.getString("keychain", null);
         TOKEN = settings.getString("token", null);
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
@@ -179,37 +178,47 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
-                if (action != null && KEY != null && SITE_URL != null) {
+                if (action != null) {
                     switch (action) {
                         case "nineteenProve" -> login();
                         case "nineteenSendProfileToServer" -> {
                             click_sound();
                             rotate_logo();
                             pre_text("Creating Profile...");
-                            final String compactJws = Jwts.builder()
-                                    .setHeader(header)
-                                    .claim("userId", user.getUid())
-                                    .claim("radio_handle", intent.getStringExtra("handle"))
-                                    .claim("carrier", intent.getStringExtra("carrier"))
-                                    .claim("title", intent.getStringExtra("title"))
-                                    .claim("hometown", intent.getStringExtra("town"))
-                                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                    .signWith(SignatureAlgorithm.HS256, KEY)
-                                    .compact();
-                            final Request request = new Request.Builder()
-                                    .url(SITE_URL + "user_create_profile.php")
-                                    .post(new FormBody.Builder().add("data", compactJws).build())
-                                    .build();
-                            okClient.newCall(request).enqueue(new Callback() {
+                            Utils.getDatabase().getReference().child("keychain").addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
-                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                    show_result("Network Error", e.getMessage());
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    final String compactJws = Jwts.builder()
+                                            .setHeader(header)
+                                            .claim("userId", user.getUid())
+                                            .claim("radio_handle", intent.getStringExtra("handle"))
+                                            .claim("carrier", intent.getStringExtra("carrier"))
+                                            .claim("title", intent.getStringExtra("title"))
+                                            .claim("hometown", intent.getStringExtra("town"))
+                                            .setIssuedAt(new Date(System.currentTimeMillis()))
+                                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                                            .signWith(SignatureAlgorithm.HS256, snapshot.getValue(String.class))
+                                            .compact();
+                                    final Request request = new Request.Builder()
+                                            .url(SITE_URL + "user_create_profile.php")
+                                            .post(new FormBody.Builder().add("data", compactJws).build())
+                                            .build();
+                                    okClient.newCall(request).enqueue(new Callback() {
+                                        @Override
+                                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                                            show_result("Network Error", e.getMessage());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NotNull Call call, @NotNull Response response) {
+                                            login();
+                                        }
+                                    });
                                 }
 
                                 @Override
-                                public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                    login();
+                                public void onCancelled(@NonNull DatabaseError error) {
+
                                 }
                             });
                         }
@@ -221,8 +230,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         filter.addAction("nineteenSendProfileToServer");
         filter.addAction("nineteenProve");
         registerReceiver(receiver, filter);
-        Utils.getDatabase().getReference().child("keychain").addValueEventListener(this);
-        Utils.getDatabase().getReference().child("siteUrl").addValueEventListener(this);
     }
 
     @Override
@@ -230,10 +237,10 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         super.onResume();
         binding.version.setText("v(" + getVersionName() + ")");
         if (serviceAlive() && !settings.getBoolean("exiting", false)) launch_main_activity();
-        authDisplay(auth.getCurrentUser());
+        handleAuth(auth.getCurrentUser());
     }
 
-    public void authDisplay(FirebaseUser user) {
+    public void handleAuth(FirebaseUser user) {
         this.user = user;
         if (user == null) {
             Glide.with(this).load(R.drawable.googlelogo).circleCrop().into(binding.googleButton);
@@ -252,8 +259,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     protected void onStop() {
         super.onStop();
         unregisterReceiver(receiver);
-        Utils.getDatabase().getReference().child("keychain").removeEventListener(this);
-        Utils.getDatabase().getReference().child("siteUrl").removeEventListener(this);
     }
 
     private void launch_main_activity() {
@@ -266,8 +271,9 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             startSignIn();
             return;
         }
-        if (KEY == null || SITE_URL == null || TOKEN == null)
+        if (TOKEN == null) {
             return;
+        }
         if (!settings.getBoolean("accepted", false)) {
             showTerms();
             return;
@@ -276,87 +282,100 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         rotate_logo();
         if (billingUtils.isConnected) {
             billingUtils.queryActiveSubscriptions((billingResult, subscriptions) -> DeviceName.with(LoginActivity.this).request((info, error) -> {
-                String compactJws = Jwts.builder()
-                        .setHeader(header)
-                        .claim("userId", user.getUid())
-                        .claim("email", user.getEmail())
-                        .claim("name", user.getDisplayName())
-                        .claim("reg_id", TOKEN)
-                        .claim("deviceId", deviceId())
-                        .claim("gsf", returnGSF())
-                        .claim("imei", "")
-                        .claim("serial", serial)
-                        .claim("language", Locale.getDefault().getDisplayLanguage())
-                        .claim("deviceName", info.marketName)
-                        .claim("active", !subscriptions.isEmpty())
-                        .claim("version", String.valueOf(getVersion()))
-                        .claim("version_name", getVersionName())
-                        .claim("build", getBuildVersion())
-                        .setIssuedAt(new Date(System.currentTimeMillis()))
-                        .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                        .signWith(SignatureAlgorithm.HS256, KEY)
-                        .compact();
-                Request request = new Request.Builder()
-                        .url(SITE_URL + "google_login.php")
-                        .post(new FormBody.Builder().add("data", compactJws).build())
-                        .build();
-                okClient.newCall(request).enqueue(new Callback() {
+                Utils.getDatabase().getReference().child("keychain").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                        show_result("Network Error", e.getMessage());
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String KEY = snapshot.getValue(String.class);
+                        settings.edit().putString("keychain", KEY).apply();
+                        String compactJws = Jwts.builder()
+                                .setHeader(header)
+                                .claim("userId", user.getUid())
+                                .claim("email", user.getEmail())
+                                .claim("name", user.getDisplayName())
+                                .claim("reg_id", TOKEN)
+                                .claim("deviceId", deviceId())
+                                .claim("gsf", returnGSF())
+                                .claim("imei", "")
+                                .claim("serial", serial)
+                                .claim("language", Locale.getDefault().getDisplayLanguage())
+                                .claim("deviceName", info.marketName)
+                                .claim("active", !subscriptions.isEmpty())
+                                .claim("version", String.valueOf(getVersion()))
+                                .claim("version_name", getVersionName())
+                                .claim("build", getBuildVersion())
+                                .setIssuedAt(new Date(System.currentTimeMillis()))
+                                .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                                .signWith(SignatureAlgorithm.HS256, KEY)
+                                .compact();
+                        Request request = new Request.Builder()
+                                .url(SITE_URL + "google_login.php")
+                                .post(new FormBody.Builder().add("data", compactJws).build())
+                                .build();
+                        okClient.newCall(request).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                                show_result("Network Error", e.getMessage());
+                            }
+
+                            @Override
+                            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                                String image = response.body().string();
+                                runOnUiThread(() -> {
+                                    try {
+                                        Log.i("logging", "data: " + image);
+                                        JSONObject data = new JSONObject(image);
+                                        if (data.getString("user_id").equals("0")) {
+                                            show_result(data.getString("mode"), data.getString("msg"));
+                                        } else {
+                                            final String handle = data.getString("radio_hanlde");
+                                            if (handle.equals("default")) {
+                                                select_title();
+                                                return;
+                                            }
+                                            final String profile = data.getString("profileLink");
+                                            final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
+                                            welcome(handle, profile);
+                                            final SharedPreferences.Editor edit = settings.edit();
+                                            edit.putString("email", data.getString("email"));
+                                            edit.putString("userId", data.getString("user_id"));
+                                            edit.putString("handle", handle);
+                                            edit.putString("rank", data.getString("rank"));
+                                            edit.putString("carrier", data.getString("carrier"));
+                                            edit.putString("town", data.getString("hometown"));
+                                            edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
+                                            edit.putBoolean("invisible", invisible);
+                                            edit.putString("profileLink", profile);
+                                            edit.putInt("newbie", data.getInt("newbie"));
+                                            edit.putBoolean("active", data.getBoolean("subscribed"));
+                                            edit.putString("photoIDs", data.getString("photoIDs"));
+                                            edit.putString("textIDs", data.getString("textIDs"));
+                                            edit.putString("blockedIDs", data.getString("blockedIDs"));
+                                            edit.putString("salutedIDs", data.getString("salutedIDs"));
+                                            edit.putString("flaggedIDs", data.getString("flaggedIDs"));
+                                            edit.putString("main_backdrop", data.getString("one"));
+                                            edit.putString("settings_backdrop", data.getString("two"));
+                                            edit.putInt("count", data.getInt("total_count"));
+                                            edit.putInt("salutes", data.getInt("salutes"));
+                                            edit.putBoolean("exiting", false);
+                                            edit.apply();
+                                            finish();
+                                            startForegroundService(new Intent(LoginActivity.this, RadioService.class));
+                                            launch_main_activity();
+                                        }
+                                    } catch (JSONException e) {
+                                        show_result("Login Error", e.getMessage());
+                                        Logger.INSTANCE.e("google_login", e.getMessage());
+                                    } finally {
+                                        response.close();
+                                    }
+                                });
+                            }
+                        });
                     }
 
                     @Override
-                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                        String image = response.body().string();
-                        runOnUiThread(() -> {
-                            try {
-                                JSONObject data = new JSONObject(image);
-                                if (data.getString("user_id").equals("0")) {
-                                    show_result(data.getString("mode"), data.getString("msg"));
-                                } else {
-                                    final String handle = data.getString("radio_hanlde");
-                                    if (handle.equals("default")) {
-                                        select_title();
-                                        return;
-                                    }
-                                    final String profile = data.getString("profileLink");
-                                    final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
-                                    welcome(handle, profile);
-                                    final SharedPreferences.Editor edit = settings.edit();
-                                    edit.putString("email", data.getString("email"));
-                                    edit.putString("userId", data.getString("user_id"));
-                                    edit.putString("handle", handle);
-                                    edit.putString("rank", data.getString("rank"));
-                                    edit.putString("carrier", data.getString("carrier"));
-                                    edit.putString("town", data.getString("hometown"));
-                                    edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
-                                    edit.putBoolean("invisible", invisible);
-                                    edit.putString("profileLink", profile);
-                                    edit.putInt("newbie", data.getInt("newbie"));
-                                    edit.putBoolean("active", data.getBoolean("subscribed"));
-                                    edit.putString("photoIDs", data.getString("photoIDs"));
-                                    edit.putString("textIDs", data.getString("textIDs"));
-                                    edit.putString("blockedIDs", data.getString("blockedIDs"));
-                                    edit.putString("salutedIDs", data.getString("salutedIDs"));
-                                    edit.putString("flaggedIDs", data.getString("flaggedIDs"));
-                                    edit.putString("main_backdrop", data.getString("one"));
-                                    edit.putString("settings_backdrop", data.getString("two"));
-                                    edit.putInt("count", data.getInt("total_count"));
-                                    edit.putInt("salutes", data.getInt("salutes"));
-                                    edit.putBoolean("exiting", false);
-                                    edit.apply();
-                                    finish();
-                                    startForegroundService(new Intent(LoginActivity.this, RadioService.class));
-                                    launch_main_activity();
-                                }
-                            } catch (JSONException e) {
-                                show_result("Login Error", e.getMessage());
-                                Logger.INSTANCE.e("google_login", e.getMessage());
-                            } finally {
-                                response.close();
-                            }
-                        });
+                    public void onCancelled(@NonNull DatabaseError error) {
+
                     }
                 });
 
@@ -523,29 +542,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         }
         snackbar.show();
     }
-
-    @Override
-    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        Log.i("logging", "onDataChange " + dataSnapshot.getKey());
-        switch (dataSnapshot.getKey()) {
-            case "siteUrl" -> {
-                SITE_URL = dataSnapshot.getValue(String.class);
-                Log.i("logging", "SITE_URL UPDATED TO " + SITE_URL);
-                settings.edit().putString("siteUrl", SITE_URL).apply();
-            }
-            case "keychain" -> {
-                KEY = dataSnapshot.getValue(String.class);
-                Log.i("logging", "KEYCHAIN UPDATED TO " + KEY);
-                settings.edit().putString("keychain", KEY).apply();
-            }
-        }
-    }
-
-    @Override
-    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-    }
-
 
     @Override
     public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> list) {

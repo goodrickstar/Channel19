@@ -80,7 +80,7 @@ public class Driver extends Fragment {
     }
 
     public void updateGhostStatus() {
-        if (RadioService.operator.getSalutes() < 359 || RadioService.operator.getCount() < 1000) {
+        if (RadioService.operator.getSalutes() < 319 || RadioService.operator.getCount() < 1000) {
             binding.ghost.setVisibility(View.INVISIBLE);
             binding.status.setText("");
         } else {
