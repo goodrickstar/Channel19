@@ -315,14 +315,14 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                 this.channelInfo = channelInfo;
                 List<String> newline = new ArrayList<>();
                 for (String profile : channelInfo.getProfiles()) {
-                    if (!profile.equals("http://truckradiosystem.com/~channel1/drawables/default.png")) {
+                    if (!profile.equals("http://23.111.159.2/~channel1//drawables/default.png")) {
                         newline.add(profile);
                     }
                 }
                 int columns = calculateNoOfColumns(76);
                 int maxRows = channelInfo.getProfiles().size() / columns;
                 while (newline.size() < maxRows * columns) {
-                    newline.add("http://truckradiosystem.com/~channel1/drawables/default.png");
+                    newline.add(RadioService.SITE_URL + "drawables/default.png");
                 }
                 channelInfo.profiles = newline;
             }

@@ -24,7 +24,7 @@ android {
         //noinspection OldTargetApi
         targetSdkVersion 33
         versionCode 4920
-        versionName "2.0.5"
+        versionName "2.0.6"
         multiDexEnabled true
     }
     compileSdk 34

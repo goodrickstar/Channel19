@@ -303,7 +303,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     @Override
     protected void onStart() {
         super.onStart();
-        registerReceiver(receiver, returnFilter());
+        ContextCompat.registerReceiver(this, receiver, returnFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
         if (!RadioService.operator.getAdmin())
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
     }

@@ -114,7 +114,7 @@ public class FillProfile extends DialogFragment {
                             .signWith(SignatureAlgorithm.HS256, settings.getString("keychain", null))
                             .compact();
                     final Request request = new Request.Builder()
-                            .url(settings.getString("siteUrl", "http://truckradiosystem.com/~channel1/") + "user_handle_match.php")
+                            .url(RadioService.SITE_URL + "user_handle_match.php")
                             .post(new FormBody.Builder().add("data", compactJws).build())
                             .build();
                     new OkHttpClient().newCall(request).enqueue(new Callback() {

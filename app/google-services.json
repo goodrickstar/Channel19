@@ -45,6 +45,14 @@
             "package_name": "com.cb3g.channel19",
             "certificate_hash": "9ec54141b5b620059971b32de71a7461c61f1b7e"
           }
+        },
+        {
+          "client_id": "266162092275-t0ev8de2sccn6pna2qehrimsvcea928t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cb3g.channel19",
+            "certificate_hash": "29fb2fd7e5840f988746addfd2c45cb27d944501"
+          }
         }
       ],
       "api_key": [

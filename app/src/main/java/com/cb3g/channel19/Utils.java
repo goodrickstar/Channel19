@@ -297,32 +297,19 @@ class Utils {
     }
 
     static String timeOnline(Duration duration) {
-        String response = "";
-        int days = 0;
         int hours = (int) duration.toHours();
         int minutes = (int) duration.toMinutes();
-        int seconds = (int) duration.toMillis() / 1000;
-        if (hours > 24) {
-            days = hours / 24;
-            response = days + " day";
-            if (days == 1) response += response + " ";
-            else response += response + "s ";
-            hours = hours - days * 24;
+        if (hours > 23) {
+            final int days = hours / 24;
+            if (days == 1 || hours == 24) return "One day ";
+            return days + " days ";
         }
-        if (minutes > 60) minutes = minutes - (hours * 60);
         if (hours > 0) {
-            if (hours == 1) response = hours + " hr";
-            else response = hours + " hrs";
+            if (hours == 1) return "One hour ";
+            return hours + " hours ";
         }
-        if (minutes > 0) {
-            response += " ";
-            if (minutes == 1) response += minutes + " min";
-            else response += minutes + " mins";
-        } else {
-            if (seconds == 1) response = "1 sec";
-            else response = seconds + " secs";
-        }
-        return response;
+        if (minutes == 1) return "One min ";
+        return minutes + " mins";
     }
 
     static String formatDuration(Duration duration) {

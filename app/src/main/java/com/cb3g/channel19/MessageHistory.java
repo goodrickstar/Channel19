@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
+import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -27,6 +29,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,16 +110,26 @@ public class MessageHistory extends DialogFragment {
                             JSONObject returnedObject = new JSONObject(data);
                             JSONArray returnedList = returnedObject.getJSONArray("data");
                             JSONArray onlineList = returnedObject.getJSONArray("online");
+                            final int timeStamp = returnedObject.getInt("time");
                             list.clear();
                             for (int i = 0; i < returnedList.length(); i++) {
                                 History entry = RadioService.gson.fromJson(returnedList.get(i).toString(), History.class);
                                 try {
-                                    entry.setOnline(onlineList.getInt(i));
+                                    final int online = onlineList.getInt(i);
+                                    if (online >= timeStamp) entry.setOnline(0);
+                                    else entry.setOnline(onlineList.getInt(i));
                                 } catch (JSONException e) {
                                     Logger.INSTANCE.e("entry.setOnline", String.valueOf(e));
                                 }
                                 list.add(entry);
                             }
+                            list.sort((one, two) -> two.getOnline() - one.getOnline());
+                            list.sort((o1, o2) -> {
+                                if (o1.getOnline() == 0 && o2.getOnline() == 0) return 0;
+                                if (o1.getOnline() == 0) return -1;
+                                if (o2.getOnline() == 0) return 1;
+                                return 0;
+                            });
                             adapter.notifyDataSetChanged();
                             history.animate().alpha(1.0f).setDuration(500);
                         } catch (JSONException e) {
@@ -247,7 +261,7 @@ public class MessageHistory extends DialogFragment {
             holder.lastOnline.setVisibility(View.VISIBLE);
             if (object.getOnline() == 0) holder.lastOnline.setText("Online");
             else
-                holder.lastOnline.setText("Active" + "\n" + Utils.timeOnline(Utils.timeDifferance(object.getOnline())) + " ago");
+                holder.lastOnline.setText("Active" + "\n" + Utils.timeOnline(Utils.timeDifferance(object.getOnline())) + "ago");
             new GlideImageLoader(context, holder.profile).load(object.getProfileLink(), RadioService.profileOptions);
         }
 

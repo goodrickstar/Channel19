@@ -61,6 +61,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
@@ -132,6 +133,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         showSnack(new Snack("Logged Out", Snackbar.LENGTH_SHORT));
     }
 
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -170,7 +172,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                 });
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onStart() {
         super.onStart();
@@ -229,7 +230,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         final IntentFilter filter = new IntentFilter();
         filter.addAction("nineteenSendProfileToServer");
         filter.addAction("nineteenProve");
-        registerReceiver(receiver, filter);
+        ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     @Override
@@ -248,7 +249,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             binding.emailAddress.setText("");
             settings.edit().putString("userId", "0").apply();
         } else {
-            Glide.with(this).load(user.getPhotoUrl().toString().replace("96", "400")).circleCrop().into(binding.googleButton);
+            Glide.with(this).load(Objects.requireNonNull(user.getPhotoUrl()).toString().replace("96", "400")).circleCrop().into(binding.googleButton);
             binding.profileName.setText(user.getDisplayName());
             binding.emailAddress.setText(user.getEmail());
             settings.edit().putString("userId", user.getUid()).apply();
@@ -281,105 +282,100 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         pre_text("Logging in..");
         rotate_logo();
         if (billingUtils.isConnected) {
-            billingUtils.queryActiveSubscriptions((billingResult, subscriptions) -> DeviceName.with(LoginActivity.this).request((info, error) -> {
-                Utils.getDatabase().getReference().child("keychain").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String KEY = snapshot.getValue(String.class);
-                        settings.edit().putString("keychain", KEY).apply();
-                        String compactJws = Jwts.builder()
-                                .setHeader(header)
-                                .claim("userId", user.getUid())
-                                .claim("email", user.getEmail())
-                                .claim("name", user.getDisplayName())
-                                .claim("reg_id", TOKEN)
-                                .claim("deviceId", deviceId())
-                                .claim("gsf", returnGSF())
-                                .claim("imei", "")
-                                .claim("serial", serial)
-                                .claim("language", Locale.getDefault().getDisplayLanguage())
-                                .claim("deviceName", info.marketName)
-                                .claim("active", !subscriptions.isEmpty())
-                                .claim("version", String.valueOf(getVersion()))
-                                .claim("version_name", getVersionName())
-                                .claim("build", getBuildVersion())
-                                .setIssuedAt(new Date(System.currentTimeMillis()))
-                                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                .signWith(SignatureAlgorithm.HS256, KEY)
-                                .compact();
-                        Request request = new Request.Builder()
-                                .url(SITE_URL + "google_login.php")
-                                .post(new FormBody.Builder().add("data", compactJws).build())
-                                .build();
-                        okClient.newCall(request).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                                show_result("Network Error", e.getMessage());
-                            }
+            billingUtils.queryActiveSubscriptions((billingResult, subscriptions) -> DeviceName.with(LoginActivity.this).request((info, error) -> Utils.getDatabase().getReference().child("keychain").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String KEY = snapshot.getValue(String.class);
+                    settings.edit().putString("keychain", KEY).apply();
+                    String compactJws = Jwts.builder()
+                            .setHeader(header)
+                            .claim("userId", user.getUid())
+                            .claim("email", user.getEmail())
+                            .claim("name", user.getDisplayName())
+                            .claim("reg_id", TOKEN)
+                            .claim("deviceId", deviceId())
+                            .claim("gsf", returnGSF())
+                            .claim("imei", "")
+                            .claim("serial", serial)
+                            .claim("language", Locale.getDefault().getDisplayLanguage())
+                            .claim("deviceName", info.marketName)
+                            .claim("active", !subscriptions.isEmpty())
+                            .claim("version", String.valueOf(getVersion()))
+                            .claim("version_name", getVersionName())
+                            .claim("build", getBuildVersion())
+                            .setIssuedAt(new Date(System.currentTimeMillis()))
+                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                            .signWith(SignatureAlgorithm.HS256, KEY)
+                            .compact();
+                    Request request = new Request.Builder()
+                            .url(SITE_URL + "google_login.php")
+                            .post(new FormBody.Builder().add("data", compactJws).build())
+                            .build();
+                    okClient.newCall(request).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                            show_result("Network Error", e.getMessage());
+                        }
 
-                            @Override
-                            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                                String image = response.body().string();
-                                runOnUiThread(() -> {
-                                    try {
-                                        Log.i("logging", "data: " + image);
-                                        JSONObject data = new JSONObject(image);
-                                        if (data.getString("user_id").equals("0")) {
-                                            show_result(data.getString("mode"), data.getString("msg"));
-                                        } else {
-                                            final String handle = data.getString("radio_hanlde");
-                                            if (handle.equals("default")) {
-                                                select_title();
-                                                return;
-                                            }
-                                            final String profile = data.getString("profileLink");
-                                            final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
-                                            welcome(handle, profile);
-                                            final SharedPreferences.Editor edit = settings.edit();
-                                            edit.putString("email", data.getString("email"));
-                                            edit.putString("userId", data.getString("user_id"));
-                                            edit.putString("handle", handle);
-                                            edit.putString("rank", data.getString("rank"));
-                                            edit.putString("carrier", data.getString("carrier"));
-                                            edit.putString("town", data.getString("hometown"));
-                                            edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
-                                            edit.putBoolean("invisible", invisible);
-                                            edit.putString("profileLink", profile);
-                                            edit.putInt("newbie", data.getInt("newbie"));
-                                            edit.putBoolean("active", data.getBoolean("subscribed"));
-                                            edit.putString("photoIDs", data.getString("photoIDs"));
-                                            edit.putString("textIDs", data.getString("textIDs"));
-                                            edit.putString("blockedIDs", data.getString("blockedIDs"));
-                                            edit.putString("salutedIDs", data.getString("salutedIDs"));
-                                            edit.putString("flaggedIDs", data.getString("flaggedIDs"));
-                                            edit.putString("main_backdrop", data.getString("one"));
-                                            edit.putString("settings_backdrop", data.getString("two"));
-                                            edit.putInt("count", data.getInt("total_count"));
-                                            edit.putInt("salutes", data.getInt("salutes"));
-                                            edit.putBoolean("exiting", false);
-                                            edit.apply();
-                                            finish();
-                                            startForegroundService(new Intent(LoginActivity.this, RadioService.class));
-                                            launch_main_activity();
+                        @Override
+                        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                            assert response.body() != null;
+                            String image = response.body().string();
+                            runOnUiThread(() -> {
+                                try (response) {
+                                    JSONObject data = new JSONObject(image);
+                                    if (data.getString("user_id").equals("0")) {
+                                        show_result(data.getString("mode"), data.getString("msg"));
+                                    } else {
+                                        final String handle = data.getString("radio_hanlde");
+                                        if (handle.equals("default")) {
+                                            select_title();
+                                            return;
                                         }
-                                    } catch (JSONException e) {
-                                        show_result("Login Error", e.getMessage());
-                                        Logger.INSTANCE.e("google_login", e.getMessage());
-                                    } finally {
-                                        response.close();
+                                        final String profile = data.getString("profileLink");
+                                        final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
+                                        welcome(handle, profile);
+                                        final SharedPreferences.Editor edit = settings.edit();
+                                        edit.putString("email", data.getString("email"));
+                                        edit.putString("userId", data.getString("user_id"));
+                                        edit.putString("handle", handle);
+                                        edit.putString("rank", data.getString("rank"));
+                                        edit.putString("carrier", data.getString("carrier"));
+                                        edit.putString("town", data.getString("hometown"));
+                                        edit.putBoolean("admin", Boolean.parseBoolean(data.getString("admin")));
+                                        edit.putBoolean("invisible", invisible);
+                                        edit.putString("profileLink", profile);
+                                        edit.putInt("newbie", data.getInt("newbie"));
+                                        edit.putBoolean("active", data.getBoolean("subscribed"));
+                                        edit.putString("photoIDs", data.getString("photoIDs"));
+                                        edit.putString("textIDs", data.getString("textIDs"));
+                                        edit.putString("blockedIDs", data.getString("blockedIDs"));
+                                        edit.putString("salutedIDs", data.getString("salutedIDs"));
+                                        edit.putString("flaggedIDs", data.getString("flaggedIDs"));
+                                        edit.putString("main_backdrop", data.getString("one"));
+                                        edit.putString("settings_backdrop", data.getString("two"));
+                                        edit.putInt("count", data.getInt("total_count"));
+                                        edit.putInt("salutes", data.getInt("salutes"));
+                                        edit.putBoolean("exiting", false);
+                                        edit.apply();
+                                        finish();
+                                        startForegroundService(new Intent(LoginActivity.this, RadioService.class));
+                                        launch_main_activity();
                                     }
-                                });
-                            }
-                        });
-                    }
+                                } catch (JSONException e) {
+                                    show_result("Login Error", e.getMessage());
+                                    Logger.INSTANCE.e("google_login", e.getMessage());
+                                }
+                            });
+                        }
+                    });
+                }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
 
-                    }
-                });
-
-            }));
+                }
+            })));
         } else {
             runOnUiThread(() -> {
                 post_text();
@@ -516,7 +512,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                 String result = Long.toHexString(Long.parseLong(c.getString(1)));
                 if (!c.isClosed())
                     c.close();
-                if (result != null) return result;
+                return result;
             }
         } catch (NumberFormatException e) {
             if (!c.isClosed())

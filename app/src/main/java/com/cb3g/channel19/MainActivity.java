@@ -244,7 +244,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         }
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onStart() {
         super.onStart();
@@ -273,11 +272,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             }
         };
         isBound = bindService(new Intent(this, RadioService.class), SC, BIND_IMPORTANT);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(receiver, returnFilter(), Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(receiver, returnFilter());
-        }
+        ContextCompat.registerReceiver(this, receiver, returnFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
         delay = true;
         if (settings.getBoolean("exiting", false)) {
             startActivity(new Intent(this, LoginActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));

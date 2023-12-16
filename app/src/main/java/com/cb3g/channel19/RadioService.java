@@ -32,6 +32,7 @@ import android.media.SoundPool;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -46,6 +47,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.Observable;
 import androidx.databinding.ObservableBoolean;
 import androidx.databinding.ObservableField;
@@ -87,6 +89,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
@@ -162,12 +165,11 @@ public class RadioService extends Service implements ValueEventListener {
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
-            switch (intent.getAction()) {
+            switch (Objects.requireNonNull(intent.getAction())) {
                 case "token"://TODO: update token on server
                     break;
                 case "listUpdate":
                     final String flagData = intent.getStringExtra("data");
-                    Log.i("logging", flagData);
                     flaggedIds.clear();
                     flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
                     }.getType());
@@ -222,7 +224,7 @@ public class RadioService extends Service implements ValueEventListener {
                     break;
                 case "background":
                     try {
-                        JSONObject backgrounds = new JSONObject(intent.getStringExtra("data"));
+                        JSONObject backgrounds = new JSONObject(Objects.requireNonNull(intent.getStringExtra("data")));
                         settings.edit().putString("main_backdrop", backgrounds.getString("one")).apply();
                         settings.edit().putString("settings_backdrop", backgrounds.getString("two")).apply();
                         if (MI != null) MI.changeBackground(backgrounds.getString("one"));
@@ -307,7 +309,7 @@ public class RadioService extends Service implements ValueEventListener {
                     final Photo photo = gson.fromJson(intent.getStringExtra("data"), Photo.class);
                     if (RadioService.blockListContainsId(photoIDs, photo.getSenderId())) return;
                     switch (photo.getMass()) {
-                        case 0: //private photo
+                        case 0 -> { //private photo
                             if (settings.getBoolean("photos", true)) {
                                 if (chat.get().equals(photo.getSenderId())) {
                                     if (MI != null)
@@ -318,14 +320,14 @@ public class RadioService extends Service implements ValueEventListener {
                                     photos.add(photo);
                                 }
                             }
-                            break;
-                        case 1: //mass
+                        }
+                        case 1 -> { //mass
                             if (!recording && MI != null) sp.play(glass, .1f, .1f, 1, 0, 1f);
                             if (settings.getBoolean("photos", true) && !paused) photos.add(photo);
                             else if (MI != null)
                                 snacks.add(new Snack(photo.getHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
                             Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(photo);
-                            break;
+                        }
                     }
 
                     checkForMessages();
@@ -446,7 +448,7 @@ public class RadioService extends Service implements ValueEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        registerReceiver(telephonyReceiver, returnTelephoneFilter());
+        ContextCompat.registerReceiver(this, telephonyReceiver, returnTelephoneFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
         registerDefaultNetworkCallback();
         return START_NOT_STICKY;
     }
@@ -463,13 +465,13 @@ public class RadioService extends Service implements ValueEventListener {
         storage = FirebaseStorage.getInstance();
         databaseReference = Utils.getDatabase().getReference();
         databaseReference.child("reservoir").keepSynced(true);
-        operator.setKey(settings.getString("keychain", null));
+        operator.setKey(settings.getString("keychain", ""));
         operator.setUser_id(settings.getString("userId", "0"));
         operator.setHandle(settings.getString("handle", "default"));
         operator.setCarrier(settings.getString("carrier", ""));
         operator.setRank(settings.getString("rank", "f"));
         operator.setTown(settings.getString("town", ""));
-        operator.setProfileLink(settings.getString("profileLink", "http://truckradiosystem.com/~channel1/drawables/default.png"));
+        operator.setProfileLink(settings.getString("profileLink", SITE_URL + "drawables/default.png"));
         operator.setSubscribed(settings.getBoolean("active", false));
         operator.setInvisible(settings.getBoolean("invisible", false));
         operator.setLimit(settings.getInt("limit", 50));
@@ -731,7 +733,7 @@ public class RadioService extends Service implements ValueEventListener {
         STATE_MAP.put("Wisconsin", "WI");
         STATE_MAP.put("Wyoming", "WY");
         STATE_MAP.put("Yukon Territory", "YT");
-        registerReceiver(receiver, returnFilter());
+        ContextCompat.registerReceiver(this, receiver, returnFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
         if (settings.getBoolean("welcomesound", true)) {
             playing = true;
             try {
@@ -876,7 +878,7 @@ public class RadioService extends Service implements ValueEventListener {
         removeZeros();
         if (operator.getChannel() != null) {
             databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
-            if (operator.getAdmin()) enterStamp = Instant.now().getEpochSecond() - 300000;
+            if (operator.getAdmin()) enterStamp = Instant.now().getEpochSecond() - 7200;
             else enterStamp = Instant.now().getEpochSecond() - 300;
             databaseReference.child("audio").child(operator.getChannel().getChannel_name()).addChildEventListener(audioListener);
         }

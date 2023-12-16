@@ -94,7 +94,7 @@ public class TermsOfUse extends DialogFragment {
                                 if (activity != null)
                                     activity.runOnUiThread(adapter::notifyDataSetChanged);
                             } catch (IOException e) {
-                                LOG.e("http://23.111.159.2/~channel1/terms.php", e.getMessage());
+                                LOG.e("terms.php", e.getMessage());
                             }
                         }
                         response.close();
