@@ -87,7 +87,6 @@ public class TermsOfUse extends DialogFragment {
                         if (response.isSuccessful()) {
                             try {
                                 String data = response.body().string();
-                                Log.i("logging", data);
                                 terms = new Gson().fromJson(data, new TypeToken<ArrayList<Term>>() {
                                 }.getType());
                                 Activity activity = getActivity();

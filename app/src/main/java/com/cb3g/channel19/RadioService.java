@@ -1293,13 +1293,25 @@ public class RadioService extends Service implements ValueEventListener {
         return null;
     }
 
-    String[] getlatest() {
+    ProfileDisplay getlatest() {
+        ProfileDisplay data = new ProfileDisplay();
+        data.setHandle(onlineStatus);
         if (!inbounds.isEmpty()) {
-            String duration = String.valueOf(getDuration() / 1000);
-            Inbound object = inbounds.get(0);
-            return new String[]{object.getHandle(), object.getCarrier(), object.getTown(), duration, object.getRank(), object.getProfileLink()};
+            data = inboundObjectToProfileDisplayObject(inbounds.get(0));
+            data.setDuration(getDuration()/1000);
+            return data;
         }
-        return new String[]{onlineStatus, "", "", "", "f", "none"};
+        return data;
+    }
+
+    private ProfileDisplay inboundObjectToProfileDisplayObject(Inbound inbound){
+        ProfileDisplay display = new ProfileDisplay();
+        display.setHandle(inbound.getHandle());
+        display.setCarrier(inbound.getCarrier());
+        display.setTown(inbound.getTown());
+        display.setRank(inbound.getRank());
+        display.setProfileLink(inbound.getProfileLink());
+        return display;
     }
 
     long getlatestStamp() {
@@ -1996,10 +2008,6 @@ public class RadioService extends Service implements ValueEventListener {
         purge = sp.load(this, R.raw.purge, 1);
         skip = sp.load(this, R.raw.newskip, 1);
         type = sp.load(this, R.raw.type, 1);
-    }
-
-    String getOnlineStatus() {
-        return onlineStatus;
     }
 
     public int getQueue() {

@@ -343,27 +343,27 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         }
     }
 
-    public void updateDisplay(final String[] array, long stamp) {
+    public void updateDisplay(final ProfileDisplay display, long stamp) {
         if (RadioService.recording || !isResumed()) return;
-        handle.setText(array[0]);
-        carrier.setText(array[1]);
-        location.setText(array[2]);
+        handle.setText(display.getHandle());
+        carrier.setText(display.getCarrier());
+        location.setText(display.getTown());
         if (stamp == 0)
             title.setText("");
         else
-            title.setText(Utils.formatDiff(array[3], Utils.timeDifferance(stamp)));
-        new GlideImageLoader(context, rank).load(Utils.parseRankUrl(array[4]));
-        if (array[5].equals("none")) {
+            title.setText(Utils.formatDiff(Utils.timeDifferance(stamp), true));
+        new GlideImageLoader(context, rank).load(Utils.parseRankUrl(display.getRank()));
+        if (display.getProfileLink().equals("none")) {
             profile.setVisibility(View.GONE);
             profile.setOnClickListener(null);
         } else {
             profile.setVisibility(View.VISIBLE);
-            new GlideImageLoader(context, profile).load(array[5], RadioService.profileOptions);
+            new GlideImageLoader(context, profile).load(display.getProfileLink(), RadioService.profileOptions);
             profile.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenBoxSound"));
                 if (MI != null)
-                    MI.streamFile(array[5]);
+                    MI.streamFile(display.getProfileLink());
             });
         }
     }

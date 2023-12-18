@@ -58,7 +58,7 @@ interface MI {
 
     void updateQueue(int count, boolean paused, boolean poor);
 
-    void updateDisplay(String[] display, int count, int duration, boolean paused, boolean poor, long stamp);
+    void updateDisplay(ProfileDisplay display, int count, int duration, boolean paused, boolean poor, long stamp);
 
     void lockOthers(boolean lock);
 
@@ -92,7 +92,7 @@ interface MI {
 
     void updateLocationDisplay(String location);
 
-    String[] getDisplayedText();
+    ProfileDisplay getDisplayedText();
 
     long getStamp();
 

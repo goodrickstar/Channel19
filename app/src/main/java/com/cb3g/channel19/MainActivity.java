@@ -20,7 +20,6 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -77,11 +76,8 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -571,7 +567,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (!RadioService.operator.getAdmin()) {
             sendBroadcast(new Intent("nineteenEmptyPlayer"));
             if (transmitFragment.isAdded()) {
-                transmitFragment.updateDisplay(new String[]{onlineStatus(), "", "", "", "f", "none"}, 0);
+                transmitFragment.updateDisplay(new ProfileDisplay(), 0);
                 transmitFragment.updateque(0, RadioService.paused);
             }
         }
@@ -660,9 +656,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public String[] getDisplayedText() {
+    public ProfileDisplay getDisplayedText() {
         if (RS != null) return RS.getlatest();
-        return new String[]{onlineStatus(), "", "", "", "f", "none"};
+        return new ProfileDisplay();
     }
 
     @Override
@@ -678,10 +674,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void updateDisplay(final String[] display, final int count, final int duration, final boolean paused, final boolean poor, final long stamp) {
+    public void updateDisplay(ProfileDisplay display, final int count, final int duration, final boolean paused, final boolean poor, final long stamp) {
         runOnUiThread(() -> {
             if (transmitFragment.isAdded()) transmitFragment.updateDisplay(display, stamp);
-            if (display[0].equals("Welcome...")) return;
+            if (display.getHandle().equals("Welcome...")) return;
             updateDarkDisplay(display, stamp);
             updateQueue(count, paused, poor);
             if (duration >= 0) animateMax(duration);
@@ -767,8 +763,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (location.equals("")) {
             binding.maLocatoinTv.setText(R.string.location_unknown);
             //binding.blackLocationTv.setVisibility(View.INVISIBLE);
-        }
-        else {
+        } else {
             binding.maLocatoinTv.setText(location);
             //binding.blackLocationTv.setVisibility(View.VISIBLE);
             //binding.blackLocationTv.setText(location);
@@ -980,7 +975,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void onClick(View v) {
         delay = true;
         int id = v.getId();
-        if (id == R.id.cancel) {
+        if (id == R.id.ma_cancel_button) {
             Utils.vibrate(v);
             if (transmitFragment.isAdded()) transmitFragment.stopRecorder(false);
         } else if (id == R.id.black_queue_tv) {
@@ -1046,7 +1041,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             }
         } else if (id == R.id.blackOut) {
             darkChange(false);
-        }else if (id == R.id.black_profile_picture_iv) {
+        } else if (id == R.id.black_profile_picture_iv) {
             darkChange(false);
         } else if (id == R.id.ma_skip_button) {
             Utils.vibrate(v);
@@ -1395,43 +1390,20 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maChannelsButton.setEnabled(!lock);
     }
 
-    private void updateDarkDisplay(String[] display, long stamp) {
-        if (display[0].contains("Online") || display[0].contains("Dead"))
+    private void updateDarkDisplay(final ProfileDisplay display, final long stamp) {
+        if (display.getHandle().contains("Online") || display.getHandle().contains("Dead"))
             binding.blackHandleTv.setText(" ");
-        else binding.blackHandleTv.setText(display[0]);
-        binding.blackCarrierTv.setText(display[1]);
-        //binding.blackLocationTv.setText(display[2]);
+        else binding.blackHandleTv.setText(display.getHandle());
+        binding.blackCarrierTv.setText(display.getCarrier());
         binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
-        if (display[3].equals("0") || display[3].isEmpty()) binding.blackDurationTv.setText("");
-        else binding.blackDurationTv.setText(display[3] + "s");
-        new GlideImageLoader(this, binding.blackStarIv).load(Utils.parseRankUrl(display[4]));
-        if (display[5].equals("none")) {
+        if (display.getDuration() == 0) binding.blackDurationTv.setText("");
+        else binding.blackDurationTv.setText(display.getDuration() + "s");
+        new GlideImageLoader(this, binding.blackStarIv).load(Utils.parseRankUrl(display.getRank()));
+        if (display.getProfileLink().equals("none"))
             binding.blackProfilePictureIv.setImageDrawable(null);
-            //binding.blackProfilePictureIv.setOnClickListener(null);
-        } else {
-            if (!dark) return;
-            //binding.blackProfilePictureIv.setVisibility(View.VISIBLE);
-            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display[5]);
-            /*
-            binding.blackProfilePictureIv.setOnClickListener(v -> {
-                Utils.vibrate(v);
-                sendBroadcast(new Intent("nineteenBoxSound"));
-                streamFile(display[5]);
-            });
-             */
-            /*
-            binding.blackProfilePictureIv.setOnLongClickListener(v -> {
-                UserListEntry user = returnTalkerEntry();
-                if (user != null) {
-                    Utils.vibrate(v);
-                    sendBroadcast(new Intent("nineteenClickSound"));
-                    showListOptions(user);
-                    return true;
-                }
-                return false;
-            });
-             */
-        }
+        else if (dark)
+            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display.getProfileLink());
+
     }
 
     @Override
@@ -1449,11 +1421,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void updateUserList() {
         if (userFragment.isAdded()) userFragment.update_users_list();
-    }
-
-    private String onlineStatus() {
-        if (RS != null) return RS.getOnlineStatus();
-        else return "Online";
     }
 
     public void flip(View v) {
