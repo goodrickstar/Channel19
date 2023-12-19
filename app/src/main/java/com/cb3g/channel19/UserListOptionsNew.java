@@ -17,6 +17,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,8 +39,11 @@ public class UserListOptionsNew extends DialogFragment {
     private Coordinates coordinates = null;
     private final ArrayList<UserOption> options = new ArrayList<>();
 
-    public UserListOptionsNew(UserListEntry user) {
+    private final FragmentManager fragmentManager;
+
+    public UserListOptionsNew(FragmentManager fragmentManager, UserListEntry user) {
         this.user = user;
+        this.fragmentManager = fragmentManager;
     }
 
     @Override
@@ -261,7 +265,12 @@ public class UserListOptionsNew extends DialogFragment {
                         dismiss();
                     }
                     case PHOTO -> {
-                        MI.sendPhoto(user.getUser_id(), user.getRadio_hanlde());
+                        ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
+                        if (imagePicker == null) {
+                            imagePicker = new ImagePicker(fragmentManager, user);
+                            imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                            imagePicker.show(fragmentManager, "imagePicker");
+                        }
                         dismiss();
                     }
                     case HISTORY -> {

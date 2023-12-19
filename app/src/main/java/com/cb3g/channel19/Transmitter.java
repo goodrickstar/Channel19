@@ -27,11 +27,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.example.android.multidex.myapplication.R;
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
@@ -61,6 +63,11 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     private long msgCount = System.currentTimeMillis();
     private int tutorial_count = 0, queueMax = 9;
 
+    private final FragmentManager fragmentManager;
+
+    public Transmitter(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -312,7 +319,15 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         if (user != null) {
             context.sendBroadcast(new Intent("nineteenClickSound"));
             Utils.vibrate(v);
-            if (MI != null) MI.showListOptions(user);
+            UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+            if (cdf == null) {
+                Bundle bundle = new Bundle();
+                bundle.putString("user", new Gson().toJson(user));
+                cdf = new UserListOptionsNew(fragmentManager, user);
+                cdf.setArguments(bundle);
+                cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                cdf.show(fragmentManager, "options");
+            }
             return true;
         }
         return false;

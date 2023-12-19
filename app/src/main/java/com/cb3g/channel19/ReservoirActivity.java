@@ -214,7 +214,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     public void launchSearch() {
         ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
         if (imageSearch == null) {
-            imageSearch = new ImageSearch();
+            imageSearch = new ImageSearch("");
             imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             imageSearch.show(fragmentManager, "imageSearch");
         }

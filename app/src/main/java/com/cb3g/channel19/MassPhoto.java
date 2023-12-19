@@ -99,7 +99,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
                 if (user.isChecked) sendingIds.add(user.id);
             }
             if (!sendingIds.isEmpty()) {
-                context.sendBroadcast(new Intent("upload").putExtra("uri", uri).putExtra("mode", 3737).putExtra("caption", "").putExtra("sendToId", RadioService.gson.toJson(sendingIds)).putExtra("sendToHandle", "").putExtra("height", preview.getHeight()).putExtra("width", preview.getWidth()));
+                //RS.upload_file(new FileUpload(uri, RequestCode.PRIVATE_PHOTO_SELECTED_FROM_DISK, RadioService.gson.toJson(sendingIds), preview.getHeight(), preview.getWidth()));
                 if (MI != null)
                     MI.showSnack(new Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT));
                 dismiss();

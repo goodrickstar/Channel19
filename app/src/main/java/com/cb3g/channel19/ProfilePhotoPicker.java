@@ -1,6 +1,7 @@
 package com.cb3g.channel19;
 
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,9 +14,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -25,13 +30,27 @@ import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 
 
-public class PhotoPicker extends DialogFragment implements View.OnClickListener {
+public class ProfilePhotoPicker extends DialogFragment implements View.OnClickListener {
     private Context context;
-    private Gif gif = new Gif();
+    private final Gif gif = new Gif();
     private ImageView preview;
     private SI SI;
     private boolean upload = false;
     private ProgressBar loading;
+
+    private final FragmentManager fragmentManager;
+
+    private final ActivityResultLauncher<String> picker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        if (uri != null) {
+            gif.setId(String.valueOf(System.currentTimeMillis()));
+            gif.setUrl(uri.toString());
+            setPhoto(gif, true);
+        }
+    });
+
+    public ProfilePhotoPicker(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -68,15 +87,25 @@ public class PhotoPicker extends DialogFragment implements View.OnClickListener 
         Utils.vibrate(v);
         int id = v.getId();
         if (id == R.id.accept) {
-            if (!gif.getUrl().equals(RadioService.operator.getProfileLink()) && SI != null)
-                SI.photoChosen(gif, upload);
+            FileUpload fileUpload = new FileUpload(gif.getUrl(), RequestCode.PROFILE, gif.getHeight(), gif.getWidth());
+            Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload);
+            if (upload) uploader.uploadImage();
+            else uploader.shareImage();
             dismiss();
         } else if (id == R.id.cancel) {
             dismiss();
         } else if (id == R.id.fromDisk) {
-            if (SI != null) SI.selectFromDisk();
+            if (Utils.permissionsAccepted(context, Utils.getStoragePermissions()))
+                picker.launch("image/*");
+            else
+                ActivityCompat.requestPermissions((Activity) SI, Utils.getStoragePermissions(), 2);
         } else if (id == R.id.fromGiphy) {
-            if (SI != null) SI.launchSearch(gif.getId());
+            ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
+            if (imageSearch == null) {
+                imageSearch = new ImageSearch(gif.getId());
+                imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                imageSearch.show(fragmentManager, "imageSearch");
+            }
         }
     }
 
@@ -87,15 +116,15 @@ public class PhotoPicker extends DialogFragment implements View.OnClickListener 
         gif.setId(photo.getId());
         Logger.INSTANCE.i(photo.getId());
         if (photo != null) {
-            Glide.with(context).load(photo.getUrl()).addListener(new RequestListener<Drawable>() {
+            Glide.with(context).load(photo.getUrl()).addListener(new RequestListener<>() {
                 @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
                     loading.setVisibility(View.GONE);
                     return false;
                 }
 
                 @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
                     loading.setVisibility(View.GONE);
                     if (photo.getHeight() == 0 || photo.getWidth() == 0) {
                         gif.setHeight(resource.getIntrinsicHeight());

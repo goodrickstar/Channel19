@@ -11,12 +11,14 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.UserListBinding;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,11 @@ public class UserList extends Fragment {
     private MI MI;
     private Instant now = Instant.now();
     private UserListBinding binding;
+    private final FragmentManager fragmentManager;
+
+    public UserList(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
 
     public void update_users_list() {
         now = Instant.now();
@@ -133,7 +140,15 @@ public class UserList extends Fragment {
                         MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
                         return;
                     }
-                    MI.showListOptions(user);
+                    UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                    if (cdf == null) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("user", new Gson().toJson(user));
+                        cdf = new UserListOptionsNew(fragmentManager, user);
+                        cdf.setArguments(bundle);
+                        cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                        cdf.show(fragmentManager, "options");
+                    }
                 } else if (id == R.id.black_profile_picture_iv) {
                     MI.streamFile(user.getProfileLink());
                 }

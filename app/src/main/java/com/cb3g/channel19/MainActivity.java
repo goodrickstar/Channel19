@@ -32,6 +32,8 @@ import android.view.animation.RotateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -70,7 +72,6 @@ import com.google.android.play.core.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -123,13 +124,15 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         }
                     });
                 }
-                case "nineteenGifChosen" ->
-                        launchPicker(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
+                case "nineteenGifChosen" -> {
+                    ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
+                    if (imagePicker != null)
+                        imagePicker.setPhoto(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
+                }
                 case "show_result" -> {
                     if (!isFinishing())
                         showResult(intent.getStringExtra("title"), intent.getStringExtra("content"));
                 }
-                case "nineteenPickProfile" -> photo_picker(3456);
                 case "exitChannelNineTeen" -> finish();
                 case "nineteenLockButtons" -> lockOthers(intent.getBooleanExtra("data", false));
                 case "nineteenAddCaption" -> {
@@ -196,6 +199,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     };
     private ExecutorService executor;
 
+    private final ActivityResultLauncher<String> massPhotoPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        if (uri != null) { //uri.toString() //.launch("image/*")
+
+
+        }
+    });
+
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -210,8 +220,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         rotate.setDuration(1000);
         rotate.setRepeatCount(1);
         rotate.setInterpolator(new LinearInterpolator());
-        userFragment = new UserList();
-        transmitFragment = new Transmitter();
+        userFragment = new UserList(fragmentManager);
+        transmitFragment = new Transmitter(fragmentManager);
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         transaction.replace(R.id.ma_bottom_frame, transmitFragment, "tf");
         transaction.commit();
@@ -372,20 +382,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults); // 1111, 3456, 3737
-        if (requestCode == 1111 || requestCode == 3456 || requestCode == 3737) {
-            if (Utils.permissionsAccepted(MainActivity.this, Utils.getStoragePermissions())) {
-                try {
-                    startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), requestCode);
-                } catch (Exception e) {
-                    Log.e("photo_picker", e.getMessage());
-                }
-            }
-        }
-    }
-
     @SuppressLint("MissingPermission")
     @Override
     public void startOrStopGPS(boolean start) {
@@ -456,76 +452,19 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void photoChosen(Gif gif, boolean upload) {
-        if (upload)
-            sendBroadcast(new Intent("upload").putExtra("uri", gif.getUrl()).putExtra("mode", 2345).putExtra("caption", "").putExtra("sendToId", photoToId).putExtra("sendToHandle", photoToHandle).putExtra("height", gif.getHeight()).putExtra("width", gif.getWidth()));
-        else
-            sendBroadcast(new Intent("giphyupload").putExtra("url", gif.getUrl()).putExtra("mode", 2345).putExtra("caption", "").putExtra("sendToId", photoToId).putExtra("sendToHandle", photoToHandle).putExtra("height", gif.getHeight()).putExtra("width", gif.getWidth()));
+        Uploader uploader;
+        if (upload) {
+            uploader = new Uploader(this, RadioService.operator, RadioService.client, new FileUpload(gif.getUrl(), RequestCode.PRIVATE_PHOTO, photoToId, photoToHandle, gif.getHeight(), gif.getWidth()));
+            uploader.uploadImage();
+        } else {
+            uploader = new Uploader(this, RadioService.operator, RadioService.client, new FileUpload(gif.getUrl(), RequestCode.PRIVATE_PHOTO, gif.getHeight(), gif.getWidth()));
+            uploader.shareImage();
+        }
     }
 
     @Override
     public void requestBluetoothPermission() {
         ActivityCompat.requestPermissions(MainActivity.this, Utils.getBluetoothPermissions(), 1);
-    }
-
-    @Override
-    public void launchPicker(Gif gif, boolean upload) {
-        if (isFinishing()) return;
-        ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
-        if (imagePicker == null) {
-            imagePicker = new ImagePicker();
-            Bundle bundle = new Bundle();
-            bundle.putString("handle", photoToHandle);
-            imagePicker.setArguments(bundle);
-            imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            imagePicker.show(fragmentManager, "imagePicker");
-        } else {
-            imagePicker.setPhoto(gif, upload);
-        }
-    }
-
-    @Override
-    public void launchSearch(String id) {
-        if (isFinishing()) return;
-        ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
-        if (imageSearch == null) {
-            imageSearch = new ImageSearch();
-            Bundle bundle = new Bundle();
-            bundle.putString("data", id);
-            imageSearch.setArguments(bundle);
-            imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            imageSearch.show(fragmentManager, "imageSearch");
-        }
-    }
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && data != null) {
-            switch (requestCode) {
-                case 1111 -> {
-                    Gif gif = new Gif();
-                    gif.setUrl(data.getData().toString());
-                    launchPicker(gif, true);
-                }
-                case 3737 -> {
-                    if (!isFinishing()) {
-                        MassPhoto mass = (MassPhoto) fragmentManager.findFragmentByTag("mass");
-                        if (mass == null) {
-                            mass = new MassPhoto();
-                            Bundle bundle = new Bundle();
-                            bundle.putString("data", String.valueOf(data.getData()));
-                            mass.setArguments(bundle);
-                            mass.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                            mass.show(fragmentManager, "mass");
-                        }
-                    }
-                }
-                default -> {
-                    sendBroadcast(new Intent("upload").putExtra("uri", String.valueOf(data.getData())).putExtra("mode", requestCode).putExtra("caption", "").putExtra("sendToId", photoToId).putExtra("sendToHandle", photoToHandle));
-                    photoToHandle = "";
-                    photoToId = "";
-                }
-            }
-        }
     }
 
     @Override
@@ -870,13 +809,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (RS != null) RS.saluteUser(user);
     }
 
-    @Override
-    public void sendPhoto(String id, String handle) {
-        photoToHandle = handle;
-        photoToId = id;
-        launchPicker(null, false);
-    }
-
     @SuppressLint("StaticFieldLeak")
     @Override
     public void onBackPressed() {
@@ -1008,7 +940,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 return;
             }
             sendBroadcast(new Intent("nineteenClickSound"));
-            photo_picker(3737);
+            //TODO: MassPhoto
         } else if (id == R.id.ma_channels_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));
@@ -1117,20 +1049,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         }
     }
 
-    @Override
-    public void showListOptions(UserListEntry user) {
-        if (isFinishing()) return;
-        UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
-        if (cdf == null) {
-            Bundle bundle = new Bundle();
-            bundle.putString("user", new Gson().toJson(user));
-            cdf = new UserListOptionsNew(user);
-            cdf.setArguments(bundle);
-            cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            cdf.show(fragmentManager, "options");
-        }
-    }
-
     private void showResult(String title, String content) {
         if (RadioService.recording || isFinishing()) return;
         Blank bdf = (Blank) fragmentManager.findFragmentByTag("bdf");
@@ -1154,7 +1072,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             Bundle bundle = new Bundle();
             bundle.putString("data", RadioService.gson.toJson(user));
             bundle.putBoolean("launch", launch);
-            chat_dialog = new Chat(user);
+            chat_dialog = new Chat(fragmentManager, user);
             chat_dialog.setArguments(bundle);
             chat_dialog.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             chat_dialog.show(fragmentManager, "chatD");
@@ -1357,18 +1275,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 binding.maTimer.startAnimation(anim);
             }
         }
-    }
-
-    @Override
-    public void photo_picker(int request_code) {
-        if (Utils.permissionsAccepted(this, Utils.getStoragePermissions())) {
-            try {
-                startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), request_code);
-            } catch (Exception e) {
-                Log.e("photo_picker", e.getMessage());
-            }
-        } else
-            Utils.requestPermission(MainActivity.this, Utils.getStoragePermissions(), request_code);
     }
 
     private void resetAnimation() {

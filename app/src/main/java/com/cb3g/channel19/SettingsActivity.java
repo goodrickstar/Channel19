@@ -118,7 +118,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     }
                     break;
                 case "nineteenUpdateProfile":
-                    ImageSearch imageSearch = new ImageSearch();
+                    ImageSearch imageSearch = new ImageSearch("");
                     imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                     imageSearch.show(manager, "imageSearch");
                     break;
@@ -251,13 +251,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case 3456: //profile pic
-                if (resultCode == RESULT_OK && data != null) {
-                    Gif gif = new Gif();
-                    gif.setUrl(data.getData().toString());
-                    launchPicker(gif, true);
-                }
-                break;
             case 9999: //custom background
                 if (resultCode == RESULT_OK && data != null)
                     settings.edit().putString("background", String.valueOf(data.getData())).apply();
@@ -266,48 +259,14 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     @Override
-    public void photoChosen(Gif gif, boolean upload) {
-        if (upload)
-            sendBroadcast(new Intent("upload").putExtra("uri", gif.getUrl()).putExtra("mode", 3456).putExtra("caption", "").putExtra("sendToId", "").putExtra("sendToHandle", "").putExtra("height", gif.getHeight()).putExtra("width", gif.getWidth()));
-        else
-            sendBroadcast(new Intent("giphyupload").putExtra("url", gif.getUrl()).putExtra("mode", 3456).putExtra("caption", "").putExtra("sendToId", "").putExtra("sendToHandle", "").putExtra("height", gif.getHeight()).putExtra("width", gif.getWidth()));
-    }
-
-    @Override
     public void launchPicker(Gif gif, boolean upload) {
-        PhotoPicker photoPicker = (PhotoPicker) manager.findFragmentByTag("photoPicker");
-        if (photoPicker == null) {
-            photoPicker = new PhotoPicker();
-            photoPicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            photoPicker.show(manager, "photoPicker");
+        ProfilePhotoPicker profilePhotoPicker = (ProfilePhotoPicker) manager.findFragmentByTag("photoPicker");
+        if (profilePhotoPicker == null) {
+            profilePhotoPicker = new ProfilePhotoPicker(getSupportFragmentManager());
+            profilePhotoPicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+            profilePhotoPicker.show(manager, "photoPicker");
         } else {
-            photoPicker.setPhoto(gif, upload);
-        }
-    }
-
-    @Override
-    public void launchSearch(String id) {
-        ImageSearch imageSearch = (ImageSearch) manager.findFragmentByTag("imageSearch");
-        if (imageSearch == null) {
-            imageSearch = new ImageSearch();
-            Bundle bundle = new Bundle();
-            bundle.putString("data", id);
-            imageSearch.setArguments(bundle);
-            imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            imageSearch.show(manager, "imageSearch");
-        }
-    }
-
-    @Override
-    public void selectFromDisk() {
-        if (!Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
-            Utils.requestPermission(SettingsActivity.this, Utils.getStoragePermissions(), 2);
-            return;
-        }
-        try {
-            startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), 3456);
-        } catch (Exception e) {
-            LOG.e(e.getMessage());
+            profilePhotoPicker.setPhoto(gif, upload);
         }
     }
 

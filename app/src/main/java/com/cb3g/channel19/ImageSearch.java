@@ -42,7 +42,11 @@ public class ImageSearch extends DialogFragment {
     private int columnWidth = 0;
     private RecyclerView recyclerView;
     private final RecycleAdapter recycleAdapter = new RecycleAdapter();
-    private String id;
+    private final String id;
+
+    public ImageSearch(String id) {
+        this.id = id;
+    }
 
     private void giphySearch(final String search) {
         Request request;
@@ -113,7 +117,6 @@ public class ImageSearch extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        id = requireArguments().getString("data");
         recyclerView = view.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));

@@ -4,12 +4,6 @@ interface MI {
 
     void requestBluetoothPermission();
 
-    void launchPicker(Gif gif, boolean upload);
-
-    void launchSearch(String id);
-
-    void photo_picker(int request_code);
-
     void photoChosen(Gif gif, boolean upload);
 
     void findUser(Coordinates coordinates);
@@ -31,9 +25,6 @@ interface MI {
     void updateUserList();
 
     void streamFile(String url);
-
-    void showListOptions(UserListEntry user);
-
     void createPm(UserListEntry user);
 
     void displayChat(UserListEntry user, boolean sound, boolean launch);
@@ -87,8 +78,6 @@ interface MI {
     void banUser(String id);
 
     void saluteThisUser(UserListEntry user);
-
-    void sendPhoto(String id, String handle);
 
     void updateLocationDisplay(String location);
 

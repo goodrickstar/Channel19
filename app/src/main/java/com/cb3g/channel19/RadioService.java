@@ -13,7 +13,6 @@ import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -32,7 +31,6 @@ import android.media.SoundPool;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -40,7 +38,6 @@ import android.os.Looper;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.webkit.MimeTypeMap;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
@@ -69,7 +66,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.vdurmont.emoji.EmojiParser;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -79,7 +75,6 @@ import org.threeten.bp.Instant;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -98,8 +93,6 @@ import java.util.concurrent.ExecutorService;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import me.shaohui.advancedluban.Luban;
-import me.shaohui.advancedluban.OnCompressListener;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -237,12 +230,6 @@ public class RadioService extends Service implements ValueEventListener {
                     break;
                 case "fetch_users":
                     get_users_on_channel();
-                    break;
-                case "upload":
-                    upload_file(intent.getStringExtra("uri"), intent.getIntExtra("mode", 1234), intent.getStringExtra("caption"), intent.getStringExtra("sendToId"), intent.getStringExtra("sendToHandle"), intent.getIntExtra("height", 500), intent.getIntExtra("width", 500));
-                    break;
-                case "giphyupload":
-                    shareGiphy(intent.getIntExtra("mode", 1234), intent.getStringExtra("url"), intent.getStringExtra("sendToId"), intent.getStringExtra("sendToHandle"), intent.getStringExtra("caption"), intent.getIntExtra("height", 500), intent.getIntExtra("width", 500));
                     break;
                 case "pauseLimitChange":
                     pauseLimit = intent.getIntExtra("data", 200);
@@ -1298,13 +1285,13 @@ public class RadioService extends Service implements ValueEventListener {
         data.setHandle(onlineStatus);
         if (!inbounds.isEmpty()) {
             data = inboundObjectToProfileDisplayObject(inbounds.get(0));
-            data.setDuration(getDuration()/1000);
+            data.setDuration(getDuration() / 1000);
             return data;
         }
         return data;
     }
 
-    private ProfileDisplay inboundObjectToProfileDisplayObject(Inbound inbound){
+    private ProfileDisplay inboundObjectToProfileDisplayObject(Inbound inbound) {
         ProfileDisplay display = new ProfileDisplay();
         display.setHandle(inbound.getHandle());
         display.setCarrier(inbound.getCarrier());
@@ -1400,351 +1387,6 @@ public class RadioService extends Service implements ValueEventListener {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
-    }
-
-    @Nullable
-    private File returnFileFromUri(final Uri uri, final String fileName) {
-        try {
-            final InputStream in = getContentResolver().openInputStream(uri);
-            final File sourceFile = new File(saveDirectory + fileName);
-            if (in != null) {
-                FileUtils.copyInputStreamToFile(in, sourceFile);
-                in.close();
-                return sourceFile;
-            }
-        } catch (IOException e) {
-            LOG.e(String.valueOf(e));
-        }
-        return null;
-    }
-
-    @NonNull
-    private String returnFileTypeFromUri(final Uri uri) {
-        ContentResolver cR = this.getContentResolver();
-        MimeTypeMap mime = MimeTypeMap.getSingleton();
-        return "." + mime.getExtensionFromMimeType(cR.getType(uri));
-    }
-
-    public void upload_file(final String uri, final int mode, final String caption, final String sendToId, final String sendToHandle, final int height, final int width) {
-        if (mode == 7777) {
-            final String data = Jwts.builder()
-                    .setHeader(header)
-                    .claim("senderId", operator.getUser_id())
-                    .claim("sendToId", sendToId)
-                    .claim("handle", operator.getHandle())
-                    .claim("caption", caption)
-                    .claim("reciever", sendToHandle)
-                    .claim("silenced", String.valueOf(operator.getSilenced()))
-                    .claim("url", uri)
-                    .claim("height", height)
-                    .claim("width", width)
-                    .claim("profileLink", operator.getProfileLink())
-                    .claim("fileName", uri)
-                    .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                    .compact();
-            final Request request = new Request.Builder()
-                    .url(SITE_URL + "user_send_photo.php")
-                    .post(new FormBody.Builder().add("data", data).build())
-                    .build();
-            RadioService.client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    LOG.e("UPLOAD PHOTO DB FAILURE " + e);
-                }
-
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    if (response.isSuccessful()) {
-                        handler.post(() -> {
-                            if (MI != null) {
-                                if (!chat.get().equals("0"))
-                                    MI.displayChat(null, false, false);
-                                else {
-                                    snacks.add(new Snack("Giphy Sent", Snackbar.LENGTH_SHORT));
-                                    checkForMessages();
-                                }
-                            }
-                        });
-                    }
-                }
-            });
-        } else {
-            final String fileName = System.currentTimeMillis() + returnFileTypeFromUri(Uri.parse(uri));
-            final File file = returnFileFromUri(Uri.parse(uri), fileName);
-            if (file != null) {
-                StorageReference ref = null;
-                if (fileName.contains(".gif")) {
-                    switch (mode) {
-                        case 2345: //private
-                            ref = storage.getReference().child("photos/" + fileName);
-                            break;
-                        case 3737: //mass
-                            ref = temporaryStorage.getReference().child("mass/" + fileName);
-                            break;
-                        case 3456: //profile
-                            ref = storage.getReference().child("profiles/" + fileName);
-                            break;
-                    }
-                    if (ref != null) {
-                        final StorageReference newRef = ref;
-                        UploadTask uploadTask = newRef.putFile(Uri.fromFile(file));
-                        uploadTask.continueWithTask(task -> {
-                                    if (!task.isSuccessful()) {
-                                        throw task.getException();
-                                    }
-                                    return newRef.getDownloadUrl();
-                                })
-                                .addOnCompleteListener(task -> {
-                                    if (task.isSuccessful()) {
-                                        final String downloadUri = task.getResult().toString();
-                                        shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
-                                    }
-                                });
-                    }
-                    sendBroadcast(new Intent("nineteenUpdateProfile").setPackage("com.cb3g.channel19"));
-                } else {
-                    Luban.compress(RadioService.this, file)
-                            .putGear(Luban.THIRD_GEAR)
-                            .launch(new OnCompressListener() {
-                                @Override
-                                public void onStart() {
-                                }
-
-                                @Override
-                                public void onSuccess(final File file) {
-                                    StorageReference ref = null;
-                                    switch (mode) {
-                                        case 2345: //private
-                                            ref = storage.getReference().child("photos/" + fileName);
-                                            break;
-                                        case 3737: //mass
-                                            ref = temporaryStorage.getReference().child("mass/" + fileName);
-                                            break;
-                                        case 3456: //profile
-                                            ref = storage.getReference().child("profiles/" + fileName);
-                                            break;
-                                    }
-                                    final StorageReference newRef = ref;
-                                    UploadTask uploadTask = ref.putFile(Uri.fromFile(file));
-                                    uploadTask.continueWithTask(task -> {
-                                        if (!task.isSuccessful()) {
-                                            throw task.getException();
-                                        }
-                                        return newRef.getDownloadUrl();
-                                    }).addOnCompleteListener(task -> {
-                                        if (task.isSuccessful()) {
-                                            final String downloadUri = task.getResult().toString();
-                                            Request request = null;
-                                            shareGiphy(mode, downloadUri, sendToId, sendToHandle, caption, height, width);
-                                            if (request != null) {
-                                                RadioService.client.newCall(request).enqueue(new Callback() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                                        LOG.e("UPLOAD PHOTO DB FAILURE " + e);
-                                                    }
-
-                                                    @Override
-                                                    public void onResponse(@NonNull Call call, @NonNull final Response response) {
-                                                        if (response.isSuccessful()) {
-                                                            handler.post(() -> {
-                                                                switch (mode) {
-                                                                    case 2345:
-                                                                        if (!chat.get().equals("0")) {
-                                                                            if (MI != null)
-                                                                                MI.displayChat(null, false, false);
-                                                                        } else {
-                                                                            snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                                                            checkForMessages();
-                                                                        }
-                                                                        break;
-                                                                    case 3456:
-                                                                        try {
-                                                                            storage.getReferenceFromUrl(settings.getString("profileLink", "http://truckradiosystem.com/~channel1/drawables/default.png")).delete();
-                                                                        } catch (
-                                                                                IllegalArgumentException e) {
-                                                                            LOG.e("IllegalArgumentException", e.getMessage());
-                                                                        }
-                                                                        updateProfilePhotoInReservoir(operator.getProfileLink(), downloadUri);
-                                                                        operator.setProfileLink(downloadUri);
-                                                                        settings.edit().putString("profileLink", downloadUri).apply();
-                                                                        sendBroadcast(new Intent("updateProfilePicture").setPackage("com.cb3g.channel19"));
-                                                                        break;
-                                                                    case 3737:
-                                                                        if (MI != null) {
-                                                                            if (!chat.get().equals("0"))
-                                                                                MI.displayChat(null, false, false);
-                                                                            else {
-                                                                                snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                                                                checkForMessages();
-                                                                            }
-                                                                        }
-                                                                        break;
-                                                                }
-                                                            });
-                                                        } else
-                                                            LOG.e("ONRESPONSE ERROR");
-                                                        response.close();
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onError(Throwable e) {
-                                    LOG.e("LUBAN ERROR " + e);
-                                }
-                            });
-                }
-            }
-        }
-    }
-
-    public void shareGiphy(int mode, String url, String sendToId, String sendToHandle, String caption, int height, int width) {
-        Request request = null;
-        String data;
-        switch (mode) {
-            case 2345: //private photo
-                data = Jwts.builder()
-                        .setHeader(header)
-                        .claim("senderId", operator.getUser_id())
-                        .claim("sendToId", sendToId)
-                        .claim("handle", operator.getHandle())
-                        .claim("caption", caption)
-                        .claim("reciever", sendToHandle)
-                        .claim("silenced", String.valueOf(operator.getSilenced()))
-                        .claim("url", url)
-                        .claim("height", height)
-                        .claim("width", width)
-                        .claim("profileLink", operator.getProfileLink())
-                        .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                        .compact();
-                request = new Request.Builder()
-                        .url(SITE_URL + "user_send_photo.php")
-                        .post(new FormBody.Builder().add("data", data).build())
-                        .build();
-                break;
-            case 3456: //profile photo
-                data = Jwts.builder()
-                        .setHeader(header)
-                        .claim("userId", operator.getUser_id())
-                        .claim("url", url)
-                        .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                        .compact();
-                request = new Request.Builder()
-                        .url(SITE_URL + "user_post_profile.php")
-                        .post(new FormBody.Builder().add("data", data).build())
-                        .build();
-                break;
-            case 3737: //mass photo
-                data = Jwts.builder()
-                        .setHeader(header)
-                        .claim("userId", operator.getUser_id())
-                        .claim("userIds", sendToId)
-                        .claim("handle", operator.getHandle())
-                        .claim("silenced", String.valueOf(operator.getSilenced()))
-                        .claim("url", url)
-                        .claim("height", height)
-                        .claim("width", width)
-                        .claim("profileLink", operator.getProfileLink())
-                        .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                        .compact();
-                request = new Request.Builder()
-                        .url(SITE_URL + "user_mass_photo.php")
-                        .post(new FormBody.Builder().add("data", data).build())
-                        .build();
-                break;
-        }
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                LOG.e("UPLOAD PHOTO DB FAILURE " + e);
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    handler.post(() -> {
-                        switch (mode) {
-                            case 2345:
-                            case 3737:
-                                if (MI != null) {
-                                    if (!chat.get().equals("0"))
-                                        MI.displayChat(null, false, false);
-                                    else {
-                                        snacks.add(new Snack("Photo Sent", Snackbar.LENGTH_SHORT));
-                                        checkForMessages();
-                                    }
-                                }
-                                break;
-                            case 3456:
-                                try {
-                                    storage.getReferenceFromUrl(operator.getProfileLink()).delete();
-                                } catch (IllegalArgumentException e) {
-                                    LOG.e("IllegalArgumentException", e.getMessage());
-                                }
-                                updateProfilePhotoInReservoir(operator.getProfileLink(), url);
-                                operator.setProfileLink(url);
-                                settings.edit().putString("profileLink", url).apply();
-                                sendBroadcast(new Intent("updateProfilePicture"));
-                                break;
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    public void updateProfilePhotoInReservoir(String oldLink, String newLink) {
-        databaseReference.child("reservoir").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                //loop each channel
-                for (DataSnapshot channel : dataSnapshot.getChildren()) {
-                    databaseReference.child("reservoir").child(channel.getKey()).child("posts").addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            //loop each post
-                            for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                Post post = child.getValue(Post.class);
-                                boolean edited = post.getProfileLink().equals(oldLink) || post.getLatest_profileLink().equals(oldLink);
-                                if (edited) {
-                                    if (post.getProfileLink().equals(oldLink))
-                                        post.setProfileLink(newLink);
-                                    if (post.getLatest_profileLink().equals(oldLink))
-                                        post.setLatest_profileLink(newLink);
-                                    databaseReference.child("reservoir").child(channel.getKey()).child("posts").child(post.getPostId()).setValue(post);
-                                }
-                                //loop each remark for this post
-                                databaseReference.child("reservoir").child(channel.getKey()).child("remarks").child(post.getPostId()).addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                        for (DataSnapshot commentChild : dataSnapshot.getChildren()) {
-                                            Comment comment = commentChild.getValue(Comment.class);
-                                            if (comment.getProfileLink().equals(oldLink))
-                                                databaseReference.child("reservoir").child(channel.getKey()).child("remarks").child(post.getPostId()).child(comment.getRemarkId()).child("profileLink").setValue(newLink);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                                    }
-                                });
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
     }
@@ -2036,7 +1678,6 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction("checkForMessages");
         filter.addAction("fetch_users");
         filter.addAction("keyUpdate");
-        filter.addAction("upload");
         filter.addAction("pauseLimitChange");
         filter.addAction("play");
         filter.addAction("savePhotoToDisk");
@@ -2593,8 +2234,11 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     void checkForMessages() {
-        if (recording || occupied.get() || !chat.get().equals("0") || !phoneIdle || MI == null)
+        if (recording || occupied.get() || !phoneIdle || MI == null)
             return;
+        if (!chat.get().equals("0")){
+            MI.displayChat(null, false, false);
+        }
         if (!photos.isEmpty()) {
             MI.displayPhoto(photos.get(0));
             photos.remove(0);
@@ -2830,23 +2474,22 @@ public class RadioService extends Service implements ValueEventListener {
             TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             telephony.registerTelephonyCallback(context.getMainExecutor(), new CustomTelephonyCallback(state -> {
                 switch (state) {
-                    case TelephonyManager.CALL_STATE_IDLE:
+                    case TelephonyManager.CALL_STATE_IDLE -> {
                         phoneIdle = true;
                         updateDisplay();
                         if (prePaused) {
                             prePaused = false;
                             resumePlayback();
                         }
-                        break;
-                    case TelephonyManager.CALL_STATE_OFFHOOK:
-                    case TelephonyManager.CALL_STATE_RINGING:
+                    }
+                    case TelephonyManager.CALL_STATE_OFFHOOK, TelephonyManager.CALL_STATE_RINGING -> {
                         phoneIdle = false;
                         if (MI != null && recording) MI.stopRecorder(false);
                         if (!paused) {
                             prePaused = true;
                             pause_playback();
                         }
-                        break;
+                    }
                 }
 
             }));

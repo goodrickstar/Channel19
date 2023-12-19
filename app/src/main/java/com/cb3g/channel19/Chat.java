@@ -23,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
@@ -66,8 +67,10 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private ProgressBar loading;
 
     private ChatBinding binding;
+    private final FragmentManager fragmentManager;
 
-    public Chat(UserListEntry user) {
+    public Chat(FragmentManager fragmentManager, UserListEntry user) {
+        this.fragmentManager = fragmentManager;
         this.user = user;
     }
 
@@ -78,7 +81,14 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         context.sendBroadcast(new Intent("nineteenClickSound"));
         if (MI != null) {
             if (binding.editBox.getText().length() != 0) reply();
-            else MI.sendPhoto(user.getUser_id(), user.getRadio_hanlde());
+            else {
+                ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
+                if (imagePicker == null) {
+                    imagePicker = new ImagePicker(fragmentManager, user);
+                    imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    imagePicker.show(fragmentManager, "imagePicker");
+                }
+            }
         }
     }
 
