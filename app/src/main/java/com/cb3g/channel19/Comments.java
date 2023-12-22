@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,10 +22,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +42,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +71,18 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     private Post post;
     private CommentsDialogBinding binding;
 
+    private final FragmentManager fragmentManager;
+
+    public Comments(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
+
+    private final ActivityResultLauncher<String> commentPhotoPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        if (uri != null) {
+            photo_remark(uri.toString());
+        }
+    });
+
     private void snapToPosition(int position) {
         RecyclerView.SmoothScroller smoothScroller = new
                 LinearSmoothScroller(context) {
@@ -86,9 +103,16 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             if (editBox.length() > 0) {
                 text_remark(editBox.getText().toString().trim());
                 editBox.setText("");
-            } else if (RI != null) RI.choose_photo_remark();
-        } else if (id == R.id.giphyBox) {
-            if (RI != null) RI.launchSearch();
+            }
+            commentPhotoPicker.launch("image/*");
+        }
+        if (id == R.id.giphyBox) {
+            ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
+            if (imageSearch == null) {
+                imageSearch = new ImageSearch("");
+                imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                imageSearch.show(fragmentManager, "imageSearch");
+            }
         }
     }
 
@@ -344,12 +368,13 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     }
 
     public void delete_remark(final Comment comment) {
+        Log.i("test", new Gson().toJson(comment));
         try {
             RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).removeValue(); //delete the selected comment
             if (comment.getType() == 1)
                 FirebaseStorage.getInstance().getReferenceFromUrl(comment.getContent()).delete(); //delete the selected comment image if need be
         } catch (IllegalArgumentException e) {
-            Logger.INSTANCE.e("delete_remark() IllegalArgumentException " + e);
+            Log.e("error", "delete_remark() IllegalArgumentException " + e);
         }
         RI.databaseReference().child("remarks").child(post.getPostId()).limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -396,7 +421,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             final Comment comment = comments.get(position);
             switch (holder.getItemViewType()) {
-                case 0:
+                case 0 -> {
                     //TEXT
                     TextHolder text_holder = (TextHolder) holder;
                     text_holder.content.setText(comment.getContent());
@@ -416,19 +441,30 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                             popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
                             context.sendBroadcast(new Intent("vibrate"));
-                            int id = v.getId();
+                            int id = item.getItemId();
                             if (id == R.id.delete_remark) {
                                 delete_remark(comment);
                             } else if (id == R.id.edit_remark) {
-                                if (RI != null)
-                                    RI.edit_post(getString(R.string.edit_comment_text), comment.getPostId(), comment.getRemarkId(), comment.getContent());
+                                EditPost epd = (EditPost) fragmentManager.findFragmentByTag("epd");
+                                if (epd == null) {
+                                    epd = new EditPost();
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("title", "Edit Comment");
+                                    bundle.putString("postId", comment.getPostId());
+                                    bundle.putString("remarkId", comment.getRemarkId());
+                                    bundle.putString("content", comment.getContent());
+                                    epd.setArguments(bundle);
+                                    epd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
+                                    epd.show(fragmentManager, "epd");
+                                }
+
                             }
                             return true;
                         });
                         popupMenu.show();
                     });
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     //IMAGE
                     LOG.i("PHOTO");
                     PhotoHolder photo_holder = (PhotoHolder) holder;
@@ -454,19 +490,19 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                         if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
                             popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
+                            Log.i("test", "menu item selected");
                             context.sendBroadcast(new Intent("vibrate"));
-                            context.sendBroadcast(new Intent("vibrate"));
-                            int id = v.getId();
-                            if (id == R.id.save_remark) {
+                            if (item.getItemId() == R.id.save_remark) {
                                 context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", comment.getContent()));
-                            } else if (id == R.id.delete_remark) {
+                            } else if (item.getItemId() == R.id.delete_remark) {
+                                Log.i("test", "delete called");
                                 delete_remark(comment);
                             }
                             return true;
                         });
                         popupMenu.show();
                     });
-                    break;
+                }
             }
         }
 

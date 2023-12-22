@@ -42,16 +42,13 @@ class Uploader(
                 RequestCode.PRIVATE_PHOTO -> {
                     reference = FirebaseStorage.getInstance().reference.child("photos").child(fileName)
                 }
-
                 RequestCode.MASS_PHOTO -> {
                     reference = FirebaseStorage.getInstance("gs://nineteen-temporary").reference.child("mass").child(fileName)
                 }
-
                 RequestCode.PROFILE -> {
                     Log.i("logging", "refernece set")
                     reference = FirebaseStorage.getInstance().reference.child("profiles").child(fileName)
                 }
-
                 else -> {}
             }
             reference.putFile(
@@ -88,7 +85,6 @@ class Uploader(
             }
 
             RequestCode.PROFILE-> {
-                Log.i("logging", "updating profile photo on server")
                 data = Jwts.builder().setHeader(RadioService.header).claim("userId", operator.user_id).claim("url", upload.uri).signWith(SignatureAlgorithm.HS256, operator.key).compact()
                 request = Request.Builder().url(RadioService.SITE_URL + "user_post_profile.php").post(FormBody.Builder().add("data", data).build()).build()
             }

@@ -3,6 +3,7 @@ package com.cb3g.channel19;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -88,7 +89,7 @@ class Utils {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[]{Manifest.permission.READ_MEDIA_IMAGES};
         } else {
-            return new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+            return new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
         }
     }
 
@@ -142,6 +143,14 @@ class Utils {
 
     static String parseRankUrl(String rank) {
         return RadioService.SITE_URL + "drawables/stars/" + "star" + rank + ".png";
+    }
+
+    static boolean serviceAlive(Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (RadioService.class.getName().equals(service.service.getClassName())) return true;
+        }
+        return false;
     }
 
     private static FirebaseDatabase mDatabase;

@@ -267,15 +267,14 @@ public class UserListOptionsNew extends DialogFragment {
                     case PHOTO -> {
                         ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
                         if (imagePicker == null) {
-                            imagePicker = new ImagePicker(fragmentManager, user);
+                            imagePicker = new ImagePicker(fragmentManager, user, RequestCode.PRIVATE_PHOTO);
                             imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                             imagePicker.show(fragmentManager, "imagePicker");
                         }
-                        dismiss();
                     }
                     case HISTORY -> {
-                        MI.displayChat(user, false, false);
                         dismiss();
+                        MI.displayChat(user, false, false);
                     }
                     case SILENCE -> {
                         MI.silence(user);

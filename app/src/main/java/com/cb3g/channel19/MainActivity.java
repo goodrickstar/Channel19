@@ -32,6 +32,7 @@ import android.view.animation.RotateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -93,7 +94,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private ServiceConnection SC;
     private BillingUtils billingUtils;
     private boolean delay = true, longPressed = false, dark = false, overrideUp = false, overrideDown = false;
-    private String photoToHandle = "", photoToId = "";
     private UserList userFragment;
     private Transmitter transmitFragment;
     private SharedPreferences settings;
@@ -200,9 +200,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private ExecutorService executor;
 
     private final ActivityResultLauncher<String> massPhotoPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-        if (uri != null) { //uri.toString() //.launch("image/*")
-
-
+        if (uri != null) {
+            MassPhoto massPhoto = (MassPhoto) fragmentManager.findFragmentByTag("mass");
+            if (massPhoto == null) {
+                massPhoto = new MassPhoto(uri.toString());
+                massPhoto.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                massPhoto.show(fragmentManager, "mass");
+            }
         }
     });
 
@@ -237,9 +241,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
                     }
                 });
-                builder.setNegativeButton("No Thanks", (dialogInterface, i) -> {
-                    //TODO: vibrate
-                });
+                builder.setNegativeButton("No Thanks", (dialogInterface, i) -> Utils.vibrate(binding.blackOut));
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else {
@@ -248,6 +250,29 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 }
             }
         }
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (RadioService.recording) return;
+                if (dark) {
+                    darkChange(false);
+                    return;
+                }
+                if (longPressed) {
+                    longPressed = false;
+                    sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
+                    finish();
+                } else {
+                    Utils.vibrate(binding.maMapButton);
+                    longPressed = true;
+                    executor.execute(() -> {
+                        sleep(600);
+                        longPressed = false;
+                        //showSnack(new Snack("double-tap back button to exit", Snackbar.LENGTH_SHORT));
+                    });
+                }
+            }
+        });
     }
 
     @Override
@@ -319,8 +344,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     protected void onResume() {
         super.onResume();
         if (RadioService.operator == null) {
-            longPressed = true;
-            onBackPressed();
+            finish();
             return;
         }
         timer = new Timer();
@@ -358,6 +382,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (settings.getBoolean("flagDue", false)) {
             displayLongFlag(settings.getString("flagSenderId", "Unknown"), settings.getString("flagSenderHandle", "Unknown"));
         }
+        if (!Utils.serviceAlive(this) || !isBound) finish();
     }
 
     @Override
@@ -447,18 +472,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         billingUtils.purchaseProduct(MainActivity.this, list.get(0));
                 });
             }
-        }
-    }
-
-    @Override
-    public void photoChosen(Gif gif, boolean upload) {
-        Uploader uploader;
-        if (upload) {
-            uploader = new Uploader(this, RadioService.operator, RadioService.client, new FileUpload(gif.getUrl(), RequestCode.PRIVATE_PHOTO, photoToId, photoToHandle, gif.getHeight(), gif.getWidth()));
-            uploader.uploadImage();
-        } else {
-            uploader = new Uploader(this, RadioService.operator, RadioService.client, new FileUpload(gif.getUrl(), RequestCode.PRIVATE_PHOTO, gif.getHeight(), gif.getWidth()));
-            uploader.shareImage();
         }
     }
 
@@ -640,19 +653,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     public void adjustColors(boolean poor) {
         runOnUiThread(() -> {
             if (poor) {
-                //binding.blackDateTv.setTextColor(Color.RED);
-                //binding.blackClockTv.setTextColor(Color.RED);
                 binding.blackQueueTv.setTextColor(Color.RED);
-                //binding.blackLocationTv.setTextColor(Color.RED);
                 binding.blackTitleTv.setTextColor(Color.RED);
                 binding.blackDurationTv.setTextColor(Color.RED);
                 if (dark)
                     binding.maTimer.setProgressDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.red_bar));
             } else {
-                //binding.blackDateTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                //binding.blackClockTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackQueueTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
-                //binding.blackLocationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackTitleTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 binding.blackDurationTv.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.light_blue));
                 if (dark)
@@ -704,8 +711,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             //binding.blackLocationTv.setVisibility(View.INVISIBLE);
         } else {
             binding.maLocatoinTv.setText(location);
-            //binding.blackLocationTv.setVisibility(View.VISIBLE);
-            //binding.blackLocationTv.setText(location);
         }
     }
 
@@ -807,30 +812,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void saluteThisUser(UserListEntry user) {
         if (RS != null) RS.saluteUser(user);
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    @Override
-    public void onBackPressed() {
-        if (RadioService.recording) return;
-        if (dark) {
-            darkChange(false);
-            return;
-        }
-        if (longPressed) {
-            longPressed = false;
-            sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
-            super.onBackPressed();
-            //stopService(new Intent(this, RadioService.class));
-        } else {
-            Utils.vibrate(binding.maMapButton);
-            longPressed = true;
-            executor.execute(() -> {
-                sleep(600);
-                longPressed = false;
-                //showSnack(new Snack("double-tap back button to exit", Snackbar.LENGTH_SHORT));
-            });
-        }
     }
 
     @Override
@@ -940,7 +921,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 return;
             }
             sendBroadcast(new Intent("nineteenClickSound"));
-            //TODO: MassPhoto
+            if (Utils.permissionsAccepted(this, Utils.getStoragePermissions())) {
+                massPhotoPicker.launch("image/*");
+            }else {
+                Utils.requestPermission(this, Utils.getStoragePermissions(), 0);
+            }
         } else if (id == R.id.ma_channels_button) {
             Utils.vibrate(v);
             sendBroadcast(new Intent("nineteenClickSound"));

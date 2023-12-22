@@ -4,8 +4,6 @@ interface MI {
 
     void requestBluetoothPermission();
 
-    void photoChosen(Gif gif, boolean upload);
-
     void findUser(Coordinates coordinates);
 
     void startOrStopGPS(boolean start);

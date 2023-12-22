@@ -10,8 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
+import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.DriverBinding;
 import com.vdurmont.emoji.EmojiParser;
 
@@ -36,6 +39,12 @@ public class Driver extends Fragment {
     private Context context;
     private SI SI;
 
+    private final FragmentManager fragmentManager;
+
+    public Driver(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -56,7 +65,12 @@ public class Driver extends Fragment {
             binding.driverProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenClickSound"));
-                if (SI != null) SI.launchPicker(null, false);
+                ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
+                if (imagePicker == null) {
+                    imagePicker = new ImagePicker(fragmentManager, null, RequestCode.PROFILE);
+                    imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    imagePicker.show(fragmentManager, "imagePicker");
+                }
             });
         }
         setDriverInfo();

@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
-import android.widget.RadioButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,7 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.android.multidex.myapplication.R;
-import com.google.android.material.snackbar.Snackbar;
+import com.example.android.multidex.myapplication.databinding.MassPhotoBinding;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -33,24 +32,26 @@ import java.util.Set;
 
 public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private final RecyclerViewAdapter adapter = new RecyclerViewAdapter();
+    private MassPhotoBinding binding;
     private Context context;
     private List<String> savedIds = new ArrayList<>();
     private final List<User> working = new ArrayList<>();
-    private String uri;
-    private ImageView preview;
-    private RadioButton selector;
-    private MI MI;
+    private final String uri;
+
+    public MassPhoto(String uri) {
+        this.uri = uri;
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
-        MI = (com.cb3g.channel19.MI) getActivity();
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.mass_photo, container, false);
+        binding = MassPhotoBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
@@ -60,10 +61,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         if (window != null)
             window.getAttributes().windowAnimations = R.style.photoAnimation;
         RadioService.occupied.set(true);
-        preview = view.findViewById(R.id.photo_preview);
-        selector = view.findViewById(R.id.selector);
-        uri = requireArguments().getString("data");
-        Glide.with(this).load(uri).into(preview);
+        Glide.with(this).load(uri).into(binding.photoPreview);
         Set<String> set = context.getSharedPreferences("settings", Context.MODE_PRIVATE).getStringSet("massIds", null);
         if (set != null) savedIds = new ArrayList<>(set);
         RecyclerView recyclerView = view.findViewById(R.id.multi_select);
@@ -77,13 +75,13 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         cancel.setOnClickListener(this);
         send.setVisibility(View.GONE);
         send.setOnClickListener(this);
-        selector.setOnClickListener(this);
+        binding.selector.setOnClickListener(this);
         for (UserListEntry entry : RadioService.users) {
             working.add(convertUserListEntryToUser(entry));
         }
         adapter.notifyDataSetChanged();
         recyclerView.animate().alpha(1.0f).setDuration(800);
-        preview.animate().alpha(.3f).setDuration(800);
+        binding.photoPreview.animate().alpha(.3f).setDuration(800);
         send.setVisibility(View.VISIBLE);
     }
 
@@ -99,9 +97,9 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
                 if (user.isChecked) sendingIds.add(user.id);
             }
             if (!sendingIds.isEmpty()) {
-                //RS.upload_file(new FileUpload(uri, RequestCode.PRIVATE_PHOTO_SELECTED_FROM_DISK, RadioService.gson.toJson(sendingIds), preview.getHeight(), preview.getWidth()));
-                if (MI != null)
-                    MI.showSnack(new Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT));
+                FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", binding.photoPreview.getHeight(), binding.photoPreview.getWidth());
+                Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload);
+                uploader.uploadImage();
                 dismiss();
             }
         } else if (id == R.id.selector) {
@@ -157,7 +155,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             if (user.isChecked) {
                 holder.profile.setImageResource(R.drawable.sender);
             } else {
-                Glide.with(context).load(user.profileLink).apply(RadioService.profileOptions).thumbnail(0.1f).transition(withCrossFade()).into(holder.profile);
+                Glide.with(context).load(user.profileLink).apply(RadioService.profileOptions).transition(withCrossFade()).into(holder.profile);
             }
             holder.itemView.setOnClickListener(v -> {
                 user.isChecked = !user.isChecked;
@@ -172,7 +170,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         }
 
         private void questionChecks() {
-            selector.setChecked(allChecked());
+            binding.selector.setChecked(allChecked());
         }
 
         private boolean allChecked() {

@@ -20,7 +20,11 @@ public class CreatePoll extends DialogFragment implements View.OnClickListener {
     private Context context;
     private RI RI;
     private EditText content;
-    private String postId;
+    private final String postId;
+
+    public CreatePoll(String postId) {
+        this.postId = postId;
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -42,7 +46,6 @@ public class CreatePoll extends DialogFragment implements View.OnClickListener {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        postId = requireArguments().getString("postId");
         final TextView cancel = view.findViewById(R.id.cancel);
         final TextView finish = view.findViewById(R.id.finish);
         content = view.findViewById(R.id.question);

@@ -37,13 +37,16 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     private final FragmentManager fragmentManager;
     private final UserListEntry user;
 
-    public ImagePicker(FragmentManager fragmentManager, UserListEntry user) {
+    private final RequestCode requestCode;
+
+    public ImagePicker(FragmentManager fragmentManager, UserListEntry user, RequestCode requestCode) {
         this.fragmentManager = fragmentManager;
         this.user = user;
+        this.requestCode = requestCode;
     }
 
     private final ActivityResultLauncher<String> photoPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-        if (uri != null) { //uri.toString() //.launch("image/*")
+        if (uri != null) {
             gif.setUrl(uri.toString());
             setPhoto(gif, true);
         }
@@ -78,7 +81,7 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         loading = v.findViewById(R.id.loading);
         placeHolder.setVisibility(View.VISIBLE);
         accept.setVisibility(View.GONE);
-        title.setText(user.getRadio_hanlde());
+        if (user != null) title.setText(user.getRadio_hanlde());
     }
 
     @Override
@@ -87,7 +90,11 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         context.sendBroadcast(new Intent("nineteenClickSound"));
         int id = v.getId();
         if (id == R.id.accept) {
-            FileUpload fileUpload = new FileUpload(gif.getUrl(), RequestCode.PRIVATE_PHOTO, user.getUser_id(), user.getRadio_hanlde(), gif.getHeight(), gif.getWidth());
+            UserListOptionsNew options = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+            if (options != null) options.dismiss();
+            FileUpload fileUpload;
+            if (user != null) fileUpload = new FileUpload(gif.getUrl(), requestCode, user.getUser_id(), user.getRadio_hanlde(), gif.getHeight(), gif.getWidth());
+            else fileUpload = new FileUpload(gif.getUrl(), requestCode, RadioService.operator.getUser_id(), RadioService.operator.getHandle(), gif.getHeight(), gif.getWidth());
             Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload);
             if (upload) uploader.uploadImage();
             else uploader.shareImage();
@@ -95,7 +102,11 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         } else if (id == R.id.cancel) {
             dismiss();
         } else if (id == R.id.fromDisk) {
-            photoPicker.launch("image/*");
+            if (Utils.permissionsAccepted(context, Utils.getStoragePermissions())) {
+                photoPicker.launch("image/*");
+            }else {
+                Utils.requestPermission(getActivity(), Utils.getStoragePermissions(), 0);
+            }
         } else if (id == R.id.fromGiphy) {
             ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
             if (imageSearch == null) {

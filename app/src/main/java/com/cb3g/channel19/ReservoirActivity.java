@@ -73,8 +73,6 @@ import me.shaohui.advancedluban.OnCompressListener;
 @SuppressWarnings("ALL")
 public class ReservoirActivity extends AppCompatActivity implements ChildEventListener, RI {
     static int screen_width;
-    private Comments comments = new Comments();
-    private CreatePost entry_fragment = new CreatePost();
     private final recycler_adapter containerAdapter = new recycler_adapter();
     private TextView emptyView;
     private final List<Post> posts = new ArrayList<>();
@@ -84,9 +82,10 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             if ("nineteenGifChosen".equals(intent.getAction())) {
                 Gif gif = RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class);
                 if (gif != null) {
-                    if (entry_fragment.isAdded())
-                        entry_fragment.setPhoto(gif, false);
-                    if (comments.isAdded()) comments.giphy_remark(gif);
+                    CreatePost createPost = (CreatePost) fragmentManager.findFragmentByTag("createPost");
+                    if (createPost != null) createPost.setPhoto(gif, false);
+                    Comments comments = (Comments) fragmentManager.findFragmentByTag("comments");
+                    if (comments != null) comments.giphy_remark(gif);
                 }
             }
         }
@@ -164,10 +163,11 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     }
 
     public void create_new_entry() {
-        if (!entry_fragment.isAdded()) {
-            entry_fragment = new CreatePost();
-            entry_fragment.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
-            entry_fragment.show(fragmentManager, "newEntry");
+        CreatePost createPost = (CreatePost) fragmentManager.findFragmentByTag("createPost");
+        if (createPost == null) {
+            createPost = new CreatePost(fragmentManager);
+            createPost.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
+            createPost.show(fragmentManager, "createPost");
         }
     }
 
@@ -211,16 +211,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     }
 
     @Override
-    public void launchSearch() {
-        ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
-        if (imageSearch == null) {
-            imageSearch = new ImageSearch("");
-            imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            imageSearch.show(fragmentManager, "imageSearch");
-        }
-    }
-
-    @Override
     public void showSnack(Snack snack) {
         Snackbar snackbar = Snackbar.make(findViewById(R.id.coordinator), snack.getMessage(), snack.getLength());
         View view = snackbar.getView();
@@ -237,24 +227,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         }
         snackbar.show();
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (Utils.permissionsAccepted(this, Utils.getStoragePermissions()))
-            startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), requestCode);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && data != null) {
-            Gif gif = new Gif();
-            gif.setUrl(data.getData().toString());
-            if (entry_fragment.isAdded()) entry_fragment.setPhoto(gif, true);
-            if (comments.isAdded()) comments.photo_remark(data.getData().toString());
-        }
     }
 
     @SuppressLint({"HardwareIds", "UseCompatLoadingForDrawables"})
@@ -292,7 +264,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             });
             poll.setOnClickListener(v -> {
                 Utils.vibrate(v);
-                CreatePoll createPoll = new CreatePoll();
+                CreatePoll createPoll = new CreatePoll(null);
                 createPoll.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
                 createPoll.show(fragmentManager, "createPoll");
             });
@@ -497,21 +469,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         return date + ", " + time;
     }
 
-    @Override
-    public void choose_photo_remark() {
-        photo_picker(2);
-    }
-
-    @Override
-    public void choose_photo_entry() {
-        photo_picker(3);
-    }
-
-    private void photo_picker(final int request_code) {
-        if (Utils.permissionsAccepted(this, Utils.getStoragePermissions()))
-            startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), request_code);
-    }
-
     private IntentFilter returnFilter() {
         IntentFilter filter = new IntentFilter();
         filter.addAction("nineteenGifChosen");
@@ -524,8 +481,9 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
             return;
         }
-        if (!comments.isAdded()) {
-            comments = new Comments();
+        Comments comments = (Comments) fragmentManager.findFragmentByTag("comments");
+        if (comments == null) {
+            comments = new Comments(fragmentManager);
             comments.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
             Bundle bundle = new Bundle();
             bundle.putString("post", RadioService.gson.toJson(post));
@@ -544,22 +502,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             fullScreen.setArguments(bundle);
             fullScreen.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             fullScreen.show(fragmentManager, "fsf");
-        }
-    }
-
-    @Override
-    public void edit_post(final String title, String postId, String remarkId, String content) {
-        EditPost epd = (EditPost) fragmentManager.findFragmentByTag("epd");
-        if (epd == null) {
-            epd = new EditPost();
-            Bundle bundle = new Bundle();
-            bundle.putString("title", title);
-            bundle.putString("postId", postId);
-            bundle.putString("remarkId", remarkId);
-            bundle.putString("content", content);
-            epd.setArguments(bundle);
-            epd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
-            epd.show(fragmentManager, "epd");
         }
     }
 
@@ -720,16 +662,25 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             }
                         }
                         popupMenu.setOnMenuItemClickListener(item -> {
-                            Utils.vibrate(item.getActionView());
+                            Utils.vibrate(v);
                             int id = item.getItemId();
                             if (id == R.id.delete_all_post) {
                                 removeAllPosts(post.getFacebookId());
                             } else if (id == R.id.bann_user) {
                                 RadioService.databaseReference.child("blockedFromReservoir").child(post.getFacebookId()).setValue(post.getHandle());
-                            } else if (id == R.id.add_text) {
-                                edit_post(getString(R.string.add_post_text), post.getPostId(), "default", post.getCaption());
-                            } else if (id == R.id.edit_text) {
-                                edit_post(getString(R.string.edit_post_text), post.getPostId(), "default", post.getCaption());
+                            } else if (id == R.id.add_text || id == R.id.edit_text) {
+                                EditPost epd = (EditPost) fragmentManager.findFragmentByTag("epd");
+                                if (epd == null) {
+                                    epd = new EditPost();
+                                    Bundle bundle = new Bundle();
+                                    bundle.putString("title", "Edit Post");
+                                    bundle.putString("postId", post.getPostId());
+                                    bundle.putString("remarkId", "default");
+                                    bundle.putString("content", post.getCaption());
+                                    epd.setArguments(bundle);
+                                    epd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
+                                    epd.show(fragmentManager, "epd");
+                                }
                             } else if (id == R.id.delete_post) {
                                 delete_post(post);
                             } else if (id == R.id.lock_post) {

@@ -6,4 +6,12 @@ class Gif {
     var width = 0
     var height = 0
     var size = 0
+
+    constructor(){
+
+    }
+
+    constructor(url: String) {
+        this.url = url
+    }
 }

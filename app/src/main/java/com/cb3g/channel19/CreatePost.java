@@ -11,9 +11,12 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
@@ -29,22 +32,37 @@ public class CreatePost extends DialogFragment implements View.OnClickListener {
     private RI RI;
     private ImageView photo_view;
     private EditText content;
+
+    public CreatePost(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
+
     private boolean upload = false;
     private Gif gif = null;
+
+    private final FragmentManager fragmentManager;
+
+    private final ActivityResultLauncher<String> postPhotoPicker = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+        if (uri != null) { //uri.toString()
+            setPhoto(new Gif(uri.toString()), true);
+        }
+    });
+
+
 
     public void setPhoto(Gif photo, boolean upload) {
         if (photo != null) {
             this.upload = upload;
             gif = photo;
             photo_view.setVisibility(View.VISIBLE);
-            Glide.with(context).load(gif.getUrl()).addListener(new RequestListener<Drawable>() {
+            Glide.with(context).load(gif.getUrl()).addListener(new RequestListener<>() {
                 @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
                     return false;
                 }
 
                 @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
                     gif.setHeight(resource.getIntrinsicHeight());
                     gif.setWidth(resource.getIntrinsicWidth());
                     return false;
@@ -87,9 +105,18 @@ public class CreatePost extends DialogFragment implements View.OnClickListener {
         if (RI == null) return;
         int id = v.getId();
         if (id == R.id.imageBox) {
-            RI.choose_photo_entry();
+            if (Utils.permissionsAccepted(context, Utils.getStoragePermissions())) {
+                postPhotoPicker.launch("image/*");
+            }else {
+                Utils.requestPermission(getActivity(), Utils.getStoragePermissions(), 0);
+            }
         } else if (id == R.id.giphyBox) {
-            RI.launchSearch();
+            ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");
+            if (imageSearch == null) {
+                imageSearch = new ImageSearch("");
+                imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                imageSearch.show(fragmentManager, "imageSearch");
+            }
         } else if (id == R.id.cancel) {
             dismiss();
         } else if (id == R.id.finish) {

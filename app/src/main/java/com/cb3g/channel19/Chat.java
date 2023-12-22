@@ -84,7 +84,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             else {
                 ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
                 if (imagePicker == null) {
-                    imagePicker = new ImagePicker(fragmentManager, user);
+                    imagePicker = new ImagePicker(fragmentManager, user, RequestCode.PRIVATE_PHOTO);
                     imagePicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                     imagePicker.show(fragmentManager, "imagePicker");
                 }

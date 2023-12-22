@@ -236,8 +236,9 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     @Override
     protected void onResume() {
         super.onResume();
+        binding.loginIntoServerWithGoogleButton.setEnabled(true);
         binding.version.setText("v(" + getVersionName() + ")");
-        if (serviceAlive() && !settings.getBoolean("exiting", false)) launch_main_activity();
+        if (Utils.serviceAlive(this) && !settings.getBoolean("exiting", false)) launch_main_activity();
         handleAuth(auth.getCurrentUser());
     }
 
@@ -279,6 +280,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             showTerms();
             return;
         }
+        binding.loginIntoServerWithGoogleButton.setEnabled(false);
         pre_text("Logging in..");
         rotate_logo();
         if (billingUtils.isConnected) {
@@ -365,6 +367,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                 } catch (JSONException e) {
                                     show_result("Login Error", e.getMessage());
                                     Logger.INSTANCE.e("google_login", e.getMessage());
+                                    binding.loginIntoServerWithGoogleButton.setEnabled(true);
                                 }
                             });
                         }
@@ -380,18 +383,13 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             runOnUiThread(() -> {
                 post_text();
                 showSnack(new Snack("There was an issue connected with Google Play"));
+                binding.loginIntoServerWithGoogleButton.setEnabled(true);
             });
 
         }
     }
 
-    private boolean serviceAlive() {
-        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (RadioService.class.getName().equals(service.service.getClassName())) return true;
-        }
-        return false;
-    }
+    /** @noinspection deprecation*/
 
     private float scaleVolume(int sliderValue) {
         return (float) sliderValue / 100;

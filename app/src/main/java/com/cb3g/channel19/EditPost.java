@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,16 +55,18 @@ public class EditPost extends DialogFragment {
         if (content.equals("none")) content = "";
         binding.question.append(content);
         binding.question.setSelection(binding.question.getText().length());
-        binding.cancel.setOnClickListener(view12 -> {
+        binding.finish.setOnClickListener(view12 -> {
             Utils.vibrate(view12);
             final String postId = bundle.getString("postId");
             final String remarkId = bundle.getString("remarkId");
             String content1 = binding.question.getText().toString().trim();
+            Log.i("test", "remarkId " + remarkId);
             if (remarkId.equals("default")) {
                 if (content1.isEmpty()) content1 = "none";
                 channelReservoirReference.child("posts").child(postId).child("caption").setValue(content1);
             } else {
                 if (content1.isEmpty()) {
+                    Log.i("test", "Content1 is empty");
                     channelReservoirReference.child("remarks").child(postId).child(remarkId).removeValue();
                     channelReservoirReference.child("posts").child(postId).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -105,6 +108,7 @@ public class EditPost extends DialogFragment {
                         }
                     });
                 } else {
+                    Log.i("test", content1);
                     channelReservoirReference.child("remarks").child(postId).child(remarkId).child("content").setValue(content1);
                     channelReservoirReference.child("posts").child(postId).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -142,7 +146,7 @@ public class EditPost extends DialogFragment {
             }
             dismiss();
         });
-        binding.finish.setOnClickListener(view1 -> {
+        binding.cancel.setOnClickListener(view1 -> {
             Utils.vibrate(view1);
             dismiss();
         });

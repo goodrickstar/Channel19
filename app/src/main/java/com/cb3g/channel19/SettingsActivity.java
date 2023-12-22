@@ -63,7 +63,7 @@ import okhttp3.Response;
 public class SettingsActivity extends FragmentActivity implements SI, PurchasesUpdatedListener {
     private final Controls confrag = new Controls();
     private final Account accfrag = new Account();
-    private final Driver drifrag = new Driver();
+    private final Driver drifrag = new Driver(getSupportFragmentManager());
     private final Bundle userbundle = new Bundle();
     public final String OLD_SUBSCRIPTION = "activate";
     public final String NEW_SUBSCRIPTION = "fivedollars";
@@ -72,14 +72,16 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     private int stage = 1, post = 2;
     private TextView label;
     private ViewGroup tbb1, tbb2, tbb3;
-    private FragmentManager manager;
+    private FragmentManager fragmentManager;
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action != null) switch (action) {
                 case "nineteenGifChosen":
-                    launchPicker(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
+                    ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
+                    if (imagePicker != null)
+                        imagePicker.setPhoto(RadioService.gson.fromJson(intent.getStringExtra("data"), Gif.class), false);
                     break;
                 case "nineteenToast":
                     Toaster.toastlow(SettingsActivity.this, intent.getStringExtra("data"));
@@ -110,17 +112,17 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     break;
                 case "starSelection":
                     Stars starSelectionDialog;
-                    starSelectionDialog = (Stars) manager.findFragmentByTag("ssd");
+                    starSelectionDialog = (Stars) fragmentManager.findFragmentByTag("ssd");
                     if (starSelectionDialog == null) {
                         starSelectionDialog = new Stars();
                         starSelectionDialog.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                        starSelectionDialog.show(manager, "ssd");
+                        starSelectionDialog.show(fragmentManager, "ssd");
                     }
                     break;
                 case "nineteenUpdateProfile":
                     ImageSearch imageSearch = new ImageSearch("");
                     imageSearch.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    imageSearch.show(manager, "imageSearch");
+                    imageSearch.show(fragmentManager, "imageSearch");
                     break;
                 case "browseBackgrounds":
                     if (!Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
@@ -177,7 +179,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 if (response.isSuccessful()) {
                     try {
-                        BlockedByFragment blockedByFragment = (BlockedByFragment) manager.findFragmentByTag("bbf");
+                        BlockedByFragment blockedByFragment = (BlockedByFragment) fragmentManager.findFragmentByTag("bbf");
                         if (blockedByFragment == null) {
                             blockedByFragment = new BlockedByFragment();
                             Bundle bundle = new Bundle();
@@ -185,7 +187,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                             }.getType()));
                             blockedByFragment.setArguments(bundle);
                             blockedByFragment.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                            blockedByFragment.show(manager, "bbf");
+                            blockedByFragment.show(fragmentManager, "bbf");
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -235,7 +237,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                     RadioService.operator.setSubscribed(true);
                                     settings.edit().putBoolean("active", true).apply();
                                     showResult("Peaked And Tuned", "Subscription successful! You will no longer recieve advertising");
-                                    final Account af = (Account) manager.findFragmentByTag("afrag");
+                                    final Account af = (Account) fragmentManager.findFragmentByTag("afrag");
                                     if (af != null) af.setStatus(true);
                                     userSubscribed();
                                 }
@@ -244,29 +246,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     }
                 }
             }
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case 9999: //custom background
-                if (resultCode == RESULT_OK && data != null)
-                    settings.edit().putString("background", String.valueOf(data.getData())).apply();
-                break;
-        }
-    }
-
-    @Override
-    public void launchPicker(Gif gif, boolean upload) {
-        ProfilePhotoPicker profilePhotoPicker = (ProfilePhotoPicker) manager.findFragmentByTag("photoPicker");
-        if (profilePhotoPicker == null) {
-            profilePhotoPicker = new ProfilePhotoPicker(getSupportFragmentManager());
-            profilePhotoPicker.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            profilePhotoPicker.show(manager, "photoPicker");
-        } else {
-            profilePhotoPicker.setPhoto(gif, upload);
         }
     }
 
@@ -399,7 +378,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.settings);
         billingUtils = new BillingUtils(this, this);
-        manager = getSupportFragmentManager();
+        fragmentManager = getSupportFragmentManager();
         ImageView backDrop = findViewById(R.id.backdrop);
         String background = settings.getString("settings_backdrop", "");
         if (settings.getBoolean("custom", false))
@@ -485,7 +464,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     private void showResult(String title, String content) {
         if (isFinishing()) return;
-        Blank bdf = (Blank) manager.findFragmentByTag("bdf");
+        Blank bdf = (Blank) fragmentManager.findFragmentByTag("bdf");
         if (bdf == null) {
             Bundle helpbundle = new Bundle();
             helpbundle.putString("title", title);
@@ -493,7 +472,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             bdf = new Blank();
             bdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.mydialog);
             bdf.setArguments(helpbundle);
-            bdf.show(manager, "bdf");
+            bdf.show(fragmentManager, "bdf");
         }
     }
 
@@ -550,7 +529,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     private void chstage() {
         if (stage != post) {
-            FragmentTransaction transaction = manager.beginTransaction();
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
             switch (post) {
                 case 1:
                     tbb1.setBackgroundResource(R.drawable.empty_box_white_outline);
@@ -661,7 +640,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         } else if (id == R.id.update) {
             clickSound();
             if (RadioService.operator.getAdmin()) {
-                FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
+                FillProfile sdf = (FillProfile) fragmentManager.findFragmentByTag("sdf");
                 if (sdf == null) {
                     sdf = new FillProfile();
                     userbundle.putString("profileLink", RadioService.operator.getProfileLink());
@@ -670,7 +649,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     userbundle.putString("location", RadioService.operator.getTown());
                     sdf.setArguments(userbundle);
                     sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    sdf.show(manager, "sdf");
+                    sdf.show(fragmentManager, "sdf");
                 }
             } else {
                 final String data = Jwts.builder()
@@ -697,7 +676,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                             try {
                                                 final JSONObject object = new JSONObject(data);
                                                 if (object.getString("success").equals("1")) {
-                                                    FillProfile sdf = (FillProfile) manager.findFragmentByTag("sdf");
+                                                    FillProfile sdf = (FillProfile) fragmentManager.findFragmentByTag("sdf");
                                                     if (sdf == null) {
                                                         sdf = new FillProfile();
                                                         userbundle.putString("profileLink", RadioService.operator.getProfileLink());
@@ -706,7 +685,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                                         userbundle.putString("location", RadioService.operator.getTown());
                                                         sdf.setArguments(userbundle);
                                                         sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                                                        sdf.show(manager, "sdf");
+                                                        sdf.show(fragmentManager, "sdf");
                                                     }
                                                 } else
                                                     showResult(object.getString("title"), object.getString("message"));
@@ -721,11 +700,11 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             }
         } else if (id == R.id.blocked) {
             clickSound();
-            Blocked bd = (Blocked) manager.findFragmentByTag("bd");
+            Blocked bd = (Blocked) fragmentManager.findFragmentByTag("bd");
             if (bd == null) {
                 bd = new Blocked();
                 bd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                bd.show(manager, "bd");
+                bd.show(fragmentManager, "bd");
             }
         }
     }
@@ -766,12 +745,12 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     public void displayTerms(View v) {
         Utils.vibrate(v);
         clickSound();
-        TermsOfUse tdd = (TermsOfUse) manager.findFragmentByTag("tdd");
+        TermsOfUse tdd = (TermsOfUse) fragmentManager.findFragmentByTag("tdd");
         if (tdd == null) {
             tdd = new TermsOfUse(false);
             tdd.setCancelable(false);
             tdd.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            tdd.show(manager, "tdd");
+            tdd.show(fragmentManager, "tdd");
         }
     }
 
@@ -784,51 +763,26 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         clickSound();
         int id = v.getId();
         if (id == R.id.contact) {
-            Contact cdf = (Contact) manager.findFragmentByTag("cdf");
+            Contact cdf = (Contact) fragmentManager.findFragmentByTag("cdf");
             if (cdf == null) {
                 cdf = new Contact();
                 cdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                cdf.show(manager, "cdf");
+                cdf.show(fragmentManager, "cdf");
             }
         } else if (id == R.id.shop) {
             if (!RadioService.operator.getRadioShopOpen()) {
                 showResult("Temporarily Closed", "The Radio Shop is temporarily offline");
                 return;
             }
-            RadioShop shop = (RadioShop) manager.findFragmentByTag("shop");
+            RadioShop shop = (RadioShop) fragmentManager.findFragmentByTag("shop");
             if (shop == null) {
                 shop = new RadioShop();
                 shop.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                 Bundle bundle = new Bundle();
                 bundle.putString("userId", RadioService.operator.getUser_id());
                 shop.setArguments(bundle);
-                shop.show(manager, "shop");
+                shop.show(fragmentManager, "shop");
             }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 2:
-                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
-                    try {
-                        startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), 3456);
-                    } catch (Exception e) {
-                        LOG.e(e.getMessage());
-                    }
-                }
-                break;
-            case 3:
-                if (Utils.permissionsAccepted(SettingsActivity.this, Utils.getStoragePermissions())) {
-                    try {
-                        startActivityForResult(new Intent().setType("image/*").setAction(Intent.ACTION_GET_CONTENT).addCategory(Intent.CATEGORY_OPENABLE), 9999);
-                    } catch (Exception e) {
-                        LOG.e(e.getMessage());
-                    }
-                }
-                break;
         }
     }
 
