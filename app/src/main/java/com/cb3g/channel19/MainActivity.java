@@ -86,6 +86,8 @@ import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends FragmentActivity implements MI, View.OnClickListener, View.OnLongClickListener, PurchasesUpdatedListener, ValueEventListener {
     public MainLayoutBinding binding;
+
+    private final GlideImageLoader glide = new GlideImageLoader(this);
     public final String SILENCE = "silence";
     public final String UNSILENCE = "unsilence";
     boolean isBound = false;
@@ -604,7 +606,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void changeBackground(String link) {
-        new GlideImageLoader(this, binding.backdrop).load(link);
+        glide.loadAsync(binding.backdrop, link);
     }
 
     @Override
@@ -1289,12 +1291,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
         if (display.getDuration() == 0) binding.blackDurationTv.setText("");
         else binding.blackDurationTv.setText(display.getDuration() + "s");
-        new GlideImageLoader(this, binding.blackStarIv).load(Utils.parseRankUrl(display.getRank()));
+        glide.loadAsync(binding.blackStarIv, Utils.parseRankUrl(display.getRank()));
         if (display.getProfileLink().equals("none"))
-            binding.blackProfilePictureIv.setImageDrawable(null);
+            binding.blackProfilePictureIv.setImageBitmap(null);
         else if (dark)
-            new GlideImageLoader(this, binding.blackProfilePictureIv).load(display.getProfileLink());
-
+            glide.loadAsync(binding.blackProfilePictureIv, display.getProfileLink());
     }
 
     @Override

@@ -94,6 +94,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         photoRecords.clear();
         for (DataSnapshot child : dataSnapshot.getChildren()) {
             Photo photo = child.getValue(Photo.class);
+            assert photo != null;
             if (photo.getStamp() < stamp - 86400) {
                 updates.put(child.getKey(), null);
             } else photoRecords.add(0, photo);
@@ -115,6 +116,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     }
 
     class RecyleAdapter extends RecyclerView.Adapter<RecyleAdapter.MyViewHolder> {
+        GlideImageLoader glideImageLoader = new GlideImageLoader(context);
 
         @NonNull
         @Override
@@ -128,14 +130,13 @@ public class MassPast extends DialogFragment implements ValueEventListener {
             holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
             holder.handle.setText(photo.getHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));
+            new GlideImageLoader(context, holder.profile).load(photo.getProfileLink(), RadioService.profileOptions);
+            new GlideImageLoader(context, holder.rank).load(Utils.parseRankUrl(photo.getRank()));
             new GlideImageLoader(context, holder.image, holder.progressBar).load(photo.getUrl());
-            new GlideImageLoader(context, holder.profile).load(photo.getProfileLink(), profileOptions);
-            new GlideImageLoader(context, holder.rank).loadRank(photo.getRank());
             holder.image.setTag(photo);
             holder.save.setTag(photo);
             holder.image.setOnClickListener(listener);
             holder.save.setOnClickListener(listener);
-
         }
 
         private final View.OnClickListener listener = new View.OnClickListener() {

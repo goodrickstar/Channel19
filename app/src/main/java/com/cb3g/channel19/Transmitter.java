@@ -43,6 +43,7 @@ import java.util.Locale;
 
 public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeListener, View.OnTouchListener, View.OnLongClickListener, CheckBox.OnCheckedChangeListener {
     private final String[] recordPermissions = new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
+    private GlideImageLoader glide;
     final private AlphaAnimation fadeOut = new AlphaAnimation(1, 0);
     final private AlphaAnimation fadeIn = new AlphaAnimation(0, 1);
     private TextView location, handle, quetv, carrier, title;
@@ -73,6 +74,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
+        glide = new GlideImageLoader(context);
         MI = (com.cb3g.channel19.MI) getActivity();
     }
 
@@ -367,13 +369,13 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             title.setText("");
         else
             title.setText(Utils.formatDiff(Utils.timeDifferance(stamp), true));
-        new GlideImageLoader(context, rank).load(Utils.parseRankUrl(display.getRank()));
+        glide.loadAsync(rank, Utils.parseRankUrl(display.getRank()));
         if (display.getProfileLink().equals("none")) {
             profile.setVisibility(View.GONE);
             profile.setOnClickListener(null);
         } else {
             profile.setVisibility(View.VISIBLE);
-            new GlideImageLoader(context, profile).load(display.getProfileLink(), RadioService.profileOptions);
+            glide.loadAsync(profile, display.getProfileLink(), RadioService.profileOptions);
             profile.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenBoxSound"));

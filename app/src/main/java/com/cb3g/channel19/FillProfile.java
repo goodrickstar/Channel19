@@ -58,12 +58,18 @@ public class FillProfile extends DialogFragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        String handle = null;
+        String carrier = null;
+        String location = null;
+        String profileLink = null;
         final ImageView profile = view.findViewById(R.id.profile_photo);
-        final Bundle bundle = requireArguments();
-        final String profileLink = bundle.getString("profileLink");
-        final String handle = bundle.getString("handle");
-        final String carrier = bundle.getString("carrier");
-        final String location = bundle.getString("location");
+        if (getArguments() != null){
+            final Bundle bundle = requireArguments();
+            profileLink = bundle.getString("profileLink");
+            handle = bundle.getString("handle");
+            carrier = bundle.getString("carrier");
+            location = bundle.getString("location");
+        }
         if (profileLink != null)
             Glide.with(context).load(profileLink).apply(RadioService.profileOptions).into(profile);
         if (handle != null) binding.handleET.setText(handle);

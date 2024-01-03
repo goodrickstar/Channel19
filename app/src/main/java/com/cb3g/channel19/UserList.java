@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
 public class UserList extends Fragment {
+
+    private GlideImageLoader glide;
     private final recycler_adapter adapter = new recycler_adapter();
     private Context context;
     private MI MI;
@@ -46,6 +48,7 @@ public class UserList extends Fragment {
     public void onAttach(@NotNull Context context) {
         super.onAttach(context);
         this.context = context;
+        glide = new GlideImageLoader(context);
         MI = (MI) getActivity();
     }
 
@@ -108,8 +111,8 @@ public class UserList extends Fragment {
             else holder.title.setText(title);
             holder.handle.setText(entry.getRadio_hanlde());
             holder.carrier.setText(entry.getCarrier());
-            new GlideImageLoader(context, holder.profile).load(entry.getProfileLink(), RadioService.profileOptions);
-            new GlideImageLoader(context, holder.starsIm).loadRank(entry.getRank());
+            glide.loadAsync(holder.profile, entry.getProfileLink(), RadioService.profileOptions);
+            glide.loadAsync(holder.starsIm, Utils.parseRankUrl(entry.getRank()));
             holder.profile.setTag(R.id.black_profile_picture_iv, entry);
             holder.clickPoint.setTag(R.id.clickPoint, entry);
             holder.mail.setTag(R.id.mail, entry);

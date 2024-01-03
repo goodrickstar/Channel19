@@ -94,7 +94,7 @@ public class Stars extends DialogFragment {
 
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-            glideImageLoader.load(holder.star, Utils.parseRankUrl(stars.get(position)));
+            glideImageLoader.loadAsync(holder.star, Utils.parseRankUrl(stars.get(position)));
             holder.itemView.setOnClickListener(v -> {
                 context.sendBroadcast(new Intent("setStar").putExtra("data", stars.get(holder.getAdapterPosition())));
                 context.sendBroadcast(new Intent("nineteenClickSound"));

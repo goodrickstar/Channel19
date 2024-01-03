@@ -105,8 +105,8 @@ public class RadioService extends Service implements ValueEventListener {
     static final OkHttpClient client = new OkHttpClient();
     private final List<String> nearby = new ArrayList<>();
     static final String SITE_URL = "http://23.111.159.2/~channel1/";
-    static RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
-    static RequestOptions largeProfileOptions = new RequestOptions().centerInside().error(R.drawable.error);
+    static RequestOptions profileOptions = new RequestOptions().circleCrop();
+    static RequestOptions largeProfileOptions = new RequestOptions().centerInside();
     static boolean phoneIdle = true, paused = false, recording = false, bluetoothEnabled = false, mute = false;
     static ObservableBoolean occupied = new ObservableBoolean(false);
     static ObservableField<String> chat = new ObservableField<>("0");
@@ -298,7 +298,7 @@ public class RadioService extends Service implements ValueEventListener {
                     switch (photo.getMass()) {
                         case 0 -> { //private photo
                             if (settings.getBoolean("photos", true)) {
-                                if (chat.get().equals(photo.getSenderId())) {
+                                if (Objects.equals(chat.get(), photo.getSenderId())) {
                                     if (MI != null)
                                         MI.displayChat(null, true, false);
                                     else sendBroadcast(new Intent("nineteenChatSound"));
@@ -372,7 +372,7 @@ public class RadioService extends Service implements ValueEventListener {
                     Message message = gson.fromJson(intent.getStringExtra("data"), Message.class);
                     if (settings.getBoolean("pmenabled", true)) {
                         if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
-                            if (chat.get().equals(message.getUser_id())) {
+                            if (Objects.equals(chat.get(), message.getUser_id())) {
                                 if (MI != null)
                                     MI.displayChat(null, true, false);
                                 else sendBroadcast(new Intent("nineteenChatSound"));
@@ -486,7 +486,8 @@ public class RadioService extends Service implements ValueEventListener {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 ghostUsers.clear();
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    ghostUsers.add(new FBentry(child.getKey(), child.getValue(Long.class)));
+                    FBentry entry = new FBentry(child.getKey(), child.getValue(Long.class));
+                    ghostUsers.add(entry);
                 }
                 if (MI != null) MI.updateUserList();
                 get_users_on_channel();
@@ -538,6 +539,7 @@ public class RadioService extends Service implements ValueEventListener {
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 UserVolume child = dataSnapshot.getValue(UserVolume.class);
                 volumes.add(child);
+                assert child != null;
                 if (isUpdatedVolumeUserZero(child.getId())) {
                     float volume = scaleVolume(returnUserVolume(child.getId()));
                     player.setVolume(volume, volume);
@@ -548,9 +550,11 @@ public class RadioService extends Service implements ValueEventListener {
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                 UserVolume child = dataSnapshot.getValue(UserVolume.class);
                 for (int i = 0; i < volumes.size(); i++) {
+                    assert child != null;
                     if (volumes.get(i).getId().equals(child.getId()))
                         volumes.get(i).setVolume(child.getVolume());
                 }
+                assert child != null;
                 if (isUpdatedVolumeUserZero(child.getId())) {
                     float volume = scaleVolume(returnUserVolume(child.getId()));
                     player.setVolume(volume, volume);
@@ -762,13 +766,13 @@ public class RadioService extends Service implements ValueEventListener {
         chat.addOnPropertyChangedCallback(new Observable.OnPropertyChangedCallback() {
             @Override
             public void onPropertyChanged(Observable sender, int propertyId) {
-                if (chat.get().equals("0")) checkForMessages();
+                if (Objects.equals(chat.get(), "0")) checkForMessages();
             }
         });
         audioListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                proccessInbound(dataSnapshot.getValue(Inbound.class));
+                proccessInbound(Objects.requireNonNull(dataSnapshot.getValue(Inbound.class)));
             }
 
             @Override
@@ -824,7 +828,7 @@ public class RadioService extends Service implements ValueEventListener {
                 });
             }
         } catch (Exception e) {
-            Log.e("network", e.getMessage());
+            Log.e("network", Objects.requireNonNull(e.getMessage()));
         }
     }
 
@@ -832,7 +836,7 @@ public class RadioService extends Service implements ValueEventListener {
 
     private void proccessInbound(Inbound inbound) {
         if (inbound.getStamp() < enterStamp) return;
-        if (inbound.getChannel() != operator.getChannel().getChannel()) return;
+        if (inbound.getChannel() != Objects.requireNonNull(operator.getChannel()).getChannel()) return;
         if (inbound.getUser_id().equals(operator.getUser_id()) && !inbound.getTalkback()) return;
         if (blockListContainsId(blockedIDs, inbound.getUser_id())) return;
         List<String> blockLists = gson.fromJson(inbound.getBlockList(), new TypeToken<List<String>>() {
@@ -893,7 +897,7 @@ public class RadioService extends Service implements ValueEventListener {
                     });
                     player.setOnCompletionListener(mp -> removeZeros());
                     player.prepareAsync();
-                    if (true) startFadeIn();
+                    startFadeIn();
                 } catch (IOException | IllegalStateException e) {
                     Logger.INSTANCE.e("play()", e);
                     removeZeros();
@@ -957,87 +961,85 @@ public class RadioService extends Service implements ValueEventListener {
     private void transmit(final String fileLocation, boolean talkback, long duration, long stamp) {
         final File file = new File(fileLocation);
         if (!file.exists()) return;
-        if (file != null) {
-            StorageReference reference = temporaryStorage.getReference().child("audio").child(operator.getUser_id() + "-" + stamp + ".m4a");
-            StorageMetadata metadata = new StorageMetadata.Builder()
-                    .setContentType("audio/m4a")
-                    .setCustomMetadata("user", operator.getUser_id())
-                    .setCustomMetadata("stamp", String.valueOf(stamp))
-                    .build();
-            UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
-            uploadTask.continueWithTask(task -> {
-                        if (!task.isSuccessful()) {
+        StorageReference reference = temporaryStorage.getReference().child("audio").child(operator.getUser_id() + "-" + stamp + ".m4a");
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("audio/m4a")
+                .setCustomMetadata("user", operator.getUser_id())
+                .setCustomMetadata("stamp", String.valueOf(stamp))
+                .build();
+        UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
+        uploadTask.continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        if (MI != null)
+                            MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
+                        throw task.getException();
+                    }
+                    return reference.getDownloadUrl();
+                })
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<String> blockList = new ArrayList<>();
+                        for (Block block : blockedIDs) {
+                            blockList.add(block.getI());
+                        }
+                        final String downloadUri = task.getResult().toString();
+                        Inbound inbound = new Inbound();
+                        inbound.setDownloadUrl(downloadUri);
+                        inbound.setChannel(operator.getChannel().getChannel());
+                        inbound.setStamp(stamp);
+                        inbound.setDuration(duration);
+                        inbound.setTalkback(talkback);
+                        inbound.setAdmin(operator.getAdmin());
+                        inbound.setBlockList(gson.toJson(blockList));
+                        inbound.setUser_id(operator.getUser_id());
+                        inbound.setProfileLink(operator.getProfileLink());
+                        inbound.setHandle(operator.getHandle());
+                        inbound.setCarrier(operator.getCarrier());
+                        inbound.setRank(operator.getRank());
+                        if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
+                            inbound.setTown(operator.getUserLocationString());
+                        else inbound.setTown(operator.getTown());
+                        databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
+                            if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
                             if (MI != null)
-                                MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
-                            throw task.getException();
-                        }
-                        return reference.getDownloadUrl();
-                    })
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            List<String> blockList = new ArrayList<>();
-                            for (Block block : blockedIDs) {
-                                blockList.add(block.getI());
+                                MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
+                        });
+                        file.delete();
+                        final String data = Jwts.builder()
+                                .setHeader(header)
+                                .claim("userId", operator.getUser_id())
+                                .setIssuedAt(new Date(System.currentTimeMillis()))
+                                .setExpiration(new Date(System.currentTimeMillis() + 60000))
+                                .signWith(SignatureAlgorithm.HS256, operator.getKey())
+                                .compact();
+                        final Request request = new Request.Builder()
+                                .url(SITE_URL + "user_key_count.php")
+                                .post(new FormBody.Builder().add("data", data).build())
+                                .build();
+                        client.newCall(request).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
                             }
-                            final String downloadUri = task.getResult().toString();
-                            Inbound inbound = new Inbound();
-                            inbound.setDownloadUrl(downloadUri);
-                            inbound.setChannel(operator.getChannel().getChannel());
-                            inbound.setStamp(stamp);
-                            inbound.setDuration(duration);
-                            inbound.setTalkback(talkback);
-                            inbound.setAdmin(operator.getAdmin());
-                            inbound.setBlockList(gson.toJson(blockList));
-                            inbound.setUser_id(operator.getUser_id());
-                            inbound.setProfileLink(operator.getProfileLink());
-                            inbound.setHandle(operator.getHandle());
-                            inbound.setCarrier(operator.getCarrier());
-                            inbound.setRank(operator.getRank());
-                            if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
-                                inbound.setTown(operator.getUserLocationString());
-                            else inbound.setTown(operator.getTown());
-                            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
-                                if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
-                                if (MI != null)
-                                    MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
-                            });
-                            file.delete();
-                            final String data = Jwts.builder()
-                                    .setHeader(header)
-                                    .claim("userId", operator.getUser_id())
-                                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                    .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                                    .compact();
-                            final Request request = new Request.Builder()
-                                    .url(SITE_URL + "user_key_count.php")
-                                    .post(new FormBody.Builder().add("data", data).build())
-                                    .build();
-                            client.newCall(request).enqueue(new Callback() {
-                                @Override
-                                public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
-                                }
-
-                                @Override
-                                public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                    try {
-                                        if (response.isSuccessful()) {
-                                            JSONObject data = new JSONObject(response.body().string());
-                                            operator.setCount(data.getInt("count"));
-                                            operator.setSalutes(data.getInt("salutes"));
-                                            operator.setRank(data.getString("rank"));
-                                        }
-                                    } catch (JSONException | IOException e) {
-                                        LOG.e(String.valueOf(e));
-                                    } finally {
-                                        response.close();
+                            @Override
+                            public void onResponse(@NotNull Call call, @NotNull Response response) {
+                                try {
+                                    if (response.isSuccessful()) {
+                                        JSONObject data = new JSONObject(response.body().string());
+                                        operator.setCount(data.getInt("count"));
+                                        operator.setSalutes(data.getInt("salutes"));
+                                        operator.setRank(data.getString("rank"));
                                     }
+                                } catch (JSONException | IOException e) {
+                                    LOG.e(String.valueOf(e));
+                                } finally {
+                                    response.close();
                                 }
-                            });
-                        }
-                    });
-        }
+                            }
+                        });
+                    }
+                });
     }
 
     static boolean blockListContainsId(final List<Block> blockList, final String id) {
@@ -1070,21 +1072,21 @@ public class RadioService extends Service implements ValueEventListener {
 
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        switch (dataSnapshot.getKey()) {
+        switch (Objects.requireNonNull(dataSnapshot.getKey())) {
             case "locations" -> {
                 coordinates.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     coordinates.add(snapshot.getValue(Coordinates.class));
                 }
             }
-            case "blocking" -> operator.setBlocking(dataSnapshot.getValue(Boolean.class));
-            case "flagsEnabled" -> operator.setFlagsEnabled(dataSnapshot.getValue(Boolean.class));
+            case "blocking" -> operator.setBlocking(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "flagsEnabled" -> operator.setFlagsEnabled(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
             case "ghostModeAvailible" ->
-                    operator.setGhostModeAvailible(dataSnapshot.getValue(Boolean.class));
-            case "radioShopOpen" -> operator.setRadioShopOpen(dataSnapshot.getValue(Boolean.class));
-            case "silencing" -> operator.setSilencing(dataSnapshot.getValue(Boolean.class));
+                    operator.setGhostModeAvailible(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "radioShopOpen" -> operator.setRadioShopOpen(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "silencing" -> operator.setSilencing(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
             case "keychain" -> {
-                operator.setKey(dataSnapshot.getValue(String.class));
+                operator.setKey(Objects.requireNonNull(dataSnapshot.getValue(String.class)));
                 settings.edit().putString("keychain", operator.getKey()).apply();
             }
         }
@@ -1098,45 +1100,48 @@ public class RadioService extends Service implements ValueEventListener {
         if (inputLocation != null) {
             Callable<String> callable = () -> {
                 try {
-                    if (operator.getChannel() != null || operator.getNearbyLimit() != 0) {
-                        for (Coordinates otherUser : coordinates) {
-                            if (!otherUser.getUserId().equals(operator.getUser_id()) && !nearby.contains(otherUser.getUserId()) && isInChannel(otherUser.getUserId())) {
-                                int distance = returnDistance(inputLocation, otherUser.getLatitude(), otherUser.getLongitude());
-                                if (distance < operator.getNearbyLimit()) {
-                                    snacks.add(new Snack(otherUser.getHandle() + " is nearby " + "(" + distance + "m)", Snackbar.LENGTH_INDEFINITE));
-                                    nearby.add(otherUser.getUserId());
-                                }
-                            }
-                        }
-                    }
                     final Geocoder geoCoder = new Geocoder(RadioService.this, locale);
-                    for (Address address : geoCoder.getFromLocation(inputLocation.getLatitude(), inputLocation.getLongitude(), 1)) {
-                        final String city = address.getLocality();
-                        final String state = address.getAdminArea();
-                        String locationString = null;
-                        final String country_code = address.getCountryCode();
-                        if (country_code != null) {
-                            if (city != null && state != null) {
-                                if (address.getCountryCode().equals("US"))
-                                    locationString = city.trim() + ", " + getAbbreviationFromUSState(state);
-                                else
-                                    locationString = address.getLocality() + ", " + address.getCountryCode();
-                            }
-                            if (locationString != null) {
-                                locationString = locationString.replaceAll("[0-9]", "").trim();
-                                locationString = locationString.replace("New ", "").replace("North ", "N ").replace("South ", "S ").replace("East ", "E ").replace("Port ", "").replace("Bridge ", "").replace("West ", "W ").replace("Upper", "").replace("Lower", "").replace("Township", "").replace("Court House", "").replace("Charter", "").replace(" ,", ",").replace(".", "").replace(" ,", ",").trim();
-                                if (locationString.length() > 19)
-                                    locationString = locationString.replace("N ", "").replace("S ", "").replace("E ", "").replace("W ", "").replace("St ", "").trim();
-                                if (locationString.length() > 19 && country_code.equals("US"))
-                                    locationString = locationString.substring(0, locationString.length() - 4).trim();
-                                locationString = locationString + EmojiParser.parseToUnicode(" :globe_with_meridians:");
-                                if (!locationString.equals(operator.getUserLocationString()))
-                                    return locationString;
+                    final List<Address> addressList = geoCoder.getFromLocation(inputLocation.getLatitude(), inputLocation.getLongitude(), 1);
+                    if (addressList != null){
+                        for (Address address : addressList) {
+                            final String city = address.getLocality();
+                            final String state = address.getAdminArea();
+                            String locationString = null;
+                            final String country_code = address.getCountryCode();
+                            if (country_code != null) {
+                                if (city != null && state != null) {
+                                    if (address.getCountryCode().equals("US"))
+                                        locationString = city.trim() + ", " + getAbbreviationFromUSState(state);
+                                    else
+                                        locationString = address.getLocality() + ", " + address.getCountryCode();
+                                }
+                                if (locationString != null) {
+                                    locationString = locationString.replaceAll("[0-9]", "").trim();
+                                    locationString = locationString.replace("New ", "").replace("North ", "N ").replace("South ", "S ").replace("East ", "E ").replace("Port ", "").replace("Bridge ", "").replace("West ", "W ").replace("Upper", "").replace("Lower", "").replace("Township", "").replace("Court House", "").replace("Charter", "").replace(" ,", ",").replace(".", "").replace(" ,", ",").trim();
+                                    if (locationString.length() > 19)
+                                        locationString = locationString.replace("N ", "").replace("S ", "").replace("E ", "").replace("W ", "").replace("St ", "").trim();
+                                    if (locationString.length() > 19 && country_code.equals("US"))
+                                        locationString = locationString.substring(0, locationString.length() - 4).trim();
+                                    locationString = locationString + EmojiParser.parseToUnicode(" :globe_with_meridians:");
+                                    if (!locationString.equals(operator.getUserLocationString()))
+                                        return locationString;
+                                }
                             }
                         }
                     }
                 } catch (IOException e) {
                     LOG.e("geoCoder EXCEPTION " + e);
+                }
+                if (operator.getChannel() != null || operator.getNearbyLimit() != 0) {
+                    for (Coordinates otherUser : coordinates) {
+                        if (!otherUser.getUserId().equals(operator.getUser_id()) && !nearby.contains(otherUser.getUserId()) && isInChannel(otherUser.getUserId())) {
+                            int distance = returnDistance(inputLocation, otherUser.getLatitude(), otherUser.getLongitude());
+                            if (distance < operator.getNearbyLimit()) {
+                                snacks.add(new Snack(otherUser.getHandle() + " is nearby " + "(" + distance + "m)", Snackbar.LENGTH_INDEFINITE));
+                                nearby.add(otherUser.getUserId());
+                            }
+                        }
+                    }
                 }
                 return null;
             };
@@ -1187,7 +1192,7 @@ public class RadioService extends Service implements ValueEventListener {
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull final Response response) {
                         if (response.isSuccessful()) {
-                            try {
+                            try (response) {
                                 users = itterateSilenced(returnFilteredList(returnUserListObjectFromJson(response.body().string())));
                                 handler.post(() -> {
                                     if (MI != null)
@@ -1195,8 +1200,6 @@ public class RadioService extends Service implements ValueEventListener {
                                 });
                             } catch (IOException e) {
                                 LOG.e("get_users_on_channel", e.getMessage());
-                            } finally {
-                                response.close();
                             }
                         }
                     }
@@ -1307,7 +1310,7 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     int getDuration() {
-        if (!playing || player == null) return 0;
+        if (!playing) return 0;
         return player.getDuration() - player.getCurrentPosition();
     }
 
@@ -1440,6 +1443,7 @@ public class RadioService extends Service implements ValueEventListener {
         File directory = new File(saveDirectory);
         File[] files = directory.listFiles(file -> (file.getPath().endsWith(".m4a")));
         executor.execute(() -> {
+            assert files != null;
             for (File file : files) {
                 file.delete();
             }
@@ -1584,7 +1588,7 @@ public class RadioService extends Service implements ValueEventListener {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                try {
+                try (response) {
                     if (response.isSuccessful()) {
                         final JSONObject object = new JSONObject(response.body().string());
                         String content = object.getString("login") + "\n" + "Total Keyups: " + object.getString("email") + "\n" + "Salutes: " + object.getString("salutes") + ", Flags: " + object.getString("flags") + "\n" + "Version: " + object.getString("version_name") + " (" + object.getString("version") + ")" + "\n" + "Android Version: " + object.getString("build_number") + "\n" + "Donations: " + object.getString("donations") + "\n" + "UserId: " + object.getString("user_id");
@@ -1595,8 +1599,6 @@ public class RadioService extends Service implements ValueEventListener {
                     }
                 } catch (JSONException | IOException e) {
                     LOG.e(String.valueOf(e));
-                } finally {
-                    response.close();
                 }
             }
         });
@@ -1759,7 +1761,7 @@ public class RadioService extends Service implements ValueEventListener {
         }
         if (mute || paused) {
             if (mute && !paused) handle = "MUTED";
-            if (!mute && paused) handle = "PAUSED";
+            if (!mute) handle = "PAUSED";
             if (mute && paused) handle = "MUTED & PAUSED";
             carrier = "";
         }
@@ -2236,7 +2238,7 @@ public class RadioService extends Service implements ValueEventListener {
     void checkForMessages() {
         if (recording || occupied.get() || !phoneIdle || MI == null)
             return;
-        if (!chat.get().equals("0")){
+        if (!Objects.equals(chat.get(), "0")){
             MI.displayChat(null, false, false);
         }
         if (!photos.isEmpty()) {
@@ -2348,7 +2350,7 @@ public class RadioService extends Service implements ValueEventListener {
                         if (response.isSuccessful()) {
                             handler.post(() -> {
                                 if (MI != null) {
-                                    if (chat.get().equals("0")) {
+                                    if (Objects.equals(chat.get(), "0")) {
                                         snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
                                         checkForMessages();
                                     } else MI.displayChat(null, false, false);
