@@ -50,6 +50,7 @@ public class MessageHistory extends DialogFragment {
     private final List<History> list = new ArrayList<>();
     private MI MI;
     private RecyclerView history;
+    private GlideImageLoader glideImageLoader;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -191,6 +192,7 @@ public class MessageHistory extends DialogFragment {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -262,7 +264,7 @@ public class MessageHistory extends DialogFragment {
             if (object.getOnline() == 0) holder.lastOnline.setText("Online");
             else
                 holder.lastOnline.setText("Active" + "\n" + Utils.timeOnline(Utils.timeDifferance(object.getOnline())) + "ago");
-            new GlideImageLoader(context, holder.profile).load(object.getProfileLink(), RadioService.profileOptions);
+            glideImageLoader.load(holder.profile, object.getProfileLink(), RadioService.profileOptions);
         }
 
         @Override

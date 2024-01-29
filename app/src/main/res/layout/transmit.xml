@@ -15,52 +15,52 @@
         android:padding="@dimen/default_padding">
 
         <ImageView
-            android:id="@+id/black_profile_picture_iv"
+            android:id="@+id/transmit_profile_picture_iv"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginEnd="@dimen/half_margin" />
 
         <TextView
-            android:id="@+id/black_handle_tv"
+            android:id="@+id/transmit_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toStartOf="@+id/tooth"
-            android:layout_toEndOf="@+id/black_profile_picture_iv"
+            android:layout_toEndOf="@+id/transmit_profile_picture_iv"
             android:textAppearance="@style/large_font" />
 
         <TextView
-            android:id="@+id/black_carrier_tv"
+            android:id="@+id/transmit_carrier_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/black_handle_tv"
+            android:layout_below="@+id/transmit_handle_tv"
             android:layout_marginStart="@dimen/half_margin"
-            android:layout_toEndOf="@+id/black_profile_picture_iv"
+            android:layout_toEndOf="@+id/transmit_profile_picture_iv"
             android:textAppearance="@style/small_font" />
 
         <ImageView
-            android:id="@+id/black_star_iv"
+            android:id="@+id/transmit_rank_iv"
             android:layout_width="@dimen/star_width"
             android:layout_height="@dimen/star_height"
-            android:layout_alignBottom="@+id/black_profile_picture_iv"
-            android:layout_toEndOf="@+id/black_profile_picture_iv"
+            android:layout_alignBottom="@+id/transmit_profile_picture_iv"
+            android:layout_toEndOf="@+id/transmit_profile_picture_iv"
             android:scaleType="fitStart" />
 
         <TextView
-            android:id="@+id/countdown"
+            android:id="@+id/transmit_duration_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_below="@+id/black_handle_tv"
+            android:layout_below="@+id/transmit_handle_tv"
             android:textAppearance="@style/small_font" />
 
         <TextView
-            android:id="@+id/black_banner_tv"
+            android:id="@+id/transmit_title_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/black_profile_picture_iv"
+            android:layout_alignBottom="@+id/transmit_profile_picture_iv"
             android:layout_alignParentEnd="true"
-            android:layout_toEndOf="@+id/black_star_iv"
-            android:gravity="right"
+            android:layout_toEndOf="@+id/transmit_rank_iv"
+            android:gravity="end"
             android:textAppearance="@style/small_font" />
 
         <ImageView

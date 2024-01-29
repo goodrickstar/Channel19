@@ -53,9 +53,12 @@ public class Stars extends DialogFragment {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response.isSuccessful())
-                    binding.selection.setAdapter(new RecyclerAdapter(new Gson().fromJson(response.body().string(), new TypeToken<ArrayList<String>>() {
-                    }.getType())));
+                if (response.isSuccessful()) {
+                    assert response.body() != null;
+                    ArrayList<String> stars = new Gson().fromJson(response.body().string(), new TypeToken<ArrayList<String>>() {
+                    }.getType());
+                    binding.selection.post(() -> binding.selection.setAdapter(new RecyclerAdapter(stars)));
+                }
             }
         });
     }
@@ -94,7 +97,7 @@ public class Stars extends DialogFragment {
 
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-            glideImageLoader.loadAsync(holder.star, Utils.parseRankUrl(stars.get(position)));
+            glideImageLoader.load(holder.star, Utils.parseRankUrl(stars.get(position)));
             holder.itemView.setOnClickListener(v -> {
                 context.sendBroadcast(new Intent("setStar").putExtra("data", stars.get(holder.getAdapterPosition())));
                 context.sendBroadcast(new Intent("nineteenClickSound"));

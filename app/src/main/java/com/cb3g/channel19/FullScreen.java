@@ -19,11 +19,13 @@ import java.util.Objects;
 
 public class FullScreen extends DialogFragment {
     private Context context;
+    private GlideImageLoader glideImageLoader;
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -57,8 +59,8 @@ public class FullScreen extends DialogFragment {
         final Bundle bundle = requireArguments();
         final String link = bundle.getString("data");
         if (!link.contains(".gif"))
-            new GlideImageLoader(context, view.findViewById(R.id.photo_view), view.findViewById(R.id.loading)).load(link);
+            glideImageLoader.load(view.findViewById(R.id.photo_view), view.findViewById(R.id.loading), link);
         else
-            new GlideImageLoader(context, view.findViewById(R.id.gif_view), view.findViewById(R.id.loading)).load(link);
+            glideImageLoader.load(view.findViewById(R.id.gif_view), view.findViewById(R.id.loading), link);
     }
 }

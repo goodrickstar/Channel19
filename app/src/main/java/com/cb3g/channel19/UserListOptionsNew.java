@@ -66,7 +66,7 @@ public class UserListOptionsNew extends DialogFragment {
             binding.timeOnline.setText("Online: " + Utils.timeOnline(Utils.timeDifferance(user.getStamp())));
         else binding.timeOnline.setText("Offline");
         binding.deviceName.setText(user.getDeviceName());
-        new GlideImageLoader(context, binding.largeProfile).load(user.getProfileLink(), RadioService.largeProfileOptions);
+        new GlideImageLoader(context).load(binding.largeProfile, user.getProfileLink(), RadioService.largeProfileOptions);
         binding.nearbyLimitBar.getProgressDrawable().setColorFilter(Utils.colorFilter(Color.WHITE));
         binding.nearbyLimitBar.getThumb().setColorFilter(Utils.colorFilter(Color.WHITE));
         if (MI != null)

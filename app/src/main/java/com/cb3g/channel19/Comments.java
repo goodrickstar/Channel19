@@ -70,6 +70,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
     private Context context;
     private Post post;
     private CommentsDialogBinding binding;
+    private GlideImageLoader glideImageLoader;
 
     private final FragmentManager fragmentManager;
 
@@ -160,6 +161,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         super.onAttach(context);
         this.context = context;
         RI = (com.cb3g.channel19.RI) getActivity();
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -425,7 +427,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     //TEXT
                     TextHolder text_holder = (TextHolder) holder;
                     text_holder.content.setText(comment.getContent());
-                    new GlideImageLoader(context, text_holder.profile).load(comment.getProfileLink(), RadioService.profileOptions);
+                    glideImageLoader.load(text_holder.profile, comment.getProfileLink(), RadioService.profileOptions);
                     text_holder.profile.setOnClickListener(v -> {
                         Utils.vibrate(v);
                         if (RI != null) RI.action_view(comment.getProfileLink());
@@ -470,10 +472,10 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     PhotoHolder photo_holder = (PhotoHolder) holder;
                     photo_holder.name.setText(comment.getHandle());
                     photo_holder.stamp.setText(Utils.showElapsed(comment.getStamp()));
-                    new GlideImageLoader(context, photo_holder.profile).load(comment.getProfileLink(), RadioService.profileOptions);
+                    glideImageLoader.load(photo_holder.profile, comment.getProfileLink(), RadioService.profileOptions);
                     photo_holder.content.getLayoutParams().height = (int) (((comment.getImage_height() * ReservoirActivity.screen_width) / comment.getImage_width()) * 0.8);
                     photo_holder.content.getLayoutParams().width = (int) (ReservoirActivity.screen_width * 0.8);
-                    new GlideImageLoader(context, photo_holder.content, photo_holder.loading).load(comment.getContent());
+                    glideImageLoader.load(photo_holder.content, photo_holder.loading, comment.getContent());
                     photo_holder.content.setOnClickListener(v -> {
                         Utils.vibrate(v);
                         if (RI != null) RI.action_view(comment.getContent());

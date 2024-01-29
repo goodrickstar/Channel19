@@ -111,8 +111,8 @@ public class UserList extends Fragment {
             else holder.title.setText(title);
             holder.handle.setText(entry.getRadio_hanlde());
             holder.carrier.setText(entry.getCarrier());
-            glide.loadAsync(holder.profile, entry.getProfileLink(), RadioService.profileOptions);
-            glide.loadAsync(holder.starsIm, Utils.parseRankUrl(entry.getRank()));
+            glide.load(holder.profile, entry.getProfileLink(), RadioService.profileOptions);
+            glide.load(holder.starsIm, Utils.parseRankUrl(entry.getRank()));
             holder.profile.setTag(R.id.black_profile_picture_iv, entry);
             holder.clickPoint.setTag(R.id.clickPoint, entry);
             holder.mail.setTag(R.id.mail, entry);

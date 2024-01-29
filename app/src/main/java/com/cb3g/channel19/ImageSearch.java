@@ -44,6 +44,8 @@ public class ImageSearch extends DialogFragment {
     private final RecycleAdapter recycleAdapter = new RecycleAdapter();
     private final String id;
 
+    private GlideImageLoader glideImageLoader;
+
     public ImageSearch(String id) {
         this.id = id;
     }
@@ -107,6 +109,7 @@ public class ImageSearch extends DialogFragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -202,7 +205,7 @@ public class ImageSearch extends DialogFragment {
             final Giph giph = giphs.get(positiion);
             Gif activeGif = giph.getFixed_width_downsampled();
             scaleImageView(holder.imageView, activeGif.getHeight(), activeGif.getWidth(), columnWidth);
-            new GlideImageLoader(context, holder.imageView, holder.loading).load(activeGif.getUrl());
+            glideImageLoader.load(holder.imageView, holder.loading, activeGif.getUrl());
             holder.itemView.setTag(giph);
             holder.itemView.setOnClickListener(this);
             holder.itemView.setOnLongClickListener(this);

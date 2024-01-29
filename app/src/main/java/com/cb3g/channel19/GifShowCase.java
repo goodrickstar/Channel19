@@ -36,7 +36,8 @@ public class GifShowCase extends DialogFragment implements View.OnClickListener 
         ConstraintLayout container = view.findViewById(R.id.container);
         content.setOnClickListener(this);
         container.setOnClickListener(this);
-        new GlideImageLoader(context, content, view.findViewById(R.id.loading)).load(requireArguments().getString("data"));
+        if (getArguments() != null)
+            new GlideImageLoader(context).load(content, view.findViewById(R.id.loading), getArguments().getString("data"));
     }
 
     @Override

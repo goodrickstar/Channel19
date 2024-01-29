@@ -5,7 +5,9 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,11 +16,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.MassPhotoBinding;
 
@@ -42,6 +49,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         this.uri = uri;
     }
 
+    private Drawable resource;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -61,7 +70,20 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         if (window != null)
             window.getAttributes().windowAnimations = R.style.photoAnimation;
         RadioService.occupied.set(true);
-        Glide.with(this).load(uri).into(binding.photoPreview);
+        Glide.with(this).load(uri).listener(new RequestListener<>() {
+
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                dismiss();
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                MassPhoto.this.resource = resource;
+                return false;
+            }
+        }).into(binding.photoPreview);
         Set<String> set = context.getSharedPreferences("settings", Context.MODE_PRIVATE).getStringSet("massIds", null);
         if (set != null) savedIds = new ArrayList<>(set);
         RecyclerView recyclerView = view.findViewById(R.id.multi_select);
@@ -97,7 +119,9 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
                 if (user.isChecked) sendingIds.add(user.id);
             }
             if (!sendingIds.isEmpty()) {
-                FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", binding.photoPreview.getHeight(), binding.photoPreview.getWidth());
+                Log.i("logging", "sending height: "+ resource.getIntrinsicHeight() + ", width: "+resource.getIntrinsicWidth());
+                sendingIds.add(RadioService.operator.getUser_id());
+                FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", resource.getIntrinsicHeight(), resource.getIntrinsicWidth());
                 Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload);
                 uploader.uploadImage();
                 dismiss();

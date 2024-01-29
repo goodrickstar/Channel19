@@ -161,6 +161,15 @@ public class RadioService extends Service implements ValueEventListener {
             switch (Objects.requireNonNull(intent.getAction())) {
                 case "token"://TODO: update token on server
                     break;
+                case "locationUpdate":
+                    Log.i("logging", "location broadcast received");
+                    final String locationString = intent.getStringExtra("data");
+                    if (locationString != null) {
+                        operator.setUserLocationString(locationString);
+                        if (operator.getSharing()) uploadLocation(operator.getUserLocationString());
+                        if (MI != null) MI.updateLocationDisplay(operator.getUserLocationString());
+                    }
+                    break;
                 case "listUpdate":
                     final String flagData = intent.getStringExtra("data");
                     flaggedIds.clear();
@@ -247,25 +256,16 @@ public class RadioService extends Service implements ValueEventListener {
                     }
                     break;
                 case "nineteenPulse":
-                    final String data = Jwts.builder()
-                            .setHeader(header)
-                            .claim("userId", operator.getUser_id())
-                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                            .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                            .compact();
-                    client.newCall(new Request.Builder().url(SITE_URL + "user_pulse_response.php")
-                                    .post(new FormBody.Builder().add("data", data).build())
-                                    .build())
-                            .enqueue(new Callback() {
-                                @Override
-                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                                }
+                    final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+                    client.newCall(new Request.Builder().url(SITE_URL + "user_pulse_response.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        }
 
-                                @Override
-                                public void onResponse(@NonNull Call call, @NonNull Response response) {
-                                }
-                            });
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+                        }
+                    });
                     break;
                 case "nineteenTransmit":
                     transmit(intent.getStringExtra("data"), intent.getBooleanExtra("talkback", false), intent.getLongExtra("duration", 0), intent.getLongExtra("stamp", 0));
@@ -299,8 +299,7 @@ public class RadioService extends Service implements ValueEventListener {
                         case 0 -> { //private photo
                             if (settings.getBoolean("photos", true)) {
                                 if (Objects.equals(chat.get(), photo.getSenderId())) {
-                                    if (MI != null)
-                                        MI.displayChat(null, true, false);
+                                    if (MI != null) MI.displayChat(null, true, false);
                                     else sendBroadcast(new Intent("nineteenChatSound"));
                                 } else {
                                     if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
@@ -373,8 +372,7 @@ public class RadioService extends Service implements ValueEventListener {
                     if (settings.getBoolean("pmenabled", true)) {
                         if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
                             if (Objects.equals(chat.get(), message.getUser_id())) {
-                                if (MI != null)
-                                    MI.displayChat(null, true, false);
+                                if (MI != null) MI.displayChat(null, true, false);
                                 else sendBroadcast(new Intent("nineteenChatSound"));
                             } else {
                                 if (!recording) sp.play(chain, .1f, .1f, 1, 0, 1f);
@@ -486,8 +484,12 @@ public class RadioService extends Service implements ValueEventListener {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 ghostUsers.clear();
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    FBentry entry = new FBentry(child.getKey(), child.getValue(Long.class));
-                    ghostUsers.add(entry);
+                    String key = child.getKey();
+                    Long stamp = child.getValue(Long.class);
+                    if (key != null && stamp != null) {
+                        FBentry entry = new FBentry(key, stamp);
+                        ghostUsers.add(entry);
+                    }
                 }
                 if (MI != null) MI.updateUserList();
                 get_users_on_channel();
@@ -502,8 +504,12 @@ public class RadioService extends Service implements ValueEventListener {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 pausedUsers.clear();
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    FBentry fBentry = new FBentry(child.getKey(), child.getValue(Long.class));
-                    if (isInChannel(fBentry.getUserId())) pausedUsers.add(fBentry);
+                    String key = child.getKey();
+                    Long stamp = child.getValue(Long.class);
+                    if (key != null && stamp != null) {
+                        FBentry entry = new FBentry(key, stamp);
+                        if (isInChannel(entry.getUserId())) pausedUsers.add(entry);
+                    }
                 }
                 if (MI != null) MI.updateUserList();
             }
@@ -795,16 +801,9 @@ public class RadioService extends Service implements ValueEventListener {
 
             }
         };
-        AudioAttributes focusAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build();
-        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE)
-                .setAudioAttributes(focusAttributes)
-                .setAcceptsDelayedFocusGain(false)
-                .setOnAudioFocusChangeListener(i -> {
-                })
-                .build();
+        AudioAttributes focusAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
+        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setAudioAttributes(focusAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(i -> {
+        }).build();
     }
 
     void registerDefaultNetworkCallback() {
@@ -836,7 +835,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     private void proccessInbound(Inbound inbound) {
         if (inbound.getStamp() < enterStamp) return;
-        if (inbound.getChannel() != Objects.requireNonNull(operator.getChannel()).getChannel()) return;
+        if (inbound.getChannel() != Objects.requireNonNull(operator.getChannel()).getChannel())
+            return;
         if (inbound.getUser_id().equals(operator.getUser_id()) && !inbound.getTalkback()) return;
         if (blockListContainsId(blockedIDs, inbound.getUser_id())) return;
         List<String> blockLists = gson.fromJson(inbound.getBlockList(), new TypeToken<List<String>>() {
@@ -962,84 +962,67 @@ public class RadioService extends Service implements ValueEventListener {
         final File file = new File(fileLocation);
         if (!file.exists()) return;
         StorageReference reference = temporaryStorage.getReference().child("audio").child(operator.getUser_id() + "-" + stamp + ".m4a");
-        StorageMetadata metadata = new StorageMetadata.Builder()
-                .setContentType("audio/m4a")
-                .setCustomMetadata("user", operator.getUser_id())
-                .setCustomMetadata("stamp", String.valueOf(stamp))
-                .build();
+        StorageMetadata metadata = new StorageMetadata.Builder().setContentType("audio/m4a").setCustomMetadata("user", operator.getUser_id()).setCustomMetadata("stamp", String.valueOf(stamp)).build();
         UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
         uploadTask.continueWithTask(task -> {
-                    if (!task.isSuccessful()) {
-                        if (MI != null)
-                            MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
-                        throw task.getException();
+            if (!task.isSuccessful()) {
+                if (MI != null) MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
+            }
+            return reference.getDownloadUrl();
+        }).addOnCompleteListener(task -> {
+            if (task.isSuccessful() && operator.getChannel() != null) {
+                List<String> blockList = new ArrayList<>();
+                for (Block block : blockedIDs) {
+                    blockList.add(block.getI());
+                }
+                final String downloadUri = task.getResult().toString();
+                Inbound inbound = new Inbound();
+                inbound.setDownloadUrl(downloadUri);
+                inbound.setChannel(operator.getChannel().getChannel());
+                inbound.setStamp(stamp);
+                inbound.setDuration(duration);
+                inbound.setTalkback(talkback);
+                inbound.setAdmin(operator.getAdmin());
+                inbound.setBlockList(gson.toJson(blockList));
+                inbound.setUser_id(operator.getUser_id());
+                inbound.setProfileLink(operator.getProfileLink());
+                inbound.setHandle(operator.getHandle());
+                inbound.setCarrier(operator.getCarrier());
+                inbound.setRank(operator.getRank());
+                if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
+                    inbound.setTown(operator.getUserLocationString());
+                else inbound.setTown(operator.getTown());
+                databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
+                    if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
+                    if (MI != null)
+                        MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
+                });
+                file.delete();
+                final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+                final Request request = new Request.Builder().url(SITE_URL + "user_key_count.php").post(new FormBody.Builder().add("data", data).build()).build();
+                client.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
                     }
-                    return reference.getDownloadUrl();
-                })
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        List<String> blockList = new ArrayList<>();
-                        for (Block block : blockedIDs) {
-                            blockList.add(block.getI());
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) {
+                        try (response) {
+                            if (response.isSuccessful()) {
+                                assert response.body() != null;
+                                JSONObject data = new JSONObject(response.body().string());
+                                operator.setCount(data.getInt("count"));
+                                operator.setSalutes(data.getInt("salutes"));
+                                operator.setRank(data.getString("rank"));
+                            }
+                        } catch (JSONException | IOException e) {
+                            LOG.e(String.valueOf(e));
                         }
-                        final String downloadUri = task.getResult().toString();
-                        Inbound inbound = new Inbound();
-                        inbound.setDownloadUrl(downloadUri);
-                        inbound.setChannel(operator.getChannel().getChannel());
-                        inbound.setStamp(stamp);
-                        inbound.setDuration(duration);
-                        inbound.setTalkback(talkback);
-                        inbound.setAdmin(operator.getAdmin());
-                        inbound.setBlockList(gson.toJson(blockList));
-                        inbound.setUser_id(operator.getUser_id());
-                        inbound.setProfileLink(operator.getProfileLink());
-                        inbound.setHandle(operator.getHandle());
-                        inbound.setCarrier(operator.getCarrier());
-                        inbound.setRank(operator.getRank());
-                        if (operator.getSharing() && !operator.getUserLocationString().isEmpty())
-                            inbound.setTown(operator.getUserLocationString());
-                        else inbound.setTown(operator.getTown());
-                        databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
-                            if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
-                            if (MI != null)
-                                MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
-                        });
-                        file.delete();
-                        final String data = Jwts.builder()
-                                .setHeader(header)
-                                .claim("userId", operator.getUser_id())
-                                .setIssuedAt(new Date(System.currentTimeMillis()))
-                                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                                .compact();
-                        final Request request = new Request.Builder()
-                                .url(SITE_URL + "user_key_count.php")
-                                .post(new FormBody.Builder().add("data", data).build())
-                                .build();
-                        client.newCall(request).enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
-                            }
-
-                            @Override
-                            public void onResponse(@NotNull Call call, @NotNull Response response) {
-                                try {
-                                    if (response.isSuccessful()) {
-                                        JSONObject data = new JSONObject(response.body().string());
-                                        operator.setCount(data.getInt("count"));
-                                        operator.setSalutes(data.getInt("salutes"));
-                                        operator.setRank(data.getString("rank"));
-                                    }
-                                } catch (JSONException | IOException e) {
-                                    LOG.e(String.valueOf(e));
-                                } finally {
-                                    response.close();
-                                }
-                            }
-                        });
                     }
                 });
+            }
+        });
     }
 
     static boolean blockListContainsId(final List<Block> blockList, final String id) {
@@ -1079,12 +1062,16 @@ public class RadioService extends Service implements ValueEventListener {
                     coordinates.add(snapshot.getValue(Coordinates.class));
                 }
             }
-            case "blocking" -> operator.setBlocking(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "flagsEnabled" -> operator.setFlagsEnabled(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "blocking" ->
+                    operator.setBlocking(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "flagsEnabled" ->
+                    operator.setFlagsEnabled(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
             case "ghostModeAvailible" ->
                     operator.setGhostModeAvailible(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "radioShopOpen" -> operator.setRadioShopOpen(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "silencing" -> operator.setSilencing(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "radioShopOpen" ->
+                    operator.setRadioShopOpen(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
+            case "silencing" ->
+                    operator.setSilencing(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
             case "keychain" -> {
                 operator.setKey(Objects.requireNonNull(dataSnapshot.getValue(String.class)));
                 settings.edit().putString("keychain", operator.getKey()).apply();
@@ -1098,11 +1085,11 @@ public class RadioService extends Service implements ValueEventListener {
 
     public void locationUpdated(final Location inputLocation) {
         if (inputLocation != null) {
-            Callable<String> callable = () -> {
+            executor.execute(() -> {
                 try {
                     final Geocoder geoCoder = new Geocoder(RadioService.this, locale);
                     final List<Address> addressList = geoCoder.getFromLocation(inputLocation.getLatitude(), inputLocation.getLongitude(), 1);
-                    if (addressList != null){
+                    if (addressList != null) {
                         for (Address address : addressList) {
                             final String city = address.getLocality();
                             final String state = address.getAdminArea();
@@ -1124,7 +1111,7 @@ public class RadioService extends Service implements ValueEventListener {
                                         locationString = locationString.substring(0, locationString.length() - 4).trim();
                                     locationString = locationString + EmojiParser.parseToUnicode(" :globe_with_meridians:");
                                     if (!locationString.equals(operator.getUserLocationString()))
-                                        return locationString;
+                                        sendBroadcast(new Intent("locationUpdate").putExtra("data", locationString).setPackage("com.cb3g.channel19"));
                                 }
                             }
                         }
@@ -1133,26 +1120,18 @@ public class RadioService extends Service implements ValueEventListener {
                     LOG.e("geoCoder EXCEPTION " + e);
                 }
                 if (operator.getChannel() != null || operator.getNearbyLimit() != 0) {
-                    for (Coordinates otherUser : coordinates) {
+                    for (Coordinates otherUser : new ArrayList<>(coordinates)) {
                         if (!otherUser.getUserId().equals(operator.getUser_id()) && !nearby.contains(otherUser.getUserId()) && isInChannel(otherUser.getUserId())) {
                             int distance = returnDistance(inputLocation, otherUser.getLatitude(), otherUser.getLongitude());
                             if (distance < operator.getNearbyLimit()) {
                                 snacks.add(new Snack(otherUser.getHandle() + " is nearby " + "(" + distance + "m)", Snackbar.LENGTH_INDEFINITE));
                                 nearby.add(otherUser.getUserId());
+                                sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
                             }
                         }
                     }
                 }
-                return null;
-            };
-            String locationString = ExecutorUtils.getFutureString(executor, callable);
-            if (locationString != null) {
-                operator.setUserLocationString(locationString);
-                if (operator.getSharing()) uploadLocation(operator.getUserLocationString());
-                if (MI != null)
-                    MI.updateLocationDisplay(operator.getUserLocationString());
-                checkForMessages();
-            }
+            });
         }
     }
 
@@ -1172,38 +1151,28 @@ public class RadioService extends Service implements ValueEventListener {
 
     private void get_users_on_channel() {
         if (operator.getChannel() == null) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .claim("channel", operator.getChannel().getChannel())
-                .claim("language", language)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_list.php")
-                        .post(new FormBody.Builder().add("data", data).build()).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        LOG.e("get_users_on_channel IOException " + e);
-                    }
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("channel", operator.getChannel().getChannel()).claim("language", language).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        client.newCall(new Request.Builder().url(SITE_URL + "user_list.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                LOG.e("get_users_on_channel IOException " + e);
+            }
 
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull final Response response) {
-                        if (response.isSuccessful()) {
-                            try (response) {
-                                users = itterateSilenced(returnFilteredList(returnUserListObjectFromJson(response.body().string())));
-                                handler.post(() -> {
-                                    if (MI != null)
-                                        MI.updateUserList();
-                                });
-                            } catch (IOException e) {
-                                LOG.e("get_users_on_channel", e.getMessage());
-                            }
-                        }
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull final Response response) {
+                if (response.isSuccessful()) {
+                    try (response) {
+                        assert response.body() != null;
+                        users = itterateSilenced(returnFilteredList(returnUserListObjectFromJson(response.body().string())));
+                        handler.post(() -> {
+                            if (MI != null) MI.updateUserList();
+                        });
+                    } catch (IOException e) {
+                        LOG.e("get_users_on_channel", e.getMessage());
                     }
-                });
+                }
+            }
+        });
     }
 
     void recording(final boolean recording) {
@@ -1322,29 +1291,16 @@ public class RadioService extends Service implements ValueEventListener {
         databaseReference.child("audio").child(channel.getChannel_name()).addChildEventListener(audioListener);
         get_users_on_channel();
         if (operator.getInvisible() || userIsGhost(operator.getUser_id())) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .claim("handle", operator.getHandle())
-                .claim("channel", channel.getChannel())
-                .claim("language", language)
-                .claim("profileLink", operator.getProfileLink())
-                .claim("channelName", channel.getChannel_name())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_entered_channel.php")
-                        .post(new FormBody.Builder().add("data", data).build()).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("handle", operator.getHandle()).claim("channel", channel.getChannel()).claim("language", language).claim("profileLink", operator.getProfileLink()).claim("channelName", channel.getChannel_name()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        client.newCall(new Request.Builder().url(SITE_URL + "user_entered_channel.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
 
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    }
-                });
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            }
+        });
     }
 
     private boolean isUpdatedVolumeUserZero(String id) {
@@ -1364,25 +1320,13 @@ public class RadioService extends Service implements ValueEventListener {
         for (int i = 0; i < users.size(); i++) {
             users.get(i).setSilenced(silencedUsers.contains(users.get(i).getUser_id()));
         }
-        if (MI != null)
-            MI.updateUserList();
+        if (MI != null) MI.updateUserList();
     }
 
     private void update_block_list(final List<Block> blockList, final String field) {
         settings.edit().putString(field, gson.toJson(blockList)).apply();
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .claim("list", gson.toJson(blockList))
-                .claim("field", field)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_update_block_list.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("list", gson.toJson(blockList)).claim("field", field).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_update_block_list.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1416,16 +1360,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void uploadLocation(final String location_string) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .claim("location", location_string)
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_change_location.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("location", location_string).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_change_location.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1454,15 +1390,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     public void logOut() {
         removeListeners();
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_log_out.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_log_out.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1572,15 +1501,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void user_info_lookup(final String id) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", id)
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_info_lookup.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", id).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_info_lookup.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1590,6 +1512,7 @@ public class RadioService extends Service implements ValueEventListener {
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 try (response) {
                     if (response.isSuccessful()) {
+                        assert response.body() != null;
                         final JSONObject object = new JSONObject(response.body().string());
                         String content = object.getString("login") + "\n" + "Total Keyups: " + object.getString("email") + "\n" + "Salutes: " + object.getString("salutes") + ", Flags: " + object.getString("flags") + "\n" + "Version: " + object.getString("version_name") + " (" + object.getString("version") + ")" + "\n" + "Android Version: " + object.getString("build_number") + "\n" + "Donations: " + object.getString("donations") + "\n" + "UserId: " + object.getString("user_id");
                         final String created = object.getString("created");
@@ -1605,20 +1528,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void uploadListToDB(final String field, @NonNull final JSONArray list) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .claim("list", list.toString())
-                .claim("field", field)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_list_update.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .tag("none")
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("list", list.toString()).claim("field", field).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_list_update.php").post(new FormBody.Builder().add("data", data).build()).tag("none").build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1664,6 +1575,7 @@ public class RadioService extends Service implements ValueEventListener {
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        filter.addAction("locationUpdate");
         filter.addAction("listUpdate");
         filter.addAction("token");
         filter.addAction("confirmInterrupt");
@@ -1766,10 +1678,8 @@ public class RadioService extends Service implements ValueEventListener {
             carrier = "";
         }
         int color;
-        if (onlineStatus.equals("Online"))
-            color = Color.parseColor("#007aff");
-        else
-            color = Color.parseColor("#990000");
+        if (onlineStatus.equals("Online")) color = Color.parseColor("#007aff");
+        else color = Color.parseColor("#990000");
         int led = 0;
         mBuilder.setLights(color, led, 0);
         notifyview.setTextViewText(R.id.black_handle_tv, handle);
@@ -1823,10 +1733,8 @@ public class RadioService extends Service implements ValueEventListener {
         if (widget.getBoolean("availible", false)) {
             SharedPreferences.Editor edit = widget.edit();
             edit.putString("status", onlineStatus);
-            if (!mute)
-                edit.putString("channel", "");
-            else
-                edit.putString("channel", "Muted");
+            if (!mute) edit.putString("channel", "");
+            else edit.putString("channel", "Muted");
             edit.putString("handle", "");
             edit.putString("carrier", "");
             edit.apply();
@@ -1836,18 +1744,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     void flag_out(final String id) {
         if (operator.getSilenced()) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", id)
-                .claim("adminId", operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_flag_out.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_flag_out.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1865,18 +1763,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     void bannUser(final String id) {
         if (operator.getSilenced()) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", id)
-                .claim("adminId", operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_ban.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_ban.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1892,20 +1780,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     void silence(final String id, final String handle) {
         if (operator.getAdmin()) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", id)
-                .claim("userHandle", handle)
-                .claim("adminId", operator.getUser_id())
-                .claim("adminHandle", operator.getHandle())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_silence_new.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("userHandle", handle).claim("adminId", operator.getUser_id()).claim("adminHandle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_silence_new.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1918,17 +1794,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     void ghost() {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_ghost_new.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_ghost_new.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1942,20 +1809,8 @@ public class RadioService extends Service implements ValueEventListener {
 
     void unsilence(final String id, final String handle) {
         if (operator.getAdmin()) return;
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", id)
-                .claim("userHandle", handle)
-                .claim("adminId", operator.getUser_id())
-                .claim("adminHandle", operator.getHandle())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_unsilence_new.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("userHandle", handle).claim("adminId", operator.getUser_id()).claim("adminHandle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_unsilence_new.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -1974,18 +1829,8 @@ public class RadioService extends Service implements ValueEventListener {
             checkForMessages();
             return;
         }
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", entry.getUser_id())
-                .claim("handle", operator.getHandle())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_salute_new.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", entry.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_salute_new.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -2007,19 +1852,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     void flagUser(UserListEntry entry) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", entry.getUser_id())
-                .claim("operatorId", operator.getUser_id())
-                .claim("handle", operator.getHandle())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_flag.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", entry.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -2041,19 +1875,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     public void longFlagUser(UserListEntry user) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", user.getUser_id())
-                .claim("operatorId", operator.getUser_id())
-                .claim("handle", operator.getHandle())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_long_flag.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_long_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -2076,39 +1899,21 @@ public class RadioService extends Service implements ValueEventListener {
 
     public void keyUpWasInterupted(String userId) {
         Log.i("Interrupt", "Calling interrupted.php " + userId);
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", userId)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "interupted.php")
-                        .post(new FormBody.Builder().add("data", data).build())
-                        .build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
+        final String data = Jwts.builder().setHeader(header).claim("userId", userId).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        client.newCall(new Request.Builder().url(SITE_URL + "interupted.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
 
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    }
-                });
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            }
+        });
     }
 
     void pauseOrplay(@NonNull UserListEntry userListEntry) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", userListEntry.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_play_pause.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", userListEntry.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_play_pause.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -2122,17 +1927,8 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     void kickUser(@NonNull UserListEntry userListEntry) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", userListEntry.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(SITE_URL + "user_kick.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
+        final String data = Jwts.builder().setHeader(header).claim("userId", userListEntry.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final Request request = new Request.Builder().url(SITE_URL + "user_kick.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
@@ -2181,8 +1977,7 @@ public class RadioService extends Service implements ValueEventListener {
             RadioService.databaseReference.child("volumes").child(RadioService.operator.getUser_id()).child(id).removeValue();
             update_block_list(blockedIDs, "blockedIDs");
             removeAllOf(id, false, 0);
-            if (toast)
-                snacks.add(new Snack("Radio blocked From " + handle, Snackbar.LENGTH_SHORT));
+            if (toast) snacks.add(new Snack("Radio blocked From " + handle, Snackbar.LENGTH_SHORT));
         } else {
             if (toast) snacks.add(new Snack("Already blocked", Snackbar.LENGTH_SHORT));
         }
@@ -2229,16 +2024,14 @@ public class RadioService extends Service implements ValueEventListener {
             if (toast)
                 snacks.add(new Snack("Messages blocked From " + handle, Snackbar.LENGTH_SHORT));
         } else {
-            if (toast)
-                snacks.add(new Snack("Already blocked " + handle, Snackbar.LENGTH_SHORT));
+            if (toast) snacks.add(new Snack("Already blocked " + handle, Snackbar.LENGTH_SHORT));
         }
         checkForMessages();
     }
 
     void checkForMessages() {
-        if (recording || occupied.get() || !phoneIdle || MI == null)
-            return;
-        if (!Objects.equals(chat.get(), "0")){
+        if (recording || occupied.get() || !phoneIdle || MI == null) return;
+        if (!Objects.equals(chat.get(), "0")) {
             MI.displayChat(null, false, false);
         }
         if (!photos.isEmpty()) {
@@ -2327,45 +2120,32 @@ public class RadioService extends Service implements ValueEventListener {
     }
 
     private void sendPrivate(final String messageTxt, final String reciever) {
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("to", reciever)
-                .claim("text", messageTxt)
-                .claim("from", operator.getUser_id())
-                .claim("handle", operator.getHandle())
-                .claim("rank", operator.getRank())
-                .claim("silenced", String.valueOf(operator.getSilenced()))
-                .claim("profileLink", operator.getProfileLink())
-                .signWith(SignatureAlgorithm.HS256, operator.getKey())
-                .compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_send_pm.php").post(new FormBody.Builder()
-                        .add("data", data).build()).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
+        final String data = Jwts.builder().setHeader(header).claim("to", reciever).claim("text", messageTxt).claim("from", operator.getUser_id()).claim("handle", operator.getHandle()).claim("rank", operator.getRank()).claim("silenced", String.valueOf(operator.getSilenced())).claim("profileLink", operator.getProfileLink()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        client.newCall(new Request.Builder().url(SITE_URL + "user_send_pm.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
 
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                        if (response.isSuccessful()) {
-                            handler.post(() -> {
-                                if (MI != null) {
-                                    if (Objects.equals(chat.get(), "0")) {
-                                        snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
-                                        checkForMessages();
-                                    } else MI.displayChat(null, false, false);
-                                }
-                            });
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                if (response.isSuccessful()) {
+                    handler.post(() -> {
+                        if (MI != null) {
+                            if (Objects.equals(chat.get(), "0")) {
+                                snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
+                                checkForMessages();
+                            } else MI.displayChat(null, false, false);
                         }
-                        response.close();
-                    }
-                });
+                    });
+                }
+                response.close();
+            }
+        });
     }
 
     String[] queCheck(int index) {
         if (!inbounds.isEmpty()) {
-            if (index == 0)
-                return new String[]{"Clear Queue", "", "", "", "f", "none"};
+            if (index == 0) return new String[]{"Clear Queue", "", "", "", "f", "none"};
             int size = inbounds.size();
             Inbound object;
             final int check = size - index;
@@ -2404,8 +2184,7 @@ public class RadioService extends Service implements ValueEventListener {
         databaseReference.child("paused").child(operator.getUser_id()).setValue(Instant.now().getEpochSecond());
         if (paused) return;
         paused = true;
-        if (playing)
-            player.pause();
+        if (playing) player.pause();
         if (MI != null) MI.resumeAnimation(new int[]{0, 0});
         sendBroadcast(new Intent("switchToPlay"));
         updateDisplay();

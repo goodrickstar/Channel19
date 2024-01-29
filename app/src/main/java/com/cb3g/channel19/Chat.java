@@ -69,6 +69,8 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private ChatBinding binding;
     private final FragmentManager fragmentManager;
 
+    private GlideImageLoader glideImageLoader;
+
     public Chat(FragmentManager fragmentManager, UserListEntry user) {
         this.fragmentManager = fragmentManager;
         this.user = user;
@@ -119,7 +121,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         loading.setVisibility(View.GONE);
                         try {
                             JSONObject total = new JSONObject(data);
-                            new GlideImageLoader(context, starIV).load(Utils.parseRankUrl(total.getString("rank")));
+                            glideImageLoader.load(starIV, Utils.parseRankUrl(total.getString("rank")));
                             stamp.setText("Active " + Utils.timeOnline(Utils.timeDifferance(total.getInt("last_online"))) + " ago");
                             JSONArray quick = new JSONArray(total.getString("history"));
                             List<ChatRow> newList = new ArrayList<>();
@@ -156,6 +158,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
         RadioService.chat.set(user.getUser_id());
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -179,7 +182,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         loading = v.findViewById(R.id.loading);
         starIV = v.findViewById(R.id.black_star_iv);
         stamp = v.findViewById(R.id.stamp);
-        new GlideImageLoader(context, profile).load(user.getProfileLink(), RadioService.profileOptions);
+        glideImageLoader.load(profile, user.getProfileLink(), RadioService.profileOptions);
         chat_view = v.findViewById(R.id.chat_view);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         linearLayoutManager.setReverseLayout(true);
@@ -318,7 +321,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     final int new_width = (int) (screenWidth * .8);
                     photoHolder.image.getLayoutParams().height = new_height;
                     photoHolder.image.getLayoutParams().width = new_width;
-                    new GlideImageLoader(context, photoHolder.image, photoHolder.loading).load(Uri.parse(chatRow.getUrl()).toString());
+                    glideImageLoader.load(photoHolder.image, photoHolder.loading, Uri.parse(chatRow.getUrl()).toString());
                     photoHolder.image.setOnClickListener(v -> {
                         Utils.vibrate(v);
                         if (MI != null)

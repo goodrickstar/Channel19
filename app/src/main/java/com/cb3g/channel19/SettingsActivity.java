@@ -73,6 +73,8 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     private TextView label;
     private ViewGroup tbb1, tbb2, tbb3;
     private FragmentManager fragmentManager;
+
+    private GlideImageLoader glideImageLoader = new GlideImageLoader(this);
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -109,15 +111,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                             if (drifrag.isAdded() && response.isSuccessful()) drifrag.refreshRank();
                         }
                     });
-                    break;
-                case "starSelection":
-                    Stars starSelectionDialog;
-                    starSelectionDialog = (Stars) fragmentManager.findFragmentByTag("ssd");
-                    if (starSelectionDialog == null) {
-                        starSelectionDialog = new Stars();
-                        starSelectionDialog.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                        starSelectionDialog.show(fragmentManager, "ssd");
-                    }
                     break;
                 case "nineteenUpdateProfile":
                     ImageSearch imageSearch = new ImageSearch("");
@@ -383,7 +376,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         String background = settings.getString("settings_backdrop", "");
         if (settings.getBoolean("custom", false))
             background = settings.getString("background", "default");
-        new GlideImageLoader(this, backDrop).load(background);
+        glideImageLoader.load(backDrop, background);
     }
 
     @Override
@@ -392,7 +385,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         IntentFilter filter = new IntentFilter();
         filter.addAction("setStar");
         filter.addAction("browseBackgrounds");
-        filter.addAction("starSelection");
         filter.addAction("updateProfilePicture");
         filter.addAction("nineteenUpdateProfile");
         filter.addAction("exitChannelNineTeen");

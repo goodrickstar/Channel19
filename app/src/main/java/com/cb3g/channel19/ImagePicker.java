@@ -93,8 +93,10 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
             UserListOptionsNew options = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
             if (options != null) options.dismiss();
             FileUpload fileUpload;
-            if (user != null) fileUpload = new FileUpload(gif.getUrl(), requestCode, user.getUser_id(), user.getRadio_hanlde(), gif.getHeight(), gif.getWidth());
-            else fileUpload = new FileUpload(gif.getUrl(), requestCode, RadioService.operator.getUser_id(), RadioService.operator.getHandle(), gif.getHeight(), gif.getWidth());
+            if (user != null)
+                fileUpload = new FileUpload(gif.getUrl(), requestCode, user.getUser_id(), user.getRadio_hanlde(), gif.getHeight(), gif.getWidth());
+            else
+                fileUpload = new FileUpload(gif.getUrl(), requestCode, RadioService.operator.getUser_id(), RadioService.operator.getHandle(), gif.getHeight(), gif.getWidth());
             Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload);
             if (upload) uploader.uploadImage();
             else uploader.shareImage();
@@ -104,7 +106,7 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         } else if (id == R.id.fromDisk) {
             if (Utils.permissionsAccepted(context, Utils.getStoragePermissions())) {
                 photoPicker.launch("image/*");
-            }else {
+            } else {
                 Utils.requestPermission(getActivity(), Utils.getStoragePermissions(), 0);
             }
         } else if (id == R.id.fromGiphy) {

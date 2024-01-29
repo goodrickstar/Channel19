@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,13 +18,13 @@ import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.request.RequestOptions;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.MassPastLayoutBinding;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
@@ -33,7 +34,6 @@ import java.util.HashMap;
 
 
 public class MassPast extends DialogFragment implements ValueEventListener {
-    private final RequestOptions profileOptions = new RequestOptions().circleCrop().error(R.drawable.error);
     private Context context;
     private final DatabaseReference massReference = Utils.getDatabase().getReference().child("mass history").child(RadioService.operator.getUser_id());
     private final RecyleAdapter recycler_adapter = new RecyleAdapter();
@@ -43,12 +43,14 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     private MassPastLayoutBinding binding;
     private MI MI;
 
+    private GlideImageLoader glideImageLoader;
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
-        massReference.addValueEventListener(this);
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Nullable
@@ -66,6 +68,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setAdapter(recycler_adapter);
+        massReference.addValueEventListener(this);
     }
 
     @Override
@@ -101,13 +104,8 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         }
         recycler_adapter.notifyDataSetChanged();
         massReference.updateChildren(updates);
-        if (photoRecords.isEmpty()) {
-            binding.hourGlass.setVisibility(View.VISIBLE);
-            //binding.emptyView.setVisibility(View.VISIBLE);
-        } else {
-            binding.hourGlass.setVisibility(View.INVISIBLE);
-            //binding.emptyView.setVisibility(View.INVISIBLE);
-        }
+        binding.hourGlass.setVisibility(View.INVISIBLE);
+        if (photoRecords.isEmpty()) dismiss();
     }
 
     @Override
@@ -116,7 +114,6 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     }
 
     class RecyleAdapter extends RecyclerView.Adapter<RecyleAdapter.MyViewHolder> {
-        GlideImageLoader glideImageLoader = new GlideImageLoader(context);
 
         @NonNull
         @Override
@@ -127,12 +124,13 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         @Override
         public void onBindViewHolder(@NonNull RecyleAdapter.MyViewHolder holder, int i) {
             Photo photo = photoRecords.get(holder.getAdapterPosition());
+            Log.i("logging", new Gson().toJson(photo));
             holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
             holder.handle.setText(photo.getHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));
-            new GlideImageLoader(context, holder.profile).load(photo.getProfileLink(), RadioService.profileOptions);
-            new GlideImageLoader(context, holder.rank).load(Utils.parseRankUrl(photo.getRank()));
-            new GlideImageLoader(context, holder.image, holder.progressBar).load(photo.getUrl());
+            glideImageLoader.load(holder.rank, Utils.parseRankUrl(photo.getRank()));
+            glideImageLoader.load(holder.profile, photo.getProfileLink(), RadioService.profileOptions);
+            glideImageLoader.load(holder.image, holder.progressBar, photo.getUrl(), screenWidth);
             holder.image.setTag(photo);
             holder.save.setTag(photo);
             holder.image.setOnClickListener(listener);

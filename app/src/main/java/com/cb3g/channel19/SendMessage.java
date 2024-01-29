@@ -23,6 +23,8 @@ public class SendMessage extends DialogFragment {
     private EditText messageET;
     private Context context;
 
+    private GlideImageLoader glideImageLoader;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.send_pm, container, false);
@@ -43,8 +45,8 @@ public class SendMessage extends DialogFragment {
         final Bundle bundle = requireArguments();
         id = bundle.getString("userId");
         handleTV.setText(bundle.getString("handle"));
-        new GlideImageLoader(context, profile).load(bundle.getString("profileLink"), RadioService.profileOptions);
-        new GlideImageLoader(context, starIV).load(Utils.parseRankUrl(bundle.getString("rank")));
+        glideImageLoader.load(profile, bundle.getString("profileLink"), RadioService.profileOptions);
+        glideImageLoader.load(starIV, Utils.parseRankUrl(bundle.getString("rank")));
         messageET.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -77,6 +79,7 @@ public class SendMessage extends DialogFragment {
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         this.context = context;
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override

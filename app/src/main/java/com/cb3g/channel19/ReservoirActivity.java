@@ -96,6 +96,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     private StorageReference storageReference;
     private final List<String> editing = new ArrayList<>();
     private RecyclerView recyclerView;
+    private GlideImageLoader glideImageLoader = new GlideImageLoader(this);
 
     private void snapToPosition(int position) {
         RecyclerView.SmoothScroller smoothScroller = new
@@ -249,7 +250,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         String background = settings.getString("settings_backdrop", "");
         if (settings.getBoolean("custom", false))
             background = settings.getString("background", "default");
-        new GlideImageLoader(this, backDrop).load(background);
+        glideImageLoader.load(backDrop, background);
         TextView post = findViewById(R.id.post);
         TextView poll = findViewById(R.id.poll);
         if (RadioService.operator.getBlockedFromReservoir()) {
@@ -531,7 +532,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             switch (holder.getItemViewType()) {
                 case 1: //TODO links
                     PostHolder simple_post = (PostHolder) holder;
-                    new GlideImageLoader(ReservoirActivity.this, simple_post.poster_profile_pic).load(post.getProfileLink(), RadioService.profileOptions);
+                    glideImageLoader.load(simple_post.poster_profile_pic, post.getProfileLink(), RadioService.profileOptions);
                     simple_post.poster_profile_pic.setOnClickListener(v -> {
                         Utils.vibrate(v);
                         action_view(post.getProfileLink());
@@ -565,7 +566,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             simple_post.image.getLayoutParams().height = new_height;
                             simple_post.image.getLayoutParams().width = new_width;
                             simple_post.loading.setVisibility(View.VISIBLE);
-                            new GlideImageLoader(ReservoirActivity.this, simple_post.image, simple_post.loading).load(post.getImageLink());
+                            glideImageLoader.load(simple_post.image, simple_post.loading, post.getImageLink());
                             if (post.getWebLink().equals("none")) {
                                 simple_post.image.setOnClickListener(v -> {
                                     Utils.vibrate(v);
@@ -617,7 +618,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                         simple_post.remarker_profile_pic.setVisibility(View.VISIBLE);
                         simple_post.remarker_name.setVisibility(View.VISIBLE);
                         simple_post.remarker_text.setVisibility(View.VISIBLE);
-                        new GlideImageLoader(ReservoirActivity.this, simple_post.remarker_profile_pic).load(post.getLatest_profileLink(), RadioService.profileOptions);
+                        glideImageLoader.load(simple_post.remarker_profile_pic, post.getLatest_profileLink(), RadioService.profileOptions);
                         simple_post.remarker_name.setText(post.getLatest_handle());
                         simple_post.remarker_text.setText(StringUtils.abbreviate(post.getLatest_remark(), 60));
                         simple_post.remarker_profile_pic.setOnClickListener(v -> {
@@ -697,7 +698,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     break;
                 case 2:
                     PollHolder pollHolder = (PollHolder) holder;
-                    new GlideImageLoader(ReservoirActivity.this, pollHolder.poster_profile_pic).load(post.getProfileLink(), RadioService.profileOptions);
+                    glideImageLoader.load(pollHolder.poster_profile_pic, post.getProfileLink(), RadioService.profileOptions);
                     pollHolder.poster_profile_pic.setOnClickListener(v -> {
                         Utils.vibrate(v);
                         action_view(post.getProfileLink());

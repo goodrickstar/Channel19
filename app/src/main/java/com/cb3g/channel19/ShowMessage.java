@@ -25,15 +25,10 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
     private EditText outbound;
     private MI MI;
 
+    private GlideImageLoader glideImageLoader;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        /*
-        Window window = requireDialog().getWindow();
-        if (window != null) {
-            window.getAttributes().windowAnimations = R.style.pmAnimation;
-            window.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
-        }
-         */
         return inflater.inflate(R.layout.show_pm, container, false);
     }
 
@@ -50,8 +45,8 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
         left = view.findViewById(R.id.order);
         right = view.findViewById(R.id.send);
         message = requireArguments().getStringArray("data");
-        new GlideImageLoader(context, profile).load(message[4], RadioService.profileOptions);
-        new GlideImageLoader(context, starIV).load(Utils.parseRankUrl(message[3]));
+        glideImageLoader.load(profile, message[4], RadioService.profileOptions);
+        glideImageLoader.load(starIV, Utils.parseRankUrl(message[3]));
         handle.setText(message[1]);
         inbound.setText(message[2]);
         left.setOnClickListener(this);
@@ -64,6 +59,7 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
         super.onAttach(context);
         this.context = context;
         MI = (MI) getActivity();
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override

@@ -45,8 +45,9 @@ public class Channels extends DialogFragment implements View.OnClickListener {
     boolean owned = false;
     private Context context;
     private MI MI;
-
+    private GlideImageLoader glideImageLoader;
     private SidebandsBinding binding;
+
 
     @Override
     public void onClick(View v) {
@@ -163,6 +164,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         this.context = context;
         MI = (com.cb3g.channel19.MI) getActivity();
         RadioService.occupied.set(true);
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -244,7 +246,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         public void onBindViewHolder(@NotNull RecyclerView.ViewHolder holder, int position) {
             final ChannelInfo channelInfo = channels.get(position);
             switch (holder.getItemViewType()) {
-                case 0:
+                case 0 -> {
                     ChannelCreatorHolder channelCreatorHolder = (ChannelCreatorHolder) holder;
                     channelCreatorHolder.itemView.setOnClickListener(v -> {
                         Utils.vibrate(v);
@@ -252,8 +254,8 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                         if (MI != null) MI.createChannel();
                         dismiss();
                     });
-                    break;
-                case 1:
+                }
+                case 1 -> {
                     ChannelViewHolder channelViewHolder = (ChannelViewHolder) holder;
                     channelViewHolder.name.setText(channelInfo.channel.getChannel_name());
                     channelViewHolder.count.setText(String.valueOf(channelInfo.getProfiles().size()));
@@ -267,7 +269,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                     channelViewHolder.itemView.setOnClickListener(this);
                     channelViewHolder.profileRecyclerView.setTag(channelInfo);
                     channelViewHolder.profileRecyclerView.setOnClickListener(this);
-                    break;
+                }
             }
         }
 
@@ -336,9 +338,9 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             @Override
             public void onBindViewHolder(@NonNull ProfileHolder holder, int position) {
                 if (channelInfo.isUnlocked() || channelInfo.channel.getUser_id().equals(RadioService.operator.getUser_id()))
-                    new GlideImageLoader(context, holder.profile).load(channelInfo.profiles.get(position), RadioService.profileOptions);
+                    glideImageLoader.load(holder.profile, channelInfo.profiles.get(position), RadioService.profileOptions);
                 else
-                    new GlideImageLoader(context, holder.profile).load("https://firebasestorage.googleapis.com/v0/b/channel-19.appspot.com/o/system%2Fquestion.jpg?alt=media&token=3228922f-e41e-4d10-8edd-b52958086958", RadioService.profileOptions);
+                    glideImageLoader.load(holder.profile, "https://firebasestorage.googleapis.com/v0/b/channel-19.appspot.com/o/system%2Fquestion.jpg?alt=media&token=3228922f-e41e-4d10-8edd-b52958086958", RadioService.profileOptions);
                 holder.itemView.setTag(channelInfo);
                 holder.itemView.setOnClickListener(SideBandAdapter.this);
             }

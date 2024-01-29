@@ -38,7 +38,7 @@ public class Driver extends Fragment {
     private DriverBinding binding;
     private Context context;
     private SI SI;
-
+    private GlideImageLoader glideImageLoader;
     private final FragmentManager fragmentManager;
 
     public Driver(FragmentManager fragmentManager) {
@@ -50,6 +50,7 @@ public class Driver extends Fragment {
         super.onAttach(context);
         this.context = context;
         SI = (SI) getActivity();
+        glideImageLoader = new GlideImageLoader(context);
     }
 
     @Override
@@ -121,7 +122,7 @@ public class Driver extends Fragment {
     }
 
     public void updateProfilePicture() {
-        new GlideImageLoader(context, binding.driverProfilePictureIv).load(RadioService.operator.getProfileLink(), RadioService.profileOptions);
+        glideImageLoader.load(binding.driverProfilePictureIv, RadioService.operator.getProfileLink(), RadioService.profileOptions);
     }
 
     public void setDriverInfo() {
@@ -136,7 +137,7 @@ public class Driver extends Fragment {
 
     public void setRankAndStamp() {
         if (isAdded())
-            new GlideImageLoader(context, binding.driverStarIv).load(Utils.parseRankUrl(RadioService.operator.getRank()));
+            glideImageLoader.load(binding.driverStarIv, Utils.parseRankUrl(RadioService.operator.getRank()));
     }
 
     public void refreshRank() {
@@ -171,7 +172,12 @@ public class Driver extends Fragment {
                                     binding.driverStarIv.setOnClickListener(v -> {
                                         Utils.vibrate(v);
                                         context.sendBroadcast(new Intent("nineteenClickSound"));
-                                        Utils.vibrate(v);
+                                        Stars starSelectionDialog = (Stars) fragmentManager.findFragmentByTag("ssd");
+                                        if (starSelectionDialog == null) {
+                                            starSelectionDialog = new Stars();
+                                            starSelectionDialog.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                                            starSelectionDialog.show(fragmentManager, "ssd");
+                                        }
                                     });
                                 else binding.driverStarIv.setOnClickListener(null);
                                 setRankAndStamp();

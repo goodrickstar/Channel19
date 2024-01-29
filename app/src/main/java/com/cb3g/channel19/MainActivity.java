@@ -73,6 +73,7 @@ import com.google.android.play.core.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -149,8 +150,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 }
                 case "nineteenUpdateCaption" -> {
                     SendPhoto sendF = (SendPhoto) fragmentManager.findFragmentByTag("sendF");
-                    if (sendF != null)
-                        sendF.updateCaption(intent.getStringExtra("data"));
+                    if (sendF != null) sendF.updateCaption(intent.getStringExtra("data"));
                 }
                 case "nineteenSetPauseProgress" -> {
                     int[] set = intent.getIntArrayExtra("data");
@@ -160,12 +160,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 }
                 case "switchToPause" -> {
                     if (transmitFragment.isAdded() && RS != null)
-                        transmitFragment.updateque(RS.getQueue(), RadioService.paused);
+                        transmitFragment.updateQueue(RS.getQueue(), RadioService.paused);
                     binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.pause_set));
                 }
                 case "switchToPlay" -> {
                     if (transmitFragment.isAdded() && RS != null)
-                        transmitFragment.updateque(RS.getQueue(), RadioService.paused);
+                        transmitFragment.updateQueue(RS.getQueue(), RadioService.paused);
                     binding.maPauseButton.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.resume_set));
                 }
                 case "bird" -> {
@@ -416,11 +416,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (Utils.permissionsAccepted(this, Utils.getLocationPermissions()) && RadioService.operator.getLocationEnabled().get()) {
                 if (mFusedLocationClient == null)
                     mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-                LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30000)
-                        .setWaitForAccurateLocation(true)
-                        .setMinUpdateIntervalMillis(30000)
-                        .setMaxUpdateDelayMillis(60000)
-                        .build();
+                LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30000).setWaitForAccurateLocation(false).setMinUpdateIntervalMillis(30000).setMaxUpdateDelayMillis(60000).build();
                 mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
             }
         } else {
@@ -435,16 +431,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         databaseReference.child("silenced").child(developerPayload.id).setValue(Instant.now().getEpochSecond());
         showSnack(new Snack(developerPayload.handle + " has been silenced for an hour"));
         sendBroadcast(new Intent("register"));
-        if (RS != null)
-            RS.silence(developerPayload.id, developerPayload.handle);
+        if (RS != null) RS.silence(developerPayload.id, developerPayload.handle);
     }
 
     private void finishUnsilence(DeveloperPayload developerPayload) {
         databaseReference.child("silenced").child(developerPayload.id).removeValue();
         showSnack(new Snack(developerPayload.handle + " has been unsilenced"));
         sendBroadcast(new Intent("register"));
-        if (RS != null)
-            RS.unsilence(developerPayload.id, developerPayload.handle);
+        if (RS != null) RS.unsilence(developerPayload.id, developerPayload.handle);
     }
 
     @Override
@@ -520,12 +514,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         resetAnimation();
         if (!RadioService.operator.getAdmin()) {
             sendBroadcast(new Intent("nineteenEmptyPlayer"));
+            sendBroadcast(new Intent("nineteenStaticSound"));
             if (transmitFragment.isAdded()) {
                 transmitFragment.updateDisplay(new ProfileDisplay(), 0);
-                transmitFragment.updateque(0, RadioService.paused);
+                transmitFragment.updateQueue(0, RadioService.paused);
             }
         }
-        sendBroadcast(new Intent("nineteenStaticSound"));
         if (RS != null) RS.entered(channel);
     }
 
@@ -606,7 +600,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void changeBackground(String link) {
-        glide.loadAsync(binding.backdrop, link);
+        glide.load(binding.backdrop, link);
     }
 
     @Override
@@ -640,7 +634,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void updateQueue(int count, boolean paused, boolean poor) {
-        if (transmitFragment.isAdded()) transmitFragment.updateque(count, paused);
+        if (transmitFragment.isAdded()) transmitFragment.updateQueue(count, paused);
         if (count == 0 || paused) {
             if (!binding.maTimer.isIndeterminate()) binding.maTimer.setIndeterminate(true);
         } else {
@@ -782,8 +776,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (tutorial_count < 6) return;
         dark = show;
         delay = true;
-        if (show) binding.blackOut.setVisibility(View.VISIBLE);
-        else binding.blackOut.setVisibility(View.GONE);
+        if (show) {
+            binding.blackOut.setVisibility(View.VISIBLE);
+            if (RS != null) updateDarkDisplay(RS.getlatest(), 0);
+        } else binding.blackOut.setVisibility(View.GONE);
         if (snackbar != null) {
             if (snackbar.isShown()) {
                 snackbar.dismiss();
@@ -879,7 +875,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     private void setTooth(boolean show) {
-        if (transmitFragment.isAdded()) transmitFragment.settooth(show);
+        if (transmitFragment.isAdded()) transmitFragment.setTooth(show);
     }
 
     private void setMuteFromOutside(boolean mute) {
@@ -893,6 +889,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (id == R.id.ma_cancel_button) {
             Utils.vibrate(v);
             if (transmitFragment.isAdded()) transmitFragment.stopRecorder(false);
+        } else if (id == R.id.black_profile_picture_iv_small) {
+            UserListEntry user = returnTalkerEntry();
+            if (user != null) {
+                Utils.vibrate(v);
+                sendBroadcast(new Intent("nineteenBoxSound"));
+                streamFile(user.getProfileLink());
+            }
         } else if (id == R.id.black_queue_tv) {
             if (RadioService.operator.getChannel() != null) {
                 if (RS != null) {
@@ -925,7 +928,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             sendBroadcast(new Intent("nineteenClickSound"));
             if (Utils.permissionsAccepted(this, Utils.getStoragePermissions())) {
                 massPhotoPicker.launch("image/*");
-            }else {
+            } else {
                 Utils.requestPermission(this, Utils.getStoragePermissions(), 0);
             }
         } else if (id == R.id.ma_channels_button) {
@@ -1013,11 +1016,26 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             Utils.vibrate(v);
             darkChange(true);
         } else if (id == R.id.ma_skip_button) {
-            if (RS != null)
-                if (RS.getQueue() != 0) {
-                    Utils.vibrate(v);
-                    sendBroadcast(new Intent("purgeNineTeen"));
+            if (RS != null) if (RS.getQueue() != 0) {
+                Utils.vibrate(v);
+                sendBroadcast(new Intent("purgeNineTeen"));
+            }
+        } else if (id == R.id.black_profile_picture_iv_small) {
+            UserListEntry user = returnTalkerEntry();
+            if (user != null) {
+                sendBroadcast(new Intent("nineteenClickSound"));
+                Utils.vibrate(v);
+                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                if (cdf == null) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("user", new Gson().toJson(user));
+                    cdf = new UserListOptionsNew(fragmentManager, user);
+                    cdf.setArguments(bundle);
+                    cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    cdf.show(fragmentManager, "options");
                 }
+                return true;
+            }
         }
         return true;
     }
@@ -1176,36 +1194,35 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void showRewardAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedAd.load(this, "ca-app-pub-4635898093945616/6205382793",
-                adRequest, new RewardedAdLoadCallback() {
+        RewardedAd.load(this, "ca-app-pub-4635898093945616/6205382793", adRequest, new RewardedAdLoadCallback() {
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                Logger.INSTANCE.e(loadAdError.getMessage());
+            }
+
+            @Override
+            public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+                rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                     @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        Logger.INSTANCE.e(loadAdError.getMessage());
+                    public void onAdShowedFullScreenContent() {
+                        sendBroadcast(new Intent("nineteenPause"));
+                        stopRecorder(false);
                     }
 
                     @Override
-                    public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                sendBroadcast(new Intent("nineteenPause"));
-                                stopRecorder(false);
-                            }
+                    public void onAdFailedToShowFullScreenContent(@NotNull AdError adError) {
+                        sendBroadcast(new Intent("nineteenPlayPause"));
+                    }
 
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(@NotNull AdError adError) {
-                                sendBroadcast(new Intent("nineteenPlayPause"));
-                            }
-
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                sendBroadcast(new Intent("nineteenPlayPause"));
-                            }
-                        });
-                        rewardedAd.show(MainActivity.this, rewardItem -> {
-                        });
+                    @Override
+                    public void onAdDismissedFullScreenContent() {
+                        sendBroadcast(new Intent("nineteenPlayPause"));
                     }
                 });
+                rewardedAd.show(MainActivity.this, rewardItem -> {
+                });
+            }
+        });
     }
 
     @Override
@@ -1220,13 +1237,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         lps.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         lps.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         lps.setMargins(margin, margin, margin, margin);
-        ShowcaseView showcaseView = new ShowcaseView.Builder(this)
-                .setTarget(new ViewTarget(R.id.ma_skip_button, this))
-                .setContentTitle("SKIP BUTTON")
-                .setContentText("Skips the current transmission which consequently lowers the queue")
-                .setStyle(R.style.CustomShowcaseTheme)
-                .blockAllTouches()
-                .build();
+        ShowcaseView showcaseView = new ShowcaseView.Builder(this).setTarget(new ViewTarget(R.id.ma_skip_button, this)).setContentTitle("SKIP BUTTON").setContentText("Skips the current transmission which consequently lowers the queue").setStyle(R.style.CustomShowcaseTheme).blockAllTouches().build();
         showcaseView.setButtonPosition(tps);
         showcaseView.show();
         showcaseView.overrideButtonClick(v -> {
@@ -1283,19 +1294,23 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maChannelsButton.setEnabled(!lock);
     }
 
-    private void updateDarkDisplay(final ProfileDisplay display, final long stamp) {
+    private void updateDarkDisplay(@NonNull final ProfileDisplay display, final long stamp) {
         if (display.getHandle().contains("Online") || display.getHandle().contains("Dead"))
             binding.blackHandleTv.setText(" ");
         else binding.blackHandleTv.setText(display.getHandle());
         binding.blackCarrierTv.setText(display.getCarrier());
-        binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
+        if (stamp == 0) binding.blackTitleTv.setText("");
+        else binding.blackTitleTv.setText(Utils.formatDiff(Utils.timeDifferance(stamp), false));
         if (display.getDuration() == 0) binding.blackDurationTv.setText("");
         else binding.blackDurationTv.setText(display.getDuration() + "s");
-        glide.loadAsync(binding.blackStarIv, Utils.parseRankUrl(display.getRank()));
-        if (display.getProfileLink().equals("none"))
+        glide.load(binding.blackRankIv, Utils.parseRankUrl(display.getRank()));
+        if (display.getProfileLink().equals("none") || !dark) {
             binding.blackProfilePictureIv.setImageBitmap(null);
-        else if (dark)
-            glide.loadAsync(binding.blackProfilePictureIv, display.getProfileLink());
+            binding.blackProfilePictureIvSmall.setImageBitmap(null);
+        } else {
+            glide.load(binding.blackProfilePictureIv, display.getProfileLink());
+            glide.load(binding.blackProfilePictureIvSmall, display.getProfileLink(), RadioService.profileOptions);
+        }
     }
 
     @Override
@@ -1335,6 +1350,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.blackOut.setOnClickListener(this);
         binding.maSettingsButton.setOnClickListener(this);
         binding.blackSkipButton.setOnClickListener(this);
+        binding.blackProfilePictureIvSmall.setOnClickListener(this);
         binding.blackSkipButton.setOnClickListener(this);
         binding.maSkipButton.setOnClickListener(this);
         binding.maMapButton.setOnClickListener(this);
@@ -1347,6 +1363,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maUserListButton.setOnLongClickListener(this);
         binding.blackSkipButton.setOnLongClickListener(this);
         binding.blackSkipButton.setOnLongClickListener(this);
+        binding.blackProfilePictureIvSmall.setOnLongClickListener(this);
         binding.maSkipButton.setOnLongClickListener(this);
         binding.maMassPhotoButton.setOnLongClickListener(this);
         binding.maPauseButton.setOnLongClickListener(this);
