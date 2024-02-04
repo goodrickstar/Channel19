@@ -330,7 +330,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     sp.play(clicktwo, .1f, .1f, 1, 0, 1f);
                     break;
                 case "nineteenMicSound":
-                    sp.play(mic, .1f, .1f, 1, 0, 1f);
+                    sp.play(mic, .03f, .03f, 1, 0, 1f);
                     break;
                 case "nineteenChatSound":
                     sp.play(type, .1f, .1f, 1, 0, 1f);
