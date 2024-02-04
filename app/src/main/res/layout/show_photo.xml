@@ -1,7 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/black_box_white_outline_transparent">
+    android:background="@drawable/black_box_white_outline">
 
     <LinearLayout
         android:id="@+id/top"
@@ -38,55 +38,14 @@
             android:src="@drawable/download_w" />
     </LinearLayout>
 
-    <LinearLayout
+    <ImageView
+        android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/ok"
         android:layout_below="@+id/top"
         android:layout_margin="1dp"
-        android:orientation="vertical">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="@dimen/default_margin"
-            android:layout_weight="1">
-
-            <ProgressBar
-                android:id="@+id/loading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:indeterminateOnly="true"
-                android:visibility="gone" />
-
-            <uk.co.senab.photoview.PhotoView
-                android:id="@+id/image"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:visibility="invisible" />
-
-            <ImageView
-                android:id="@+id/gif_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:visibility="invisible" />
-        </RelativeLayout>
-
-        <TextView
-            android:id="@+id/photoCaption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="0"
-            android:gravity="center"
-            android:padding="@dimen/default_padding"
-            android:textAppearance="@style/title_font"
-            android:visibility="gone" />
-    </LinearLayout>
+        android:scaleType="fitCenter"/>
 
     <TextView
         android:id="@+id/ok"

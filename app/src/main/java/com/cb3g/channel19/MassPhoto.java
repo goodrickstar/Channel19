@@ -103,7 +103,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         }
         adapter.notifyDataSetChanged();
         recyclerView.animate().alpha(1.0f).setDuration(800);
-        binding.photoPreview.animate().alpha(.3f).setDuration(800);
+        binding.photoPreview.animate().alpha(.5f).setDuration(800);
         send.setVisibility(View.VISIBLE);
     }
 
@@ -118,9 +118,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             for (User user : working) {
                 if (user.isChecked) sendingIds.add(user.id);
             }
+            if (RadioService.operator.getAdmin()) sendingIds.add(RadioService.operator.getUser_id());
             if (!sendingIds.isEmpty()) {
-                Log.i("logging", "sending height: "+ resource.getIntrinsicHeight() + ", width: "+resource.getIntrinsicWidth());
-                sendingIds.add(RadioService.operator.getUser_id());
                 FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", resource.getIntrinsicHeight(), resource.getIntrinsicWidth());
                 Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload);
                 uploader.uploadImage();

@@ -12,11 +12,14 @@ import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+
+import java.io.File;
 
 public class GlideImageLoader {
 
@@ -51,6 +54,7 @@ public class GlideImageLoader {
             }
         }).into(imageView);
     }
+
     public void load(ImageView imageView, ProgressBar progressBar, final String url, final int screenWidth) {
         progressBar.setVisibility(View.VISIBLE);
         Glide.with(context).load(url).transition(DrawableTransitionOptions.withCrossFade()).listener(new RequestListener<>() {
@@ -68,6 +72,15 @@ public class GlideImageLoader {
                 return false;
             }
         }).into(imageView);
+    }
+
+    public void preload(String url, RequestListener<File> listener) {
+        Glide.with(context)
+                .downloadOnly()
+                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .load(url)
+                .listener(listener)
+                .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
     }
 }
 

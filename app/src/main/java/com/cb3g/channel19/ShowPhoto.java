@@ -16,6 +16,7 @@ import androidx.fragment.app.DialogFragment;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
@@ -24,12 +25,20 @@ import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 public class ShowPhoto extends DialogFragment {
     private Context context;
     private boolean saved = false;
     private com.cb3g.channel19.MI MI;
-    private Photo photo;
     private ShowPhotoBinding binding;
+    private final Photo photo;
+    private final File resource;
+
+    public ShowPhoto(Photo photo, File resource) {
+        this.photo = photo;
+        this.resource = resource;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -41,11 +50,6 @@ public class ShowPhoto extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        photo = new Gson().fromJson(requireArguments().getString("data"), Photo.class);
-        if (!photo.getCaption().isEmpty()) {
-            binding.photoCaption.setVisibility(View.VISIBLE);
-            binding.photoCaption.setText(photo.getCaption());
-        }
         binding.showPhotoHandleTv.setText(photo.getHandle());
         final View.OnClickListener onClickListener = v -> {
             context.sendBroadcast(new Intent("nineteenClickSound"));
@@ -76,39 +80,8 @@ public class ShowPhoto extends DialogFragment {
         binding.ok.setOnClickListener(onClickListener);
         binding.save.setOnClickListener(onClickListener);
         binding.showPhotoChatHistoryButton.setOnClickListener(onClickListener);
-        binding.loading.setVisibility(View.VISIBLE);
-        if (!photo.getUrl().contains(".gif")) {
-            //gif
-            binding.image.setVisibility(View.VISIBLE);
-            Glide.with(ShowPhoto.this).load(photo.getUrl()).thumbnail(0.1f).addListener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                    binding.loading.setVisibility(View.GONE);
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                    binding.loading.setVisibility(View.GONE);
-                    return false;
-                }
-            }).error(R.drawable.no_signal_w).into(binding.image);
-        } else {
-            binding.gifView.setVisibility(View.VISIBLE);
-            Glide.with(ShowPhoto.this).load(photo.getUrl()).thumbnail(0.1f).addListener(new RequestListener<Drawable>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
-                    binding.loading.setVisibility(View.GONE);
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
-                    binding.loading.setVisibility(View.GONE);
-                    return false;
-                }
-            }).error(R.drawable.no_signal_w).into(binding.gifView);
-        }
+        binding.image.setOnClickListener(onClickListener);
+        Glide.with(context).load(resource).transition(DrawableTransitionOptions.withCrossFade()).into(binding.image);
     }
 
     @Override

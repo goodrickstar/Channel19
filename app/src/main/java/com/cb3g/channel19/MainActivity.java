@@ -36,6 +36,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -48,6 +49,10 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.MainLayoutBinding;
 import com.github.amlcurran.showcaseview.ShowcaseView;
@@ -79,6 +84,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -87,8 +93,6 @@ import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends FragmentActivity implements MI, View.OnClickListener, View.OnLongClickListener, PurchasesUpdatedListener, ValueEventListener {
     public MainLayoutBinding binding;
-    //this is platon
-
     private final GlideImageLoader glide = new GlideImageLoader(this);
     public final String SILENCE = "silence";
     public final String UNSILENCE = "unsilence";
@@ -779,8 +783,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         delay = true;
         if (show) {
             binding.blackOut.setVisibility(View.VISIBLE);
+            binding.blackOut.setAlpha(0);
+            binding.blackOut.animate().alpha(1.0f).setDuration(500);
             if (RS != null) updateDarkDisplay(RS.getlatest(), 0);
-        } else binding.blackOut.setVisibility(View.GONE);
+        } else {
+            binding.blackOut.setVisibility(View.GONE);
+        }
         if (snackbar != null) {
             if (snackbar.isShown()) {
                 snackbar.dismiss();
@@ -1024,19 +1032,21 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         } else if (id == R.id.black_profile_picture_iv_small) {
             UserListEntry user = returnTalkerEntry();
             if (user != null) {
-                sendBroadcast(new Intent("nineteenClickSound"));
-                Utils.vibrate(v);
-                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
-                if (cdf == null) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("user", new Gson().toJson(user));
-                    cdf = new UserListOptionsNew(fragmentManager, user);
-                    cdf.setArguments(bundle);
-                    cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    cdf.show(fragmentManager, "options");
+                if (RadioService.operator.getAdmin() || RadioService.isInChannel(user.getUser_id())){
+                    sendBroadcast(new Intent("nineteenClickSound"));
+                    Utils.vibrate(v);
+                    UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                    if (cdf == null) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("user", new Gson().toJson(user));
+                        cdf = new UserListOptionsNew(fragmentManager, user);
+                        cdf.setArguments(bundle);
+                        cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                        cdf.show(fragmentManager, "options");
+                    }
                 }
-                return true;
             }
+            return true;
         }
         return true;
     }
@@ -1119,15 +1129,21 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void displayPhoto(Photo photo) {
         if (isFinishing()) return;
-        ShowPhoto showPhoto = (ShowPhoto) fragmentManager.findFragmentByTag("showPhoto");
-        if (showPhoto == null) {
-            Bundle bundle = new Bundle();
-            bundle.putString("data", gson.toJson(photo));
-            showPhoto = new ShowPhoto();
-            showPhoto.setArguments(bundle);
-            showPhoto.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-            showPhoto.show(fragmentManager, "showPhoto");
-        }
+        glide.preload(photo.getUrl(), new RequestListener<File>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                showSnack(new Snack("Failed to load " + photo.getHandle() + "'s photo!", Snackbar.LENGTH_SHORT));
+                return true;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                ShowPhoto showPhoto = new ShowPhoto(photo, resource);
+                showPhoto.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                showPhoto.show(fragmentManager, "showPhoto");
+                return true;
+            }
+        });
     }
 
     private IntentFilter returnFilter() {

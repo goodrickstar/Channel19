@@ -300,16 +300,18 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public boolean onLongClick(View v) {
         UserListEntry user = MI.returnTalkerEntry();
         if (user != null) {
-            context.sendBroadcast(new Intent("nineteenClickSound"));
-            Utils.vibrate(v);
-            UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
-            if (cdf == null) {
-                Bundle bundle = new Bundle();
-                bundle.putString("user", new Gson().toJson(user));
-                cdf = new UserListOptionsNew(fragmentManager, user);
-                cdf.setArguments(bundle);
-                cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                cdf.show(fragmentManager, "options");
+            if (RadioService.operator.getAdmin() || RadioService.isInChannel(user.getUser_id())) {
+                context.sendBroadcast(new Intent("nineteenClickSound"));
+                Utils.vibrate(v);
+                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                if (cdf == null) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("user", new Gson().toJson(user));
+                    cdf = new UserListOptionsNew(fragmentManager, user);
+                    cdf.setArguments(bundle);
+                    cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    cdf.show(fragmentManager, "options");
+                }
             }
             return true;
         }

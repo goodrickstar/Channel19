@@ -1,7 +1,6 @@
 package com.cb3g.channel19;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -101,7 +100,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class RadioService extends Service implements ValueEventListener {
+public class RadioService extends Service implements ValueEventListener, AudioManager.OnAudioFocusChangeListener {
     static final OkHttpClient client = new OkHttpClient();
     private final List<String> nearby = new ArrayList<>();
     static final String SITE_URL = "http://23.111.159.2/~channel1/";
@@ -802,8 +801,7 @@ public class RadioService extends Service implements ValueEventListener {
             }
         };
         AudioAttributes focusAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
-        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setAudioAttributes(focusAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(i -> {
-        }).build();
+        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setAudioAttributes(focusAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(this).build();
     }
 
     void registerDefaultNetworkCallback() {
@@ -1032,6 +1030,13 @@ public class RadioService extends Service implements ValueEventListener {
         return false;
     }
 
+    static boolean isInChannel(String userId) {
+        for (UserListEntry user : users) {
+            if (user.getUser_id().equals(userId)) return true;
+        }
+        return false;
+    }
+
     public void listenForCoordinates(boolean listen) {
         if (listen) {
             if (operator.getLocationEnabled().get()) {
@@ -1133,13 +1138,6 @@ public class RadioService extends Service implements ValueEventListener {
                 }
             });
         }
-    }
-
-    private boolean isInChannel(String userId) {
-        for (UserListEntry user : users) {
-            if (user.getUser_id().equals(userId)) return true;
-        }
-        return false;
     }
 
     private int returnDistance(Location from, double latitude, double longitude) {
@@ -2054,10 +2052,13 @@ public class RadioService extends Service implements ValueEventListener {
         return mute;
     }
 
-    @SuppressLint("MissingPermission")
     private boolean headsetActive() {
-        if (bluetoothAdapter == null) return false;
-        return (bluetoothAdapter.getProfileConnectionState(1) == BluetoothAdapter.STATE_CONNECTED) && bluetooth;
+        if (bluetoothAdapter != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            return (bluetoothAdapter.getProfileConnectionState(1) == BluetoothAdapter.STATE_CONNECTED) && bluetooth;
+        }
+        snacks.add(new Snack("Bluetooth issue", Snackbar.LENGTH_INDEFINITE));
+        checkForMessages();
+        return false;
     }
 
     private void skip() {
@@ -2066,7 +2067,6 @@ public class RadioService extends Service implements ValueEventListener {
         removeZeros();
     }
 
-    @SuppressLint("StaticFieldLeak")
     private void removeAllOf(final String id, final boolean toast, final int limit) {
         if (inbounds.isEmpty()) return;
         boolean isOperator = inbounds.get(0).getUser_id().equals(id);
@@ -2221,6 +2221,17 @@ public class RadioService extends Service implements ValueEventListener {
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
         DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         manager.enqueue(request);
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                if (MI != null && recording) MI.stopRecorder(false);
+                snacks.add(new Snack("Key-up interrupted!", Snackbar.LENGTH_SHORT));
+                checkForMessages();
+            }
+        }
     }
 
     class LocalBinder extends Binder {
