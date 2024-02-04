@@ -87,6 +87,7 @@ import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends FragmentActivity implements MI, View.OnClickListener, View.OnLongClickListener, PurchasesUpdatedListener, ValueEventListener {
     public MainLayoutBinding binding;
+    //this is platon
 
     private final GlideImageLoader glide = new GlideImageLoader(this);
     public final String SILENCE = "silence";
