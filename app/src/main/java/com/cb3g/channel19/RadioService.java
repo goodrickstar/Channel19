@@ -10,6 +10,7 @@ import android.appwidget.AppWidgetManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -2053,8 +2054,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private boolean headsetActive() {
-        if (bluetoothAdapter != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            return (bluetoothAdapter.getProfileConnectionState(1) == BluetoothAdapter.STATE_CONNECTED) && bluetooth;
+        if (bluetoothAdapter != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            return (bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED) && bluetooth;
         }
         snacks.add(new Snack("Bluetooth issue", Snackbar.LENGTH_INDEFINITE));
         checkForMessages();
