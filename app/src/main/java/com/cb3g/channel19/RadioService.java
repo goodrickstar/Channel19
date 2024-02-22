@@ -1174,9 +1174,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void recording(final boolean recording) {
+    void recording(final boolean isRecording) {
+        recording = isRecording;
         if (MI != null) {
-            RadioService.recording = recording;
             if (recording) {
                 pre_key_up();
                 if (headsetActive()) {
@@ -1191,25 +1191,34 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         }
     }
 
+    private boolean headsetActive() {
+        if (bluetooth && bluetoothAdapter != null) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                return bluetoothAdapter.isEnabled() && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED;
+            }
+        }
+        return false;
+    }
+
     public void useSco(final boolean sco) {
         if (sco) {
-            audioManager.setBluetoothScoOn(true);
             audioManager.setMode(AudioManager.MODE_IN_CALL);
             audioManager.startBluetoothSco();
+            audioManager.setBluetoothScoOn(true);
         } else {
-            audioManager.stopBluetoothSco();
             audioManager.setBluetoothScoOn(false);
+            audioManager.stopBluetoothSco();
             audioManager.setMode(AudioManager.MODE_NORMAL);
         }
     }
 
     private void pre_key_up() {
-        audioManager.requestAudioFocus(focusRequest);
+        if (!bluetoothEnabled) audioManager.requestAudioFocus(focusRequest);
         if (playing) player.pause();
     }
 
     public void post_key_up() {
-        audioManager.abandonAudioFocusRequest(focusRequest);
+        if (!bluetoothEnabled) audioManager.abandonAudioFocusRequest(focusRequest);
         if (playing) {
             if (!paused) player.start();
         } else {
@@ -2051,13 +2060,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     boolean updateMute() {
         return mute;
-    }
-
-    private boolean headsetActive() {
-        if (bluetoothAdapter != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            return bluetoothAdapter.isEnabled() && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED && bluetooth;
-        }
-        return false;
     }
 
     private void skip() {
