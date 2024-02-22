@@ -2055,10 +2055,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     private boolean headsetActive() {
         if (bluetoothAdapter != null && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            return (bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED) && bluetooth;
+            return bluetoothAdapter.isEnabled() && bluetoothAdapter.getProfileConnectionState(BluetoothProfile.HEADSET) == BluetoothAdapter.STATE_CONNECTED && bluetooth;
         }
-        snacks.add(new Snack("Bluetooth issue", Snackbar.LENGTH_INDEFINITE));
-        checkForMessages();
         return false;
     }
 
