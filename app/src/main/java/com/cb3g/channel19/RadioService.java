@@ -427,7 +427,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             }
         }
     };
-    private AudioFocusRequest focusRequest;
+    private AudioFocusRequest micFocus, listenFocus;
     private boolean prePaused = false;
     private ExecutorService executor;
 
@@ -801,8 +801,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             }
         };
-        AudioAttributes focusAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
-        focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setAudioAttributes(focusAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(this).build();
+        AudioAttributes micAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
+        AudioAttributes listenAttributes = new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+        micFocus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE).setAudioAttributes(micAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(this).build();
+        listenFocus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).setAudioAttributes(listenAttributes).setAcceptsDelayedFocusGain(false).setOnAudioFocusChangeListener(this).build();
     }
 
     void registerDefaultNetworkCallback() {
@@ -1213,12 +1215,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void pre_key_up() {
-        if (!bluetoothEnabled) audioManager.requestAudioFocus(focusRequest);
+        audioManager.abandonAudioFocusRequest(listenFocus);
+        if (!bluetoothEnabled) audioManager.requestAudioFocus(micFocus);
         if (playing) player.pause();
     }
 
     public void post_key_up() {
-        if (!bluetoothEnabled) audioManager.abandonAudioFocusRequest(focusRequest);
+        if (!bluetoothEnabled) audioManager.abandonAudioFocusRequest(micFocus);
+        audioManager.requestAudioFocus(listenFocus);
         if (playing) {
             if (!paused) player.start();
         } else {
@@ -2228,9 +2232,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     public void onAudioFocusChange(int focusChange) {
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                /*
                 if (MI != null && recording) MI.stopRecorder(false);
                 snacks.add(new Snack("Key-up interrupted!", Snackbar.LENGTH_SHORT));
                 checkForMessages();
+                 */
             }
         }
     }
