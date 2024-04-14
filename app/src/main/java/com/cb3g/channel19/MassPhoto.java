@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,7 +41,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     private MassPhotoBinding binding;
     private Context context;
     private List<String> savedIds = new ArrayList<>();
-    private final List<User> working = new ArrayList<>();
+    private final List<MassPhotoUser> working = new ArrayList<>();
     private final String uri;
 
     public MassPhoto(String uri) {
@@ -98,8 +97,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         send.setVisibility(View.GONE);
         send.setOnClickListener(this);
         binding.selector.setOnClickListener(this);
-        for (UserListEntry entry : RadioService.users) {
-            working.add(convertUserListEntryToUser(entry));
+        for (User user : RadioService.users) {
+            working.add(convertUserListEntryToUser(user));
         }
         adapter.notifyDataSetChanged();
         recyclerView.animate().alpha(1.0f).setDuration(800);
@@ -115,7 +114,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             Set<String> set = new HashSet<>(savedIds);
             context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putStringSet("massIds", set).apply();
             final List<String> sendingIds = new ArrayList<>();
-            for (User user : working) {
+            for (MassPhotoUser user : working) {
                 if (user.isChecked) sendingIds.add(user.id);
             }
             if (RadioService.operator.getAdmin()) sendingIds.add(RadioService.operator.getUser_id());
@@ -139,8 +138,8 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         } else dismiss();
     }
 
-    private User convertUserListEntryToUser(UserListEntry entry) {
-        return new User(entry.getUser_id(), entry.getRadio_hanlde(), entry.getProfileLink(), savedIds.contains(entry.getUser_id()));
+    private MassPhotoUser convertUserListEntryToUser(User user) {
+        return new MassPhotoUser(user.getUser_id(), user.getRadio_hanlde(), user.getProfileLink(), savedIds.contains(user.getUser_id()));
     }
 
     @Override
@@ -158,7 +157,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     }
 
     private boolean allChecked() {
-        for (User user : working) {
+        for (MassPhotoUser user : working) {
             if (!user.isChecked) return false;
         }
         return true;
@@ -173,7 +172,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
 
         @Override
         public void onBindViewHolder(final Holder holder, final int position) {
-            final User user = working.get(position);
+            final MassPhotoUser user = working.get(position);
             holder.handle.setText(user.handle);
             if (user.isChecked) {
                 holder.profile.setImageResource(R.drawable.sender);
@@ -197,7 +196,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         }
 
         private boolean allChecked() {
-            for (User user : working) {
+            for (MassPhotoUser user : working) {
                 if (!user.isChecked) return false;
             }
             return true;
@@ -220,13 +219,13 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
         }
     }
 
-    private static class User {
+    private static class MassPhotoUser {
         private final String id;
         private final String handle;
         private final String profileLink;
         private boolean isChecked;
 
-        private User(String id, String handle, String profileLink, boolean checked) {
+        private MassPhotoUser(String id, String handle, String profileLink, boolean checked) {
             this.id = id;
             this.isChecked = checked;
             this.handle = handle;

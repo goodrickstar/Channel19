@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
-import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -29,8 +27,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -230,7 +226,7 @@ public class MessageHistory extends DialogFragment {
                     popupMenu.show();
                 } else if (id == R.id.clickPoint) {
                     context.sendBroadcast(new Intent("nineteenClickSound"));
-                    UserListEntry user = new UserListEntry();
+                    User user = new User();
                     user.setUser_id(history.getFrom_id());
                     user.setRadio_hanlde(history.getF_handle());
                     user.setProfileLink(history.getProfileLink());

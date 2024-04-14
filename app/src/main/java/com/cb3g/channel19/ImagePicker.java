@@ -35,11 +35,11 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     private TextView accept;
 
     private final FragmentManager fragmentManager;
-    private final UserListEntry user;
+    private final User user;
 
     private final RequestCode requestCode;
 
-    public ImagePicker(FragmentManager fragmentManager, UserListEntry user, RequestCode requestCode) {
+    public ImagePicker(FragmentManager fragmentManager, User user, RequestCode requestCode) {
         this.fragmentManager = fragmentManager;
         this.user = user;
         this.requestCode = requestCode;

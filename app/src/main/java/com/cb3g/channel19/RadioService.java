@@ -49,7 +49,11 @@ import androidx.databinding.Observable;
 import androidx.databinding.ObservableBoolean;
 import androidx.databinding.ObservableField;
 
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.database.ChildEventListener;
@@ -103,6 +107,7 @@ import okhttp3.Response;
 @SuppressWarnings("SpellCheckingInspection")
 public class RadioService extends Service implements ValueEventListener, AudioManager.OnAudioFocusChangeListener {
     static final OkHttpClient client = new OkHttpClient();
+    final GlideImageLoader loader = new GlideImageLoader(this);
     private final List<String> nearby = new ArrayList<>();
     static final String SITE_URL = "http://23.111.159.2/~channel1/";
     static RequestOptions profileOptions = new RequestOptions().circleCrop();
@@ -113,16 +118,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     static String language;
     static DatabaseReference databaseReference;
     static FirebaseStorage storage;
-    static User operator = new User();
+    static Operator operator = new Operator();
     static Map<String, Object> header = new HashMap<>();
-    static List<FBentry> ghostUsers = new ArrayList<>();
-    static List<FBentry> pausedUsers = new ArrayList<>();
+    static List<String> ghostUsers = new ArrayList<>();
+    static List<String> pausedUsers = new ArrayList<>();
+    static List<String> onCallUsers = new ArrayList<>();
     static List<String> silencedUsers = new ArrayList<>();
     static List<String> autoSkip = new ArrayList<>();
     static List<UserVolume> volumes = new ArrayList<>();
     static List<Coordinates> coordinates = new ArrayList<>();
     static Gson gson = new Gson();
-    static List<UserListEntry> users = new ArrayList<>();
+    static List<User> users = new ArrayList<>();
+    static List<UserListEntry> userList = new ArrayList<>();
     static List<Block> blockedIDs = new ArrayList<>();
     static List<Block> photoIDs = new ArrayList<>();
     static List<Snack> snacks = new ArrayList<>();
@@ -154,15 +161,16 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     private FirebaseStorage temporaryStorage;
     private ChildEventListener audioListener;
     private long enterStamp = Instant.now().getEpochSecond();
-    private final TelephonyReceiver telephonyReceiver = new TelephonyReceiver();
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             switch (Objects.requireNonNull(intent.getAction())) {
                 case "token"://TODO: update token on server
                     break;
+                case "interrupt":
+                    if (MI != null) MI.stopRecorder(false);
+                    break;
                 case "locationUpdate":
-                    Log.i("logging", "location broadcast received");
                     final String locationString = intent.getStringExtra("data");
                     if (locationString != null) {
                         operator.setUserLocationString(locationString);
@@ -238,7 +246,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     checkForMessages();
                     break;
                 case "fetch_users":
-                    get_users_on_channel();
+                    getUsersOnChannel();
                     break;
                 case "pauseLimitChange":
                     pauseLimit = intent.getIntExtra("data", 200);
@@ -295,28 +303,44 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 case "nineteenPhotoReceive":
                     final Photo photo = gson.fromJson(intent.getStringExtra("data"), Photo.class);
                     if (RadioService.blockListContainsId(photoIDs, photo.getSenderId())) return;
-                    switch (photo.getMass()) {
-                        case 0 -> { //private photo
-                            if (settings.getBoolean("photos", true)) {
-                                if (Objects.equals(chat.get(), photo.getSenderId())) {
-                                    if (MI != null) MI.displayChat(null, true, false);
-                                    else sendBroadcast(new Intent("nineteenChatSound"));
-                                } else {
-                                    if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
-                                    photos.add(photo);
+                    loader.preload(photo.getUrl(), new RequestListener<>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                            snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                            switch (photo.getMass()) {
+                                case 0 -> { //private photo
+                                    if (Objects.equals(chat.get(), photo.getSenderId())) {
+                                        if (MI != null) MI.displayChat(null, true, false);
+                                        else sendBroadcast(new Intent("nineteenChatSound"));
+                                    } else {
+                                        if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
+                                        if (settings.getBoolean("photos", true))
+                                            photos.add(photo);
+                                        else
+                                            snacks.add(new Snack(photo.getHandle() + " sent you a private photo", Snackbar.LENGTH_SHORT));
+                                        checkForMessages();
+                                    }
+                                }
+                                case 1 -> { //mass
+                                    if (!recording && MI != null)
+                                        sp.play(glass, .1f, .1f, 1, 0, 1f);
+                                    if (settings.getBoolean("photos", true) && !paused)
+                                        photos.add(photo);
+                                    else if (MI != null)
+                                        snacks.add(new Snack(photo.getHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
+                                    Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(photo);
+                                    checkForMessages();
                                 }
                             }
+                            return false;
                         }
-                        case 1 -> { //mass
-                            if (!recording && MI != null) sp.play(glass, .1f, .1f, 1, 0, 1f);
-                            if (settings.getBoolean("photos", true) && !paused) photos.add(photo);
-                            else if (MI != null)
-                                snacks.add(new Snack(photo.getHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
-                            Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(photo);
-                        }
-                    }
+                    });
 
-                    checkForMessages();
                     break;
                 case "nineteenSkip":
                     if (!recording) skip();
@@ -428,12 +452,13 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         }
     };
     private AudioFocusRequest micFocus, listenFocus;
-    private boolean prePaused = false;
     private ExecutorService executor;
+
+    private boolean callStateListenerRegistered = false;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        ContextCompat.registerReceiver(this, telephonyReceiver, returnTelephoneFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
+        registerCallStateListener();
         registerDefaultNetworkCallback();
         return START_NOT_STICKY;
     }
@@ -473,73 +498,41 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         operator.getLocationEnabled().set(settings.getBoolean("locationEnabled", ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED));
         if (operator.getSubscribed()) blockLimit = 30;
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
+        databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
+        databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
         databaseReference.child("keychain").addValueEventListener(this);
         databaseReference.child("blocking").addValueEventListener(this);
         databaseReference.child("ghostModeAvailible").addValueEventListener(this);
         databaseReference.child("flagsEnabled").addValueEventListener(this);
         databaseReference.child("radioShopOpen").addValueEventListener(this);
         databaseReference.child("silencing").addValueEventListener(this);
-        databaseReference.child("ghost").addValueEventListener(new ValueEventListener() {
+
+
+        databaseReference.child("ghost").addValueEventListener(this);
+        databaseReference.child("paused").addValueEventListener(this);
+        databaseReference.child("onCall").addValueEventListener(this);
+        databaseReference.child("silenced").addValueEventListener(this);
+        databaseReference.child("blockedFromReservoir").addValueEventListener(this);
+        databaseReference.child("disableProfile").addValueEventListener(this);
+        databaseReference.child("hinderTexts").addValueEventListener(this);
+        databaseReference.child("hinderPhotos").addValueEventListener(this);
+        databaseReference.child("autoSkip").child(operator.getUser_id()).addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                ghostUsers.clear();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    String key = child.getKey();
-                    Long stamp = child.getValue(Long.class);
-                    if (key != null && stamp != null) {
-                        FBentry entry = new FBentry(key, stamp);
-                        ghostUsers.add(entry);
-                    }
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                autoSkip.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    autoSkip.add(child.getKey());
                 }
-                if (MI != null) MI.updateUserList();
-                get_users_on_channel();
+                userList = settleUserList(users);
+                if (MI != null) MI.updateUserList(userList);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("paused").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                pausedUsers.clear();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    String key = child.getKey();
-                    Long stamp = child.getValue(Long.class);
-                    if (key != null && stamp != null) {
-                        FBentry entry = new FBentry(key, stamp);
-                        if (isInChannel(entry.getUserId())) pausedUsers.add(entry);
-                    }
-                }
-                if (MI != null) MI.updateUserList();
-            }
+            public void onCancelled(@NonNull DatabaseError error) {
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
-        databaseReference.child("silenced").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                silencedUsers.clear();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    silencedUsers.add(child.getKey());
-                }
-                boolean silenced = false;
-                for (String user : silencedUsers) {
-                    if (user.equals(RadioService.operator.getUser_id())) silenced = true;
-                }
-                operator.setSilenced(silenced);
-                if (MI != null) {
-                    MI.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
-                    itterateSilenced();
-                }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
         databaseReference.child("volumes").child(operator.getUser_id()).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -579,78 +572,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
-        databaseReference.child("blockedFromReservoir").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<String> ids = new ArrayList<>();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    ids.add(child.getKey());
-                }
-                operator.setBlockedFromReservoir(ids.contains(operator.getUser_id()));
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("disableProfile").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<String> ids = new ArrayList<>();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    ids.add(child.getKey());
-                }
-                operator.setDisableProfile(ids.contains(operator.getUser_id()));
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("hinderTexts").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<String> ids = new ArrayList<>();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    ids.add(child.getKey());
-                }
-                operator.setHinderTexts(ids.contains(operator.getUser_id()));
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("hinderPhotos").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<String> ids = new ArrayList<>();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    ids.add(child.getKey());
-                }
-                operator.setHinderPhotos(ids.contains(operator.getUser_id()));
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
-        databaseReference.child("autoSkip").child(operator.getUser_id()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                autoSkip.clear();
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    autoSkip.add(child.getKey());
-                }
-                if (MI != null) MI.updateUserList();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
         pauseLimit = settings.getInt("pauseLimit", 150);
         bluetooth = settings.getBoolean("bluetooth", true);
         onlineStatus = "Online";
@@ -765,7 +688,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         blockedIDs = returnBlockListObjectFromJson(settings.getString("blockedIDs", "[]"));
         salutedIds = returnStringListObjectFromJson(settings.getString("salutedIDs", "[]"));
         flaggedIds = returnStringListObjectFromJson(settings.getString("flaggedIDs", "[]"));
-        get_users_on_channel();
+        getUsersOnChannel();
         mBuilder = new NotificationCompat.Builder(this, "19");
         notifyview = new RemoteViews("com.cb3g.channel19", R.layout.skip_notify);
         buildNotification();
@@ -1034,7 +957,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     static boolean isInChannel(String userId) {
-        for (UserListEntry user : users) {
+        for (User user : users) {
             if (user.getUser_id().equals(userId)) return true;
         }
         return false;
@@ -1064,6 +987,70 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
         switch (Objects.requireNonNull(dataSnapshot.getKey())) {
+            case "paused" -> {
+                pausedUsers.clear();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    pausedUsers.add(child.getKey());
+                }
+                userList = settleUserList(users);
+                if (MI != null) MI.updateUserList(userList);
+            }
+            case "onCall" -> {
+                onCallUsers.clear();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    onCallUsers.add(child.getKey());
+                }
+                userList = settleUserList(users);
+                if (MI != null) MI.updateUserList(userList);
+            }
+            case "silenced" -> {
+                silencedUsers.clear();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    silencedUsers.add(child.getKey());
+                }
+                operator.setSilenced(silencedUsers.contains(operator.getUser_id()));
+                if (MI != null) {
+                    MI.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
+                }
+                userList = settleUserList(users);
+                if (MI != null) MI.updateUserList(userList);
+            }
+            case "ghost" -> {
+                ghostUsers.clear();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ghostUsers.add(child.getKey());
+                }
+                userList = settleUserList(users);
+                if (MI != null) MI.updateUserList(userList);
+            }
+            case "hinderPhotos" -> {
+                List<String> ids = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ids.add(child.getKey());
+                }
+                operator.setHinderPhotos(ids.contains(operator.getUser_id()));
+            }
+            case "hinderTexts" -> {
+                List<String> ids = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ids.add(child.getKey());
+                }
+                operator.setHinderTexts(ids.contains(operator.getUser_id()));
+            }
+            case "disableProfile" -> {
+                List<String> ids = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ids.add(child.getKey());
+                }
+                operator.setDisableProfile(ids.contains(operator.getUser_id()));
+            }
+            case "blockedFromReservoir" -> {
+                List<String> ids = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    ids.add(child.getKey());
+                }
+                operator.setBlockedFromReservoir(ids.contains(operator.getUser_id()));
+            }
             case "locations" -> {
                 coordinates.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -1150,7 +1137,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         return (int) (0.621371 * from.distanceTo(des)) / 1000;
     }
 
-    private void get_users_on_channel() {
+    private void getUsersOnChannel() {
         if (operator.getChannel() == null) return;
         final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("channel", operator.getChannel().getChannel()).claim("language", language).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         client.newCall(new Request.Builder().url(SITE_URL + "user_list.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
@@ -1164,9 +1151,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 if (response.isSuccessful()) {
                     try (response) {
                         assert response.body() != null;
-                        users = itterateSilenced(returnFilteredList(returnUserListObjectFromJson(response.body().string())));
+                        users = returnFilteredList(returnUserListObjectFromJson(response.body().string()));
+                        userList = settleUserList(users);
                         handler.post(() -> {
-                            if (MI != null) MI.updateUserList();
+                            if (MI != null) MI.updateUserList(userList);
                         });
                     } catch (IOException e) {
                         LOG.e("get_users_on_channel", e.getMessage());
@@ -1174,6 +1162,24 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 }
             }
         });
+    }
+
+    private List<UserListEntry> settleUserList(List<User> users){
+        List<UserListEntry> newList = new ArrayList<>();
+        for (User user : users) {
+            String id = user.getUser_id();
+            newList.add(new UserListEntry(user, silencedUsers.contains(id), ghostUsers.contains(id), pausedUsers.contains(id), onCallUsers.contains(id), autoSkip.contains(id)));
+        }
+        newList.sort((one, two) -> {
+            if ((pausedUsers.contains(one.getUser().getUser_id()) || onCallUsers.contains(one.getUser().getUser_id())) && (pausedUsers.contains(two.getUser().getUser_id()) || onCallUsers.contains(two.getUser().getUser_id())))
+                return 0;
+            if ((!pausedUsers.contains(one.getUser().getUser_id()) && !onCallUsers.contains(one.getUser().getUser_id())) && (pausedUsers.contains(two.getUser().getUser_id()) || onCallUsers.contains(two.getUser().getUser_id())))
+                return -1;
+            if ((pausedUsers.contains(one.getUser().getUser_id()) || onCallUsers.contains(one.getUser().getUser_id())) && (!pausedUsers.contains(two.getUser().getUser_id()) && !onCallUsers.contains(two.getUser().getUser_id())))
+                return 1;
+            return 0;
+        });
+        return newList;
     }
 
     void recording(final boolean isRecording) {
@@ -1247,18 +1253,17 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         else return new int[]{getDuration(), player.getCurrentPosition()};
     }
 
-    UserListEntry returnTalkerEntry() {
+    User returnTalkerEntry() {
         if (!inbounds.isEmpty()) {
             Inbound inbound = inbounds.get(0);
             String currentId = inbound.getUser_id();
-            for (UserListEntry user : users) {
+            for (User user : users) {
                 if (user.getUser_id().equals(currentId)) return user;
             }
-            UserListEntry entry = new UserListEntry();
+            User entry = new User();
             entry.setUser_id(currentId);
             entry.setRadio_hanlde(inbound.getHandle());
             entry.setProfileLink(inbound.getProfileLink());
-            entry.setSilenced(silencedUsers.contains(currentId));
             return entry;
         }
         return null;
@@ -1301,8 +1306,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             databaseReference.child("audio").child(channel.getChannel_name()).removeEventListener(audioListener);
         operator.setChannel(channel);
         databaseReference.child("audio").child(channel.getChannel_name()).addChildEventListener(audioListener);
-        get_users_on_channel();
-        if (operator.getInvisible() || userIsGhost(operator.getUser_id())) return;
+        getUsersOnChannel();
+        if (operator.getInvisible() || ghostUsers.contains(operator.getUser_id())) return;
         final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("handle", operator.getHandle()).claim("channel", channel.getChannel()).claim("language", language).claim("profileLink", operator.getProfileLink()).claim("channelName", channel.getChannel_name()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         client.newCall(new Request.Builder().url(SITE_URL + "user_entered_channel.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
             @Override
@@ -1321,20 +1326,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         return inbounds.get(0).getUser_id().equals(id);
     }
 
-    private List<UserListEntry> itterateSilenced(@NonNull List<UserListEntry> users) {
-        for (int i = 0; i < users.size(); i++) {
-            users.get(i).setSilenced(silencedUsers.contains(users.get(i).getUser_id()));
-        }
-        return users;
-    }
-
-    public void itterateSilenced() {
-        for (int i = 0; i < users.size(); i++) {
-            users.get(i).setSilenced(silencedUsers.contains(users.get(i).getUser_id()));
-        }
-        if (MI != null) MI.updateUserList();
-    }
-
     private void update_block_list(final List<Block> blockList, final String field) {
         settings.edit().putString(field, gson.toJson(blockList)).apply();
         final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("list", gson.toJson(blockList)).claim("field", field).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
@@ -1350,21 +1341,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    private List<UserListEntry> returnFilteredList(final List<UserListEntry> inbound) {
+    private List<User> returnFilteredList(final List<User> inbound) {
         if (operator.getAdmin()) return inbound;
-        List<UserListEntry> returnedList = new ArrayList<>();
-        for (UserListEntry child : inbound) {
-            if (!blockListContainsId(blockedIDs, child.getUser_id()) && !userIsGhost(child.getUser_id()))
+        List<User> returnedList = new ArrayList<>();
+        for (User child : inbound) {
+            if (!blockListContainsId(blockedIDs, child.getUser_id()) && !ghostUsers.contains(child.getUser_id()))
                 returnedList.add(child);
         }
         return returnedList;
-    }
-
-    static boolean userIsGhost(String id) {
-        for (FBentry entry : ghostUsers) {
-            if (entry.getUserId().equals(id)) return true;
-        }
-        return false;
     }
 
     public String returnLocation() {
@@ -1443,8 +1427,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         final int[] WIDGETS = AppWidgetManager.getInstance(context).getAppWidgetIds(new ComponentName(context, Channel19.class));
         if (WIDGETS.length != 0)
             sendBroadcast(new Intent(context, Channel19.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, WIDGETS).setPackage("com.cb3g.channel19"));
-        unregisterReceiver(receiver);
-        unregisterReceiver(telephonyReceiver);
+        if (callStateListenerRegistered) {
+            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+            telephonyManager.unregisterTelephonyCallback(callStateListener);
+        }
         settings.edit().putBoolean("exiting", true).apply();
         sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
     }
@@ -1458,8 +1444,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         databaseReference.child("radioShopOpen").removeEventListener(this);
         databaseReference.child("silencing").removeEventListener(this);
         databaseReference.child("keychain").removeEventListener(this);
+        databaseReference.child("hinderPhotos").removeEventListener(this);
+        databaseReference.child("hinderTexts").removeEventListener(this);
+        databaseReference.child("disableProfile").removeEventListener(this);
+        databaseReference.child("blockedFromReservoir").removeEventListener(this);
+        databaseReference.child("silenced").removeEventListener(this);
+        databaseReference.child("paused").removeEventListener(this);
+        databaseReference.child("ghost").removeEventListener(this);
+        databaseReference.child("onCall").removeEventListener(this);
+
         databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
+        databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
         listenForCoordinates(false);
     }
 
@@ -1493,9 +1489,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     @NonNull
-    private List<UserListEntry> returnUserListObjectFromJson(String json) {
+    private List<User> returnUserListObjectFromJson(String json) {
         try {
-            List<UserListEntry> list = gson.fromJson(json, new TypeToken<List<UserListEntry>>() {
+            List<User> list = gson.fromJson(json, new TypeToken<List<User>>() {
             }.getType());
             if (list != null) return list;
         } catch (JsonSyntaxException e) {
@@ -1587,6 +1583,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
         filter.addAction(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED);
+        filter.addAction("interrupt");
         filter.addAction("locationUpdate");
         filter.addAction("listUpdate");
         filter.addAction("token");
@@ -1636,13 +1633,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         filter.addAction("nineteenEmptyPlayer");
         filter.addAction("nineteenBluetoothSettingChange");
         filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
-        return filter;
-    }
-
-    @NonNull
-    private IntentFilter returnTelephoneFilter() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("android.intent.action.PHONE_STATE");
         return filter;
     }
 
@@ -1834,7 +1824,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void saluteUser(final UserListEntry entry) {
+    void saluteUser(final User entry) {
         if (operator.getSilenced()) return;
         if (salutedIds.contains(entry.getUser_id()) && !operator.getAdmin()) {
             snacks.add(new Snack("Already Saluted", Snackbar.LENGTH_SHORT));
@@ -1863,7 +1853,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void flagUser(UserListEntry entry) {
+    void flagUser(User entry) {
         final String data = Jwts.builder().setHeader(header).claim("userId", entry.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
@@ -1886,7 +1876,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    public void longFlagUser(UserListEntry user) {
+    public void longFlagUser(User user) {
         final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_long_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
@@ -1923,8 +1913,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void pauseOrplay(@NonNull UserListEntry userListEntry) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", userListEntry.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+    void pauseOrplay(@NonNull User user) {
+        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_play_pause.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1933,13 +1923,13 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                get_users_on_channel();
+                getUsersOnChannel();
             }
         });
     }
 
-    void kickUser(@NonNull UserListEntry userListEntry) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", userListEntry.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+    void kickUser(@NonNull User user) {
+        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_kick.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1948,7 +1938,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                get_users_on_channel();
+                getUsersOnChannel();
             }
         });
     }
@@ -2032,7 +2022,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (!blockListContainsId(textIDs, id)) {
             textIDs.add(new Block(id, handle));
             update_block_list(textIDs, "textIDs");
-            if (MI != null) MI.updateUserList();
+            if (MI != null) MI.updateUserList(userList);
             if (toast)
                 snacks.add(new Snack("Messages blocked From " + handle, Snackbar.LENGTH_SHORT));
         } else {
@@ -2232,14 +2222,56 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     public void onAudioFocusChange(int focusChange) {
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                /*
                 if (MI != null && recording) MI.stopRecorder(false);
                 snacks.add(new Snack("Key-up interrupted!", Snackbar.LENGTH_SHORT));
                 checkForMessages();
-                 */
             }
         }
     }
+
+    private void registerCallStateListener() {
+        if (!callStateListenerRegistered) {
+            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                telephonyManager.registerTelephonyCallback(getMainExecutor(), callStateListener);
+                callStateListenerRegistered = true;
+            }
+        }
+    }
+
+    private static abstract class CallStateListener extends TelephonyCallback implements TelephonyCallback.CallStateListener {
+        @Override
+        abstract public void onCallStateChanged(int state);
+    }
+
+    // Handle call state change
+    private boolean onCall = false;
+    private final CallStateListener callStateListener = new CallStateListener() {
+        @Override
+        public void onCallStateChanged(int state) {
+            switch (state) {
+                case TelephonyManager.CALL_STATE_OFFHOOK, TelephonyManager.CALL_STATE_RINGING -> {
+                    if (phoneIdle) {
+                        phoneIdle = false;
+                        if (MI != null) MI.stopRecorder(false);
+                        if (!paused) {
+                            onCall = true;
+                            pause_playback();
+                            databaseReference.child("onCall").child(operator.getUser_id()).setValue(System.currentTimeMillis());
+                        }
+                    }
+                }
+                case TelephonyManager.CALL_STATE_IDLE -> {
+                    phoneIdle = true;
+                    if (onCall) {
+                        onCall = false;
+                        resumePlayback();
+                        databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
+                    }
+                }
+            }
+        }
+    };
 
     class LocalBinder extends Binder {
         RadioService getService() {
@@ -2247,59 +2279,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         }
     }
 
-    public class TelephonyReceiver extends BroadcastReceiver {
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            registerCustomTelephonyCallback(context);
-        }
-
-        class CustomTelephonyCallback extends TelephonyCallback implements TelephonyCallback.CallStateListener {
-            private final CallBack mCallBack;
-
-            public CustomTelephonyCallback(CallBack callBack) {
-                mCallBack = callBack;
-            }
-
-            @Override
-            public void onCallStateChanged(int state) {
-
-                mCallBack.callStateChanged(state);
-
-            }
-        }
-
-        public void registerCustomTelephonyCallback(Context context) {
-            TelephonyManager telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            telephony.registerTelephonyCallback(context.getMainExecutor(), new CustomTelephonyCallback(state -> {
-                switch (state) {
-                    case TelephonyManager.CALL_STATE_IDLE -> {
-                        phoneIdle = true;
-                        updateDisplay();
-                        if (prePaused) {
-                            prePaused = false;
-                            resumePlayback();
-                        }
-                    }
-                    case TelephonyManager.CALL_STATE_OFFHOOK, TelephonyManager.CALL_STATE_RINGING -> {
-                        phoneIdle = false;
-                        if (MI != null && recording) MI.stopRecorder(false);
-                        if (!paused) {
-                            prePaused = true;
-                            pause_playback();
-                        }
-                    }
-                }
-
-            }));
-
-
-        }
-
-    }
-
-    interface CallBack {
-        void callStateChanged(int state);
-    }
 }
 

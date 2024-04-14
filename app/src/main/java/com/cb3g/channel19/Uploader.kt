@@ -27,7 +27,7 @@ import java.io.InputStream
 
 class Uploader(
     val context: Context,
-    val operator: User,
+    val operator: Operator,
     val client: OkHttpClient,
     val upload: FileUpload,
 ) {
@@ -46,7 +46,6 @@ class Uploader(
                     reference = FirebaseStorage.getInstance("gs://nineteen-temporary").reference.child("mass").child(fileName)
                 }
                 RequestCode.PROFILE -> {
-                    Log.i("logging", "refernece set")
                     reference = FirebaseStorage.getInstance().reference.child("profiles").child(fileName)
                 }
                 else -> {}
@@ -97,9 +96,7 @@ class Uploader(
             }
 
             override fun onResponse(call: Call, response: Response) {
-                Log.i("logging", "onResponse")
                 if (response.isSuccessful) {
-                    Log.i("logging", "response.isSuccessful")
                     when (upload.code) {
                         RequestCode.PRIVATE_PHOTO, RequestCode.MASS_PHOTO -> {
                             RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
@@ -107,7 +104,6 @@ class Uploader(
                         }
 
                         RequestCode.PROFILE -> {
-                            Log.i("logging", "PROFILE_SELECTED_FROM_DISK")
                             try {
                                 RadioService.storage.getReferenceFromUrl(RadioService.operator.profileLink).delete()
                             } catch (e: IllegalArgumentException) {

@@ -124,7 +124,6 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         @Override
         public void onBindViewHolder(@NonNull RecyleAdapter.MyViewHolder holder, int i) {
             Photo photo = photoRecords.get(holder.getAdapterPosition());
-            Log.i("logging", new Gson().toJson(photo));
             holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
             holder.handle.setText(photo.getHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));

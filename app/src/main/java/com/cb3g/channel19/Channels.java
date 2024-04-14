@@ -97,13 +97,6 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         });
     }
 
-    private boolean userIsGhost(String id) {
-        for (FBentry entry : RadioService.ghostUsers) {
-            if (entry.getUserId().equals(id)) return true;
-        }
-        return false;
-    }
-
     private List<ChannelInfo> groupIntoSidebands(final List<SidebandData> users, final List<Channel> channels) {
         int currentChannel = 0;
         if (RadioService.operator.getChannel() != null)
@@ -113,7 +106,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
             List<String> profiles = new ArrayList<>();
             for (SidebandData data : users) {
                 if (data.getChannel() == channel.getChannel() && (!RadioService.blockListContainsId(RadioService.blockedIDs, data.getUser_id()) || RadioService.operator.getAdmin())) {
-                    if (!userIsGhost(data.getUser_id()) || RadioService.operator.getAdmin())
+                    if (!RadioService.ghostUsers.contains(data.getUser_id()) || RadioService.operator.getAdmin())
                         profiles.add(data.getProfileLink());
                 }
             }

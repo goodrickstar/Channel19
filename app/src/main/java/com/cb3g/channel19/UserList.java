@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,7 +23,9 @@ import com.google.gson.Gson;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
-import org.threeten.bp.Instant;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserList extends Fragment {
 
@@ -30,7 +33,6 @@ public class UserList extends Fragment {
     private final recycler_adapter adapter = new recycler_adapter();
     private Context context;
     private MI MI;
-    private Instant now = Instant.now();
     private UserListBinding binding;
     private final FragmentManager fragmentManager;
 
@@ -38,9 +40,8 @@ public class UserList extends Fragment {
         this.fragmentManager = fragmentManager;
     }
 
-    public void update_users_list() {
-        now = Instant.now();
-        adapter.notifyDataSetChanged();
+    public void update_users_list(List<UserListEntry> userList) {
+        adapter.updateUserList(userList);
         binding.swiper.setRefreshing(false);
     }
 
@@ -68,6 +69,7 @@ public class UserList extends Fragment {
             context.sendBroadcast(new Intent("fetch_users"));
         });
         binding.swiper.setRefreshing(true);
+        update_users_list(RadioService.userList);
     }
 
     @Override
@@ -77,11 +79,14 @@ public class UserList extends Fragment {
     }
 
     class recycler_adapter extends RecyclerView.Adapter<recycler_adapter.MyViewHolder> {
-        private FBentry findPaused(String userId) {
-            for (FBentry user : RadioService.pausedUsers) {
-                if (user.getUserId().equals(userId)) return user;
-            }
-            return null;
+        List<UserListEntry> userList = new ArrayList<>();
+
+        public void updateUserList(List<UserListEntry> userList) {
+            final UserDiffCallback diffCallback = new UserDiffCallback(this.userList, userList);
+            final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+            this.userList.clear();
+            this.userList.addAll(userList);
+            diffResult.dispatchUpdatesTo(this);
         }
 
         @NonNull
@@ -92,34 +97,32 @@ public class UserList extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int i) {
-            final UserListEntry entry = RadioService.users.get(i);
+            UserListEntry entry = userList.get(i);
+            final User user = entry.getUser();
             String title = "";
-            if (entry.getSubscribed()) title = EmojiParser.parseToUnicode(":heavy_plus_sign:");
-            FBentry pausedUser = findPaused(entry.getUser_id());
-            if (pausedUser != null) {
-                title = EmojiParser.parseToUnicode(":double_vertical_bar:");
-                holder.location.setText("Paused: " + Utils.timeOnline(Utils.timeDifferance(pausedUser.getInstant(), now)));
-            } else holder.location.setText(entry.getHometown());
-            if (entry.getSilenced()) title = EmojiParser.parseToUnicode(":mute:");
-            if (entry.getNewbie() == 1) {
-                if (title.isEmpty()) title = EmojiParser.parseToUnicode(":new:");
-                else title = EmojiParser.parseToUnicode(":new:") + " " + title;
-            }
-            if (RadioService.autoSkip.contains(entry.getUser_id()))
-                title = title + " " + EmojiParser.parseToUnicode(":fast_forward:");
-            if (RadioService.userIsGhost(entry.getUser_id())) holder.title.setText("(G) " + title);
-            else holder.title.setText(title);
-            holder.handle.setText(entry.getRadio_hanlde());
-            holder.carrier.setText(entry.getCarrier());
-            glide.load(holder.profile, entry.getProfileLink(), RadioService.profileOptions);
-            glide.load(holder.starsIm, Utils.parseRankUrl(entry.getRank()));
-            holder.profile.setTag(R.id.black_profile_picture_iv, entry);
-            holder.clickPoint.setTag(R.id.clickPoint, entry);
-            holder.mail.setTag(R.id.mail, entry);
+            if (entry.isGhost()) title = "(G) ";
+            if (user.getSubscribed())
+                title += " " + EmojiParser.parseToUnicode(":heavy_plus_sign:");
+            if (!entry.isOnCall() && entry.isPaused())
+                title += " " + EmojiParser.parseToUnicode(":double_vertical_bar:");
+            else if (entry.isOnCall()) title += " " + EmojiParser.parseToUnicode(":telephone:");
+            if (user.getNewbie() == 1) title += " " + EmojiParser.parseToUnicode(":new:");
+            if (entry.isAutoSkipped())
+                title += " " + EmojiParser.parseToUnicode(":fast_forward:");
+            if (entry.isSilenced()) title += " " + EmojiParser.parseToUnicode(":mute:");
+            holder.title.setText(title);
+            holder.location.setText(user.getHometown());
+            holder.handle.setText(user.getRadio_hanlde());
+            holder.carrier.setText(user.getCarrier());
+            glide.load(holder.profile, user.getProfileLink(), RadioService.profileOptions);
+            glide.load(holder.starsIm, Utils.parseRankUrl(user.getRank()));
+            holder.profile.setTag(R.id.black_profile_picture_iv, user);
+            holder.clickPoint.setTag(R.id.clickPoint, user);
+            holder.mail.setTag(R.id.mail, user);
             holder.profile.setOnClickListener(listener);
             holder.clickPoint.setOnClickListener(listener);
             holder.mail.setOnClickListener(listener);
-            if (RadioService.blockListContainsId(RadioService.textIDs, entry.getUser_id()) || RadioService.operator.getHinderTexts())
+            if (RadioService.blockListContainsId(RadioService.textIDs, user.getUser_id()) || RadioService.operator.getHinderTexts())
                 holder.mail.setVisibility(View.GONE);
             else holder.mail.setVisibility(View.VISIBLE);
         }
@@ -130,7 +133,7 @@ public class UserList extends Fragment {
                 if (MI == null) return;
                 Utils.vibrate(v);
                 context.sendBroadcast(new Intent("nineteenBoxSound"));
-                UserListEntry user = (UserListEntry) v.getTag(v.getId());
+                User user = (User) v.getTag(v.getId());
                 int id = v.getId();
                 if (id == R.id.mail) {
                     if (RadioService.operator.getSilenced()) {
@@ -160,7 +163,7 @@ public class UserList extends Fragment {
 
         @Override
         public int getItemCount() {
-            return RadioService.users.size();
+            return userList.size();
         }
 
         class MyViewHolder extends RecyclerView.ViewHolder {

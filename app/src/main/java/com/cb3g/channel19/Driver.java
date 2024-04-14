@@ -99,26 +99,15 @@ public class Driver extends Fragment {
             binding.ghost.setVisibility(View.INVISIBLE);
             binding.status.setText("");
         } else {
-            if (userIsGhost(RadioService.operator.getUser_id())) {
+            if (RadioService.ghostUsers.contains(RadioService.operator.getUser_id())) {
                 binding.ghost.setVisibility(View.INVISIBLE);
-                for (FBentry entry : RadioService.ghostUsers) {
-                    if (entry.getUserId().equals(RadioService.operator.getUser_id())) {
-                        String elapsed = Utils.showElapsed(entry.getInstant(), Instant.now());
-                        binding.status.setText("Ghost Mode active for " + elapsed);
-                    }
-                }
+                if (RadioService.ghostUsers.contains(RadioService.operator.getUser_id()))
+                    binding.status.setText("Ghost Mode active");
             } else {
                 binding.status.setText("");
                 binding.ghost.setVisibility(View.VISIBLE);
             }
         }
-    }
-
-    private boolean userIsGhost(String id) {
-        for (FBentry entry : RadioService.ghostUsers) {
-            if (entry.getUserId().equals(id)) return true;
-        }
-        return false;
     }
 
     public void updateProfilePicture() {

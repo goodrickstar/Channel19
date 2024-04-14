@@ -157,7 +157,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
                         clearFlags();
                         break;
                     case 4:
-                        if (RadioService.userIsGhost(RadioService.operator.getUser_id())) {
+                        if (RadioService.ghostUsers.contains(RadioService.operator.getUser_id())) {
                             context.sendBroadcast(new Intent("wrong"));
                             return;
                         }

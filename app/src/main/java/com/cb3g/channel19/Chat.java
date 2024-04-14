@@ -63,7 +63,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private boolean launchHistory = false;
     private ImageView starIV;
     private int screenWidth = 0;
-    private final UserListEntry user;
+    private final User user;
     private ProgressBar loading;
 
     private ChatBinding binding;
@@ -71,7 +71,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
 
     private GlideImageLoader glideImageLoader;
 
-    public Chat(FragmentManager fragmentManager, UserListEntry user) {
+    public Chat(FragmentManager fragmentManager, User user) {
         this.fragmentManager = fragmentManager;
         this.user = user;
     }

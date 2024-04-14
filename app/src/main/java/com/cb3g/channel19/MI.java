@@ -1,5 +1,7 @@
 package com.cb3g.channel19;
 
+import java.util.List;
+
 interface MI {
 
     void requestBluetoothPermission();
@@ -20,12 +22,12 @@ interface MI {
 
     void display_message_history();
 
-    void updateUserList();
+    void updateUserList(List<UserListEntry> userList);
 
     void streamFile(String url);
-    void createPm(UserListEntry user);
+    void createPm(User user);
 
-    void displayChat(UserListEntry user, boolean sound, boolean launch);
+    void displayChat(User user, boolean sound, boolean launch);
 
     void displayPm(String[] data);
 
@@ -36,8 +38,6 @@ interface MI {
     void stopRecorder(boolean pass);
 
     void startTransmit();
-
-    void postKeyUp();
 
     void showRewardAd();
 
@@ -63,11 +63,11 @@ interface MI {
 
     void blockText(String id, String handle, boolean toast);
 
-    void flagThisUser(UserListEntry user);
+    void flagThisUser(User user);
 
-    void kickUser(UserListEntry user);
+    void kickUser(User user);
 
-    void pauseOrPlay(UserListEntry user);
+    void pauseOrPlay(User user);
 
     void adjustColors(boolean poor);
 
@@ -75,7 +75,7 @@ interface MI {
 
     void banUser(String id);
 
-    void saluteThisUser(UserListEntry user);
+    void saluteThisUser(User user);
 
     void updateLocationDisplay(String location);
 
@@ -89,15 +89,15 @@ interface MI {
 
     void resumeAnimation(int[] data);
 
-    void silence(UserListEntry user);
+    void silence(User user);
 
-    void unsilence(UserListEntry user);
+    void unsilence(User user);
 
     void selectChannel(boolean cancelable);
 
     int returnUserVolume(String id);
 
-    UserListEntry returnTalkerEntry();
+    User returnTalkerEntry();
 
-    void longFlagUser(UserListEntry user);
+    void longFlagUser(User user);
 }

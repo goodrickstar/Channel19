@@ -42,8 +42,11 @@ public class FireBaseReceiver extends FirebaseMessagingService {
                         sendBroadcast(new Intent("nineteenPulse").setPackage("com.cb3g.channel19"));
                 case "removeAllOf" ->
                         sendBroadcast(new Intent("removeAllOf").putExtra("data", messageData.getString("id")).setPackage("com.cb3g.channel19"));
-                case "alert" ->
-                        sendBroadcast(new Intent("alert").putExtra("data", new Gson().toJson(new Snack(messageData.getString("content"), Snackbar.LENGTH_LONG))).putExtra("userId", messageData.getString("userId")).setPackage("com.cb3g.channel19"));
+                case "alert" -> {
+                    String message = messageData.getString("content");
+                    sendBroadcast(new Intent("alert").putExtra("data", new Gson().toJson(new Snack(message, Snackbar.LENGTH_LONG))).putExtra("userId", messageData.getString("userId")).setPackage("com.cb3g.channel19"));
+                    if (message.contains("entered the channel")) sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
+                }
                 case "snack" ->
                         sendBroadcast(new Intent("snack").putExtra("data", new Gson().toJson(new Snack(messageData.getString("content"), Snackbar.LENGTH_LONG))).setPackage("com.cb3g.channel19"));
                 case "clear" -> sendBroadcast(new Intent("clear").setPackage("com.cb3g.channel19"));

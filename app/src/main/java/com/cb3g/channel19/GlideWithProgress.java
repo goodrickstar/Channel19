@@ -34,7 +34,6 @@ public class GlideWithProgress {
         NineteenGlideModule.expect(url, new NineteenGlideModule.UIonProgressListener() {
             @Override
             public void onProgress(long bytesRead, long expectedLength) {
-                Log.i("logging", "onProgress() " + (int) (100 * bytesRead / expectedLength));
                 if (mProgressBar != null) {
                     mProgressBar.setProgress((int) (100 * bytesRead / expectedLength));
                 }

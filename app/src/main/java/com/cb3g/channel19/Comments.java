@@ -104,8 +104,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             if (editBox.length() > 0) {
                 text_remark(editBox.getText().toString().trim());
                 editBox.setText("");
-            }
-            commentPhotoPicker.launch("image/*");
+            } else commentPhotoPicker.launch("image/*");
         }
         if (id == R.id.giphyBox) {
             ImageSearch imageSearch = (ImageSearch) fragmentManager.findFragmentByTag("imageSearch");

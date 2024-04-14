@@ -265,8 +265,6 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
 
     public void stopRecorder(final boolean pass) {
         if (!RadioService.recording) return;
-        if (MI != null)
-            MI.recordChange(false);
         if (recorder != null) {
             recorder.reset();
             recorder.release();
@@ -282,6 +280,8 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
                 } else MI.showSnack(new Snack("Too short!", Snackbar.LENGTH_SHORT));
             }
         }
+        if (MI != null)
+            MI.recordChange(false);
         binding.ring.clearAnimation();
         binding.key.clearAnimation();
         binding.pin.startAnimation(fadeIn);
@@ -293,25 +293,22 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         binding.pbar.setProgress(queue);
         binding.mute.setEnabled(true);
         binding.pbar.setOnSeekBarChangeListener(Transmitter.this);
-        if (MI != null) MI.postKeyUp();
     }
 
     @Override
     public boolean onLongClick(View v) {
-        UserListEntry user = MI.returnTalkerEntry();
+        User user = MI.returnTalkerEntry();
         if (user != null) {
-            if (RadioService.operator.getAdmin() || RadioService.isInChannel(user.getUser_id())) {
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                Utils.vibrate(v);
-                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
-                if (cdf == null) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("user", new Gson().toJson(user));
-                    cdf = new UserListOptionsNew(fragmentManager, user);
-                    cdf.setArguments(bundle);
-                    cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                    cdf.show(fragmentManager, "options");
-                }
+            context.sendBroadcast(new Intent("nineteenClickSound"));
+            Utils.vibrate(v);
+            UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+            if (cdf == null) {
+                Bundle bundle = new Bundle();
+                bundle.putString("user", new Gson().toJson(user));
+                cdf = new UserListOptionsNew(fragmentManager, user);
+                cdf.setArguments(bundle);
+                cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                cdf.show(fragmentManager, "options");
             }
             return true;
         }

@@ -2,6 +2,7 @@ package com.cb3g.channel19;
 
 import static com.cb3g.channel19.RadioService.databaseReference;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,13 +36,13 @@ public class UserListOptionsNew extends DialogFragment {
     private Context context;
     private MI MI;
     private ListOptionNewBinding binding;
-    private final UserListEntry user;
+    private final User user;
     private Coordinates coordinates = null;
     private final ArrayList<UserOption> options = new ArrayList<>();
 
     private final FragmentManager fragmentManager;
 
-    public UserListOptionsNew(FragmentManager fragmentManager, UserListEntry user) {
+    public UserListOptionsNew(FragmentManager fragmentManager, User user) {
         this.user = user;
         this.fragmentManager = fragmentManager;
     }
@@ -52,16 +53,17 @@ public class UserListOptionsNew extends DialogFragment {
         return binding.getRoot();
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onViewCreated(@NotNull View v, Bundle savedInstanceState) {
         super.onViewCreated(v, savedInstanceState);
         RadioService.occupied.set(true);
-        View.OnClickListener dismisser = v1 -> {
+        View.OnClickListener dismisses = v1 -> {
             Utils.vibrate(v1);
             dismiss();
         };
         binding.userListOptionHandleTv.setText(user.getRadio_hanlde());
-        binding.userListOptionHandleTv.setOnClickListener(dismisser);
+        binding.userListOptionHandleTv.setOnClickListener(dismisses);
         if (user.getStamp() != 0)
             binding.timeOnline.setText("Online: " + Utils.timeOnline(Utils.timeDifferance(user.getStamp())));
         else binding.timeOnline.setText("Offline");
@@ -99,14 +101,16 @@ public class UserListOptionsNew extends DialogFragment {
         binding.optionMenu.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.optionMenu.setHasFixedSize(true);
         binding.optionMenu.setAdapter(optionsAdapter);
-        if (user.getUser_id().equals(RadioService.operator.getUser_id()) || user.getUser_id().equals("JJ7SAoyqRsS7GQixEL8pbziWguV2") || userIsGhost(user.getUser_id()) || RadioService.operator.getSilenced())
+        if (RadioService.operator.getAdmin()) buildOptions();
+        if (user.getUser_id().equals(RadioService.operator.getUser_id()) || RadioService.ghostUsers.contains(user.getUser_id()) || RadioService.operator.getSilenced() || !RadioService.isInChannel(user.getUser_id()))
             return;
         buildOptions();
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void buildOptions() {
         options.clear();
-        if ((RadioService.operator.getCount() > 49 && RadioService.operator.getBlocking()) || RadioService.operator.getAdmin()) {
+        if ((RadioService.operator.getCount() > 19 && RadioService.operator.getBlocking()) || RadioService.operator.getAdmin()) {
             options.add(new UserOption(ListOption.BLOCK, "Block"));
         }
         if (!RadioService.operator.getHinderTexts()) {
@@ -118,19 +122,24 @@ public class UserListOptionsNew extends DialogFragment {
         if (!RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts()) {
             options.add(new UserOption(ListOption.HISTORY, "Chat History"));
         }
-        if (RadioService.operator.getSalutes() > 79) {
-            if (!Utils.alreadySaluted(user.getUser_id()) && findPaused(user.getUser_id()) == null)
-                options.add(new UserOption(ListOption.SALUTE, "Salute"));
-            if (!Utils.alreadyFlagged(user.getUser_id()) && !RadioService.operator.getFlagsEnabled()) {
-                options.add(new UserOption(ListOption.FLAG, "Flag"));
-                if (RadioService.operator.getSalutes() > 2000) {
-                    options.add(new UserOption(ListOption.LONG_FLAG, "Long Flag"));
+        if ((RadioService.operator.getFlagsEnabled() && RadioService.operator.getSalutes() > 79) || RadioService.operator.getAdmin()) {
+            if ((!RadioService.pausedUsers.contains(user.getUser_id()) && !RadioService.onCallUsers.contains(user.getUser_id()) && !RadioService.silencedUsers.contains(user.getUser_id())) || RadioService.operator.getAdmin()) {
+                if (!Utils.alreadySaluted(user.getUser_id()) || RadioService.operator.getAdmin())
+                    options.add(new UserOption(ListOption.SALUTE, "Salute"));
+                if (!Utils.alreadyFlagged(user.getUser_id()) || RadioService.operator.getAdmin()) {
+                    options.add(new UserOption(ListOption.FLAG, "Flag"));
+                    if (RadioService.operator.getSalutes() > 2000) {
+                        options.add(new UserOption(ListOption.LONG_FLAG, "Long Flag"));
+                    }
                 }
             }
         }
         if ((RadioService.operator.getSalutes() > 159 && RadioService.operator.getSilencing()) || RadioService.operator.getAdmin()) {
-            if (!user.getSilenced()) options.add(new UserOption(ListOption.SILENCE, "Silence"));
-            else options.add(new UserOption(ListOption.UNSILENCE, "Un-Silence"));
+            if ((!RadioService.pausedUsers.contains(user.getUser_id()) && !RadioService.onCallUsers.contains(user.getUser_id())) || RadioService.operator.getAdmin()) {
+                if (!RadioService.silencedUsers.contains(user.getUser_id()))
+                    options.add(new UserOption(ListOption.SILENCE, "Silence"));
+                else options.add(new UserOption(ListOption.UNSILENCE, "Un-Silence"));
+            }
         }
         if ((RadioService.operator.getSubscribed()) || RadioService.operator.getAdmin()) {
             if (!RadioService.autoSkip.contains(user.getUser_id()))
@@ -141,16 +150,7 @@ public class UserListOptionsNew extends DialogFragment {
             if (x.getUserId().equals(user.getUser_id())) coordinates = x;
         }
         if (coordinates != null) options.add(new UserOption(ListOption.LOCATE, "Show On Map"));
-        optionsAdapter.notifyDataSetChanged();
-    }
-
-    private void buildBlockingOptions() {
-        options.clear();
-        options.add(new UserOption(ListOption.CANCEL, "Cancel"));
-        options.add(new UserOption(ListOption.BLOCK_RADIO, "Block Radio"));
-        options.add(new UserOption(ListOption.BLOCK_TEXT, "Block Messages"));
-        options.add(new UserOption(ListOption.BLOCK_PHOTOS, "Block Photos"));
-//Admin Options
+        //Admin Options
         if (RadioService.operator.getAdmin()) {
             options.add(new UserOption(ListOption.INFO, "User Info"));
             options.add(new UserOption(ListOption.PAUSE_OR_PLAY, "Pause Or Play"));
@@ -161,19 +161,14 @@ public class UserListOptionsNew extends DialogFragment {
         optionsAdapter.notifyDataSetChanged();
     }
 
-    private FBentry findPaused(String userId) {
-        for (FBentry user : RadioService.pausedUsers) {
-            if (user.getUserId().equals(userId)) return user;
-        }
-        return null;
-    }
-
-    private boolean userIsGhost(String id) {
-        if (RadioService.operator.getAdmin()) return false;
-        for (FBentry entry : RadioService.ghostUsers) {
-            if (entry.getUserId().equals(id)) return true;
-        }
-        return false;
+    @SuppressLint("NotifyDataSetChanged")
+    private void buildBlockingOptions() {
+        options.clear();
+        options.add(new UserOption(ListOption.CANCEL, "Cancel"));
+        options.add(new UserOption(ListOption.BLOCK_RADIO, "Block Radio"));
+        options.add(new UserOption(ListOption.BLOCK_TEXT, "Block Messages"));
+        options.add(new UserOption(ListOption.BLOCK_PHOTOS, "Block Photos"));
+        optionsAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -254,8 +249,8 @@ public class UserListOptionsNew extends DialogFragment {
                 switch (option.getOption()) {
                     case CANCEL -> buildOptions();
                     case BLOCK -> {
-                        if (user.getSilenced() && !RadioService.operator.getAdmin()) {
-                            showSnack(new Snack("You can not block_b a silenced user", Snackbar.LENGTH_LONG));
+                        if (RadioService.silencedUsers.contains(user.getUser_id()) && !RadioService.operator.getAdmin()) {
+                            showSnack(new Snack("You can not block a silenced user", Snackbar.LENGTH_LONG));
                             return;
                         }
                         buildBlockingOptions();

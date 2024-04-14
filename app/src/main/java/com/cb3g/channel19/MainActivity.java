@@ -2,7 +2,6 @@ package com.cb3g.channel19;
 
 import static android.os.SystemClock.sleep;
 import static com.cb3g.channel19.RadioService.databaseReference;
-import static com.cb3g.channel19.RadioService.gson;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -36,7 +35,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -49,10 +47,6 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.MainLayoutBinding;
 import com.github.amlcurran.showcaseview.ShowcaseView;
@@ -84,7 +78,6 @@ import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -159,6 +152,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 }
                 case "nineteenSetPauseProgress" -> {
                     int[] set = intent.getIntArrayExtra("data");
+                    assert set != null;
                     binding.maTimer.clearAnimation();
                     binding.maTimer.setMax(set[0]);
                     binding.maTimer.setProgress(set[0] - set[1]);
@@ -395,20 +389,22 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-            for (Purchase purchase : purchases) {
-                if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
-                    billingUtils.handlePurchase(purchase, (billingResult1, s) -> {
-                        switch (purchase.getProducts().get(0)) {
-                            case SILENCE -> {
-                                finishSilence(silencePayload);
-                                silencePayload = null;
+            if (purchases != null) {
+                for (Purchase purchase : purchases) {
+                    if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                        billingUtils.handlePurchase(purchase, (billingResult1, s) -> {
+                            switch (purchase.getProducts().get(0)) {
+                                case SILENCE -> {
+                                    finishSilence(silencePayload);
+                                    silencePayload = null;
+                                }
+                                case UNSILENCE -> {
+                                    finishUnsilence(unSilencePayload);
+                                    unSilencePayload = null;
+                                }
                             }
-                            case UNSILENCE -> {
-                                finishUnsilence(unSilencePayload);
-                                unSilencePayload = null;
-                            }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }
@@ -421,7 +417,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (Utils.permissionsAccepted(this, Utils.getLocationPermissions()) && RadioService.operator.getLocationEnabled().get()) {
                 if (mFusedLocationClient == null)
                     mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-                LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30000).setWaitForAccurateLocation(false).setMinUpdateIntervalMillis(30000).setMaxUpdateDelayMillis(60000).build();
+                LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 120000).setWaitForAccurateLocation(false).setMinUpdateIntervalMillis(60000).setMaxUpdateDelayMillis(600000).build();
                 mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null);
             }
         } else {
@@ -447,7 +443,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void silence(UserListEntry user) {
+    public void silence(User user) {
         if (RadioService.operator.getAdmin())
             finishSilence(new DeveloperPayload(user.getUser_id(), user.getRadio_hanlde()));
         else {
@@ -462,7 +458,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void unsilence(UserListEntry user) {
+    public void unsilence(User user) {
         if (RadioService.operator.getAdmin())
             finishUnsilence(new DeveloperPayload(user.getUser_id(), user.getRadio_hanlde()));
         else {
@@ -488,13 +484,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public UserListEntry returnTalkerEntry() {
+    public User returnTalkerEntry() {
         if (RS != null) return RS.returnTalkerEntry();
         return null;
     }
 
     @Override
-    public void longFlagUser(UserListEntry user) {
+    public void longFlagUser(User user) {
         if (RS != null) RS.longFlagUser(user);
     }
 
@@ -802,22 +798,22 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void pauseOrPlay(UserListEntry user) {
+    public void pauseOrPlay(User user) {
         if (RS != null) RS.pauseOrplay(user);
     }
 
     @Override
-    public void flagThisUser(UserListEntry user) {
+    public void flagThisUser(User user) {
         if (RS != null) RS.flagUser(user);
     }
 
     @Override
-    public void kickUser(UserListEntry user) {
+    public void kickUser(User user) {
         if (RS != null) RS.kickUser(user);
     }
 
     @Override
-    public void saluteThisUser(UserListEntry user) {
+    public void saluteThisUser(User user) {
         if (RS != null) RS.saluteUser(user);
     }
 
@@ -879,7 +875,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (dark) darkChange(false);
         else {
             if (transmitFragment.isAdded()) transmitFragment.mainRecord();
-            else flip(null);
+            else flip();
         }
     }
 
@@ -898,8 +894,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (id == R.id.ma_cancel_button) {
             Utils.vibrate(v);
             if (transmitFragment.isAdded()) transmitFragment.stopRecorder(false);
+        } else if (id == R.id.ma_user_list_button) {
+            Utils.vibrate(v);
+            flip();
         } else if (id == R.id.black_profile_picture_iv_small) {
-            UserListEntry user = returnTalkerEntry();
+            User user = returnTalkerEntry();
             if (user != null) {
                 Utils.vibrate(v);
                 sendBroadcast(new Intent("nineteenBoxSound"));
@@ -1030,20 +1029,18 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 sendBroadcast(new Intent("purgeNineTeen"));
             }
         } else if (id == R.id.black_profile_picture_iv_small) {
-            UserListEntry user = returnTalkerEntry();
+            User user = returnTalkerEntry();
             if (user != null) {
-                if (RadioService.operator.getAdmin() || RadioService.isInChannel(user.getUser_id())){
-                    sendBroadcast(new Intent("nineteenClickSound"));
-                    Utils.vibrate(v);
-                    UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
-                    if (cdf == null) {
-                        Bundle bundle = new Bundle();
-                        bundle.putString("user", new Gson().toJson(user));
-                        cdf = new UserListOptionsNew(fragmentManager, user);
-                        cdf.setArguments(bundle);
-                        cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                        cdf.show(fragmentManager, "options");
-                    }
+                sendBroadcast(new Intent("nineteenClickSound"));
+                Utils.vibrate(v);
+                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                if (cdf == null) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("user", new Gson().toJson(user));
+                    cdf = new UserListOptionsNew(fragmentManager, user);
+                    cdf.setArguments(bundle);
+                    cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                    cdf.show(fragmentManager, "options");
                 }
             }
             return true;
@@ -1081,7 +1078,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void displayChat(UserListEntry user, boolean sound, boolean launch) {
+    public void displayChat(User user, boolean sound, boolean launch) {
         if (isFinishing()) return;
         Chat chat_dialog = (Chat) fragmentManager.findFragmentByTag("chatD");
         if (chat_dialog == null) {
@@ -1096,7 +1093,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void createPm(UserListEntry user) {
+    public void createPm(User user) {
         if (isFinishing()) return;
         SendMessage messageFragment = (SendMessage) fragmentManager.findFragmentByTag("messageFragment");
         if (messageFragment == null) {
@@ -1128,22 +1125,9 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void displayPhoto(Photo photo) {
-        if (isFinishing()) return;
-        glide.preload(photo.getUrl(), new RequestListener<File>() {
-            @Override
-            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
-                showSnack(new Snack("Failed to load " + photo.getHandle() + "'s photo!", Snackbar.LENGTH_SHORT));
-                return true;
-            }
-
-            @Override
-            public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                ShowPhoto showPhoto = new ShowPhoto(photo, resource);
-                showPhoto.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                showPhoto.show(fragmentManager, "showPhoto");
-                return true;
-            }
-        });
+        ShowPhoto showPhoto = new ShowPhoto(photo);
+        showPhoto.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+        showPhoto.show(fragmentManager, "showPhoto");
     }
 
     private IntentFilter returnFilter() {
@@ -1201,11 +1185,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void startTransmit() {
         if (transmitFragment.isAdded()) transmitFragment.transmitStart();
-    }
-
-    @Override
-    public void postKeyUp() {
-        if (RS != null) RS.post_key_up();
     }
 
     @Override
@@ -1311,6 +1290,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.maChannelsButton.setEnabled(!lock);
     }
 
+
     private void updateDarkDisplay(@NonNull final ProfileDisplay display, final long stamp) {
         if (display.getHandle().contains("Online") || display.getHandle().contains("Dead"))
             binding.blackHandleTv.setText(" ");
@@ -1343,12 +1323,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     }
 
     @Override
-    public void updateUserList() {
-        if (userFragment.isAdded()) userFragment.update_users_list();
+    public void updateUserList(List<UserListEntry> userList) {
+        if (userFragment.isAdded()) userFragment.update_users_list(userList);
     }
 
-    public void flip(View v) {
-        Utils.vibrate(v);
+    public void flip() {
         if (RadioService.operator.getChannel() == null) return;
         sendBroadcast(new Intent("nineteenClickSound"));
         FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -1375,6 +1354,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         binding.blackQueueTv.setOnClickListener(this);
         binding.blackProfilePictureIv.setOnClickListener(this);
         binding.maCancelButton.setOnClickListener(this);
+        binding.maUserListButton.setOnClickListener(this);
 
         //LongPress
         binding.maUserListButton.setOnLongClickListener(this);

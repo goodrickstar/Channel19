@@ -106,7 +106,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
             if (!this.isFinishing())
                 Glide.with(this).load(selected.getProfile()).apply(RadioService.profileOptions).thumbnail(0.1f).into(profile);
             handle.setText(selected.getHandle());
-            for (UserListEntry entry : RadioService.users) {
+            for (User entry : RadioService.users) {
                 if (entry.getUser_id().equals(selected.getUserId()))
                     location.setText(entry.getHometown().replace(EmojiParser.parseToUnicode(" :globe_with_meridians:"), "").trim());
             }
@@ -242,7 +242,7 @@ public class Locations extends AppCompatActivity implements ChildEventListener, 
     private boolean isInChannel(String userId) {
         if (RadioService.users.isEmpty() || RadioService.operator.getUser_id().equals(userId))
             return false;
-        for (UserListEntry user : RadioService.users) {
+        for (User user : RadioService.users) {
             if (user.getUser_id().equals(userId)) return true;
         }
         return false;

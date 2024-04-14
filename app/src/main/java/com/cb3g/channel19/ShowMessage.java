@@ -106,7 +106,7 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
                 dismiss();
             } else dismiss();
         } else if (id == R.id.ma_chat_history_button) {
-            for (UserListEntry user : RadioService.users) {
+            for (User user : RadioService.users) {
                 if (user.getUser_id().equals(message[0]) && MI != null) {
                     MI.displayChat(user, false, false);
                     dismiss();
