@@ -129,6 +129,11 @@ public class MessageHistory extends DialogFragment {
                             });
                             adapter.notifyDataSetChanged();
                             history.animate().alpha(1.0f).setDuration(500);
+                            List<ShareTarget> shareList = new ArrayList<>();
+                            for (History entry : list){
+                                shareList.add(new ShareTarget(entry.getFrom_id(), entry.getF_handle(), entry.getProfileLink()));
+                            }
+                            context.getSharedPreferences("sharing", Context.MODE_PRIVATE).edit().putString("targets", RadioService.gson.toJson(shareList)).apply();
                         } catch (JSONException e) {
                             Logger.INSTANCE.e(String.valueOf(e));
                         }

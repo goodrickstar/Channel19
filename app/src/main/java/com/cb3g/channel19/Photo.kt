@@ -1,6 +1,7 @@
 package com.cb3g.channel19
 
 class Photo {
+    var key = ""
     var senderId = ""
     var profileLink = "http://23.111.159.2/~channel1//drawables/default.png"
     var handle = ""

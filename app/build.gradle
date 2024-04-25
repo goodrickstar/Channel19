@@ -23,8 +23,8 @@ android {
         minSdk 31
         //noinspection OldTargetApi
         targetSdkVersion 33
-        versionCode 4941
-        versionName "2.2.9"
+        versionCode 4942
+        versionName "3.0.0"
         multiDexEnabled true
     }
     compileSdk 34
@@ -50,7 +50,6 @@ android {
         checkReleaseBuilds false
     }
     namespace 'com.example.android.multidex.myapplication'
-    buildToolsVersion '33.0.1'
 }
 
 dependencies {
@@ -88,7 +87,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
 
-    implementation platform('com.google.firebase:firebase-bom:30.5.0')
+    implementation platform('com.google.firebase:firebase-bom:32.8.1')
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.firebase:firebase-storage'
     implementation 'com.google.firebase:firebase-database'

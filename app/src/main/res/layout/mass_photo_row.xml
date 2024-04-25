@@ -8,17 +8,17 @@
 
     <ImageView
         android:id="@+id/black_profile_picture_iv"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="@dimen/profile_picture_size"
+        android:layout_height="@dimen/profile_picture_size"
         android:layout_marginEnd="@dimen/half_margin" />
 
     <TextView
         android:id="@+id/black_handle_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/default_padding"
         android:layout_gravity="center_vertical"
-        android:textColor="@drawable/white_to_black_text"
-        android:textAppearance="@style/title_font" />
+        android:layout_margin="@dimen/default_padding"
+        android:textAppearance="@style/title_font"
+        android:textSize="18dp" />
 
 </LinearLayout>

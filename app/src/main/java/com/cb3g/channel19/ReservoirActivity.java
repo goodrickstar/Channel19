@@ -333,21 +333,23 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 @Override
                 public void onPostResponse(@NonNull OpenGraphResult openGraphResult) {
                     String imageLink = openGraphResult.getImage();
-                    post.setImageLink(imageLink);
-                    post.setWebDescription(openGraphResult.getTitle());
-                    if (post.getCaption().isEmpty())
-                        post.setCaption(openGraphResult.getDescription());
-                    ExecutorUtils.newSingleThreadExecutor().execute(() -> {
-                        Bitmap image = Utils.fetchImage(imageLink);
-                        if (image != null) {
-                            post.setImage_height(image.getHeight());
-                            post.setImage_width(image.getWidth());
-                            Log.i("image", "Image height: " + image.getHeight());
-                            Log.i("image", "Image width: " + image.getWidth());
-                            image.recycle();
-                        } else Log.i("image", "Image was null");
-                        finish_simple_post(post, gif, false);
-                    });
+                    if (imageLink != null){
+                        post.setImageLink(imageLink);
+                        post.setWebDescription(openGraphResult.getTitle());
+                        if (post.getCaption().isEmpty())
+                            post.setCaption(openGraphResult.getDescription());
+                        ExecutorUtils.newSingleThreadExecutor().execute(() -> {
+                            Bitmap image = Utils.fetchImage(imageLink);
+                            if (image != null) {
+                                post.setImage_height(image.getHeight());
+                                post.setImage_width(image.getWidth());
+                                Log.i("image", "Image height: " + image.getHeight());
+                                Log.i("image", "Image width: " + image.getWidth());
+                                image.recycle();
+                            } else Log.i("image", "Image was null");
+                            finish_simple_post(post, gif, false);
+                        });
+                    }
                 }
 
                 @Override

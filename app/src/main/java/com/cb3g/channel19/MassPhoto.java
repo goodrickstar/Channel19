@@ -118,7 +118,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
                 if (user.isChecked) sendingIds.add(user.id);
             }
             if (RadioService.operator.getAdmin()) sendingIds.add(RadioService.operator.getUser_id());
-            if (!sendingIds.isEmpty()) {
+            if (!sendingIds.isEmpty() && resource != null) {
                 FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", resource.getIntrinsicHeight(), resource.getIntrinsicWidth());
                 Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload);
                 uploader.uploadImage();

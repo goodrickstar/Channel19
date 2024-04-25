@@ -785,6 +785,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             if (playing || recording) {
                 if (MI != null) MI.updateQueue(inbounds.size(), paused, poor);
             } else sendBroadcast(new Intent("play"));
+            if (paused) inbounds.sort(Comparator.comparingLong(Inbound::getStamp));
         }).addOnFailureListener(exception -> Logger.INSTANCE.e("download task error", exception.getMessage()));
     }
 

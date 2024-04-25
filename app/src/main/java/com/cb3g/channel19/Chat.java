@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -122,7 +123,9 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                         try {
                             JSONObject total = new JSONObject(data);
                             glideImageLoader.load(starIV, Utils.parseRankUrl(total.getString("rank")));
-                            stamp.setText("Active " + Utils.timeOnline(Utils.timeDifferance(total.getInt("last_online"))) + " ago");
+                            Log.i("logging", "online is "+ total.getBoolean("online"));
+                            if (total.getBoolean("online"))stamp.setText("Online");
+                            else stamp.setText("Offline");
                             JSONArray quick = new JSONArray(total.getString("history"));
                             List<ChatRow> newList = new ArrayList<>();
                             for (int x = 0; x < quick.length(); x++) {

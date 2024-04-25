@@ -35,10 +35,7 @@ public class UserDiffCallback extends DiffUtil.Callback {
 
     @Override
     public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-        final UserListEntry oldUser = oldUsers.get(oldItemPosition);
-        final UserListEntry newUser = newUsers.get(newItemPosition);
-
-        return gson.toJson(oldUser).equals(gson.toJson(newUser));
+        return gson.toJson(oldUsers.get(oldItemPosition)).equals(gson.toJson(newUsers.get(newItemPosition)));
     }
 
 }

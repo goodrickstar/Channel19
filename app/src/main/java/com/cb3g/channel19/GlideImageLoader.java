@@ -2,6 +2,7 @@ package com.cb3g.channel19;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -55,6 +56,24 @@ public class GlideImageLoader {
         }).into(imageView);
     }
 
+    public void load(ImageView imageView, ProgressBar progressBar, final Uri uri) {
+        progressBar.setVisibility(View.VISIBLE);
+        Glide.with(context).load(uri).transition(DrawableTransitionOptions.withCrossFade()).listener(new RequestListener<>() {
+            @Override
+            public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                progressBar.setVisibility(View.INVISIBLE);
+                return false;
+            }
+
+            @Override
+            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                progressBar.setVisibility(View.INVISIBLE);
+                imageView.setVisibility(View.VISIBLE);
+                return false;
+            }
+        }).into(imageView);
+    }
+
     public void load(ImageView imageView, ProgressBar progressBar, final String url, final int screenWidth) {
         progressBar.setVisibility(View.VISIBLE);
         Glide.with(context).load(url).transition(DrawableTransitionOptions.withCrossFade()).listener(new RequestListener<>() {
@@ -74,6 +93,10 @@ public class GlideImageLoader {
         }).into(imageView);
     }
 
+    public void load(ImageView imageView, final String url, RequestListener<Drawable> requestListener) {
+        Glide.with(context).load(url).transition(DrawableTransitionOptions.withCrossFade()).listener(requestListener).into(imageView);
+    }
+
     public void preload(String url, RequestListener<File> listener) {
         Glide.with(context)
                 .downloadOnly()
@@ -81,6 +104,10 @@ public class GlideImageLoader {
                 .load(url)
                 .listener(listener)
                 .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL);
+    }
+
+    public void load(ImageView imageView, Uri uri) {
+
     }
 }
 

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,24 +25,25 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
 import org.threeten.bp.Instant;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class MassPast extends DialogFragment implements ValueEventListener {
     private Context context;
     private final DatabaseReference massReference = Utils.getDatabase().getReference().child("mass history").child(RadioService.operator.getUser_id());
-    private final RecyleAdapter recycler_adapter = new RecyleAdapter();
-    private final ArrayList<Photo> photoRecords = new ArrayList<>();
     private int screenWidth = 0;
-    private final long stamp = Instant.now().getEpochSecond();
+
+    private MassAdapter adapter;
     private MassPastLayoutBinding binding;
     private MI MI;
-
+    private boolean staged = false;
     private GlideImageLoader glideImageLoader;
 
     @Override
@@ -64,10 +65,11 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
+        adapter = new MassAdapter();
         screenWidth = Utils.getScreenWidth(requireActivity());
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(context, RecyclerView.VERTICAL, false));
         binding.recyclerView.setHasFixedSize(true);
-        binding.recyclerView.setAdapter(recycler_adapter);
+        binding.recyclerView.setAdapter(adapter);
         massReference.addValueEventListener(this);
     }
 
@@ -93,19 +95,26 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        HashMap<String, Object> updates = new HashMap<>();
-        photoRecords.clear();
+        if (staged) context.sendBroadcast(new Intent("nineteenToast").putExtra("data", "Photo Received").setPackage("com.cb3g.channel19"));
+        staged = true;
+        List<Photo> photos = new ArrayList<>();
         for (DataSnapshot child : dataSnapshot.getChildren()) {
             Photo photo = child.getValue(Photo.class);
-            assert photo != null;
-            if (photo.getStamp() < stamp - 86400) {
-                updates.put(child.getKey(), null);
-            } else photoRecords.add(0, photo);
+            if (photo != null && child.getKey() != null) {
+                photo.setKey(child.getKey());
+                photos.add(photo);
+                photos.sort((one, two) -> Long.compare(two.getStamp(), one.getStamp()));
+            }
         }
-        recycler_adapter.notifyDataSetChanged();
-        massReference.updateChildren(updates);
-        binding.hourGlass.setVisibility(View.INVISIBLE);
-        if (photoRecords.isEmpty()) dismiss();
+        if (photos.isEmpty()) {
+            context.sendBroadcast(new Intent("nineteenToast").putExtra("data", "No History Yet").setPackage("com.cb3g.channel19"));
+            dismiss();
+        }
+        else {
+            binding.massProgress.setVisibility(View.INVISIBLE);
+            adapter.updatePhotos(photos);
+        }
+        context.getSharedPreferences("massPast", Context.MODE_PRIVATE).edit().putString("history", new Gson().toJson(photos)).apply();
     }
 
     @Override
@@ -113,17 +122,35 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
     }
 
-    class RecyleAdapter extends RecyclerView.Adapter<RecyleAdapter.MyViewHolder> {
+    class MassAdapter extends RecyclerView.Adapter<MassAdapter.MyViewHolder> {
+        private List<Photo> photos;
+
+        public MassAdapter() {
+            final String data = context.getSharedPreferences("massPast", Context.MODE_PRIVATE).getString("history", "");
+            if (!data.isEmpty()) {
+                photos = new Gson().fromJson(data, new TypeToken<List<Photo>>() {
+                }.getType());
+                binding.massProgress.setVisibility(View.INVISIBLE);
+            }
+            else photos = new ArrayList<>();
+        }
+
+        public void updatePhotos(List<Photo> photos) {
+            final MassPhotoDiffCallBack diffCallback = new MassPhotoDiffCallBack(this.photos, photos);
+            final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+            this.photos = photos;
+            diffResult.dispatchUpdatesTo(this);
+        }
 
         @NonNull
         @Override
-        public RecyleAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new RecyleAdapter.MyViewHolder(getLayoutInflater().inflate(R.layout.past_row, parent, false));
+        public MassAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new MyViewHolder(getLayoutInflater().inflate(R.layout.past_row, parent, false));
         }
 
         @Override
-        public void onBindViewHolder(@NonNull RecyleAdapter.MyViewHolder holder, int i) {
-            Photo photo = photoRecords.get(holder.getAdapterPosition());
+        public void onBindViewHolder(@NonNull MassAdapter.MyViewHolder holder, int i) {
+            Photo photo = photos.get(holder.getAdapterPosition());
             holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
             holder.handle.setText(photo.getHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));
@@ -152,10 +179,10 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
         @Override
         public int getItemCount() {
-            return photoRecords.size();
+            return photos.size();
         }
 
-        class MyViewHolder extends RecyclerView.ViewHolder {
+        static class MyViewHolder extends RecyclerView.ViewHolder {
             ImageView image, profile, rank, save;
             TextView handle, stamp;
             ProgressBar progressBar;

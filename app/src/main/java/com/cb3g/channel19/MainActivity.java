@@ -112,7 +112,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             String action = intent.getAction();
             if (action == null) return;
             switch (action) {
-                case "advertise" -> showRewardAd();
+                case "advertise" -> {
+                    if (!RadioService.ghostUsers.contains(RadioService.operator.getUser_id()))
+                        showRewardAd();
+                }
                 case "review" -> {
                     ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
                     Task<ReviewInfo> request = manager.requestReviewFlow();
@@ -383,7 +386,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (settings.getBoolean("flagDue", false)) {
             displayLongFlag(settings.getString("flagSenderId", "Unknown"), settings.getString("flagSenderHandle", "Unknown"));
         }
-        if (!Utils.serviceAlive(this) || !isBound) finish();
     }
 
     @Override
@@ -591,7 +593,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
             @Override
             public void onDismissed(Snackbar snackbar, int event) {
-                if (RadioService.snacks.size() > 0) RadioService.snacks.remove(0);
+                if (!RadioService.snacks.isEmpty()) RadioService.snacks.remove(0);
                 RadioService.occupied.set(false);
                 if (RS != null) RS.checkForMessages();
             }
@@ -703,7 +705,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     @Override
     public void updateLocationDisplay(String location) {
-        if (location.equals("")) {
+        if (location.isEmpty()) {
             binding.maLocatoinTv.setText(R.string.location_unknown);
             //binding.blackLocationTv.setVisibility(View.INVISIBLE);
         } else {
