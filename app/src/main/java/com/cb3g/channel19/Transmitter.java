@@ -55,7 +55,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     private MediaRecorder recorder = null;
     private String saveDirectory;
     private Locale locale;
-    private long msgCount = System.currentTimeMillis();
+    private long msgCount = 0;
     private int tutorial_count = 0, queueMax = 9;
     private GlideImageLoader glideImageLoader;
     private final FragmentManager fragmentManager;
@@ -101,7 +101,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
                 } else {
                     binding.mute.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.muter));
                 }
-                context.sendBroadcast(new Intent("muteChannelNineTeen"));
+                context.sendBroadcast(new Intent("muteChannelNineTeen").setPackage("com.cb3g.channel19"));
             }
         });
         binding.talkback.setOnCheckedChangeListener(this);
@@ -207,11 +207,9 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             return;
         }
         if (!Utils.permissionsAccepted(context, recordPermissions)) {
-            Log.i("test", "startRecorder() permission request");
-            context.sendBroadcast(new Intent("show_result").putExtra("title", getResources().getString(R.string.permission_needed_title)).putExtra("content", getResources().getString(R.string.record_access_info)));
+            context.sendBroadcast(new Intent("show_result").setPackage("com.cb3g.channel19").putExtra("title", getResources().getString(R.string.permission_needed_title)).putExtra("content", getResources().getString(R.string.record_access_info)));
             return;
         }
-        Log.i("test", "startRecorder() recordChange(true)");
         MI.recordChange(true);
         Utils.vibrate(binding.ring);
     }
@@ -222,7 +220,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         AlphaAnimation slightFadeOut = new AlphaAnimation(1f, .3f);
         slightFadeOut.setDuration(200);
         slightFadeOut.setFillAfter(true);
-        context.sendBroadcast(new Intent("nineteenMicSound"));
+        context.sendBroadcast(new Intent("nineteenMicSound").setPackage("com.cb3g.channel19"));
         binding.transmitHandleTv.setText(R.string.transmitting);
         binding.transmitCarrierTv.setText("");
         binding.transmitDurationTv.setText("");
@@ -274,8 +272,8 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
                 long loggedTime = (Instant.now().getEpochSecond() - msgCount);
                 if (loggedTime >= 2) {
                     Utils.vibrate(binding.ring);
-                    context.sendBroadcast(new Intent("nineteenMicSound"));
-                    context.sendBroadcast(new Intent("nineteenTransmit").putExtra("data", fileUrl).putExtra("stamp", msgCount).putExtra("talkback", binding.talkback.isChecked()).putExtra("duration", loggedTime));
+                    context.sendBroadcast(new Intent("nineteenMicSound").setPackage("com.cb3g.channel19"));
+                    context.sendBroadcast(new Intent("nineteenTransmit").setPackage("com.cb3g.channel19").putExtra("data", fileUrl).putExtra("stamp", msgCount).putExtra("talkback", binding.talkback.isChecked()).putExtra("duration", loggedTime));
 
                 } else MI.showSnack(new Snack("Too short!", Snackbar.LENGTH_SHORT));
             }
@@ -299,7 +297,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
     public boolean onLongClick(View v) {
         User user = MI.returnTalkerEntry();
         if (user != null) {
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
             if (cdf == null) {
@@ -322,7 +320,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             else MI.showSnack(new Snack("Talk-Back Off", Snackbar.LENGTH_SHORT));
         }
         Utils.vibrate(buttonView);
-        context.sendBroadcast(new Intent("nineteenBoxSound"));
+        context.sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
         settings.edit().putBoolean("talkback", isChecked).apply();
     }
 
@@ -358,7 +356,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
             glideImageLoader.load(binding.transmitProfilePictureIv, display.getProfileLink(), RadioService.profileOptions);
             binding.transmitProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenBoxSound"));
+                context.sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
                 if (MI != null)
                     MI.streamFile(display.getProfileLink());
             });
@@ -431,7 +429,7 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         final int selection = seekBar.getProgress();
         if (queue != selection) {
             if (queue != 0) Utils.vibrate(seekBar);
-            context.sendBroadcast(new Intent("nineteenScroll").putExtra("data", selection));
+            context.sendBroadcast(new Intent("nineteenScroll").setPackage("com.cb3g.channel19").putExtra("data", selection));
         }
         seekBar.setMax(queueMax);
         binding.quetv.setText(String.format(locale, "%,d", queue));

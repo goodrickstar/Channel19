@@ -82,11 +82,11 @@ public class Blocked extends DialogFragment {
             int id = v.getId();
             if (id == R.id.order) {
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             } else if (id == R.id.save) {
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
-                context.sendBroadcast(new Intent("nineteenUpdateBlocks").putExtra("photoIDs", RadioService.gson.toJson(photo)).putExtra("textIDs", RadioService.gson.toJson(text)).putExtra("blockedIDs", RadioService.gson.toJson(radio)));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+                context.sendBroadcast(new Intent("nineteenUpdateBlocks").setPackage("com.cb3g.channel19").putExtra("photoIDs", RadioService.gson.toJson(photo)).putExtra("textIDs", RadioService.gson.toJson(text)).putExtra("blockedIDs", RadioService.gson.toJson(radio)));
             }
             dismiss();
         };

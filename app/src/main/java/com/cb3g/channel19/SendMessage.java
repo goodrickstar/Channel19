@@ -65,9 +65,9 @@ public class SendMessage extends DialogFragment {
             Utils.hideKeyboard(context, v);
             final String output = messageET.getText().toString().trim();
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             if (!output.isEmpty() && v.getId() == R.id.send)
-                context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", id).putExtra("text", output));
+                context.sendBroadcast(new Intent("nineteenSendPM").setPackage("com.cb3g.channel19").putExtra("id", id).putExtra("text", output));
             dismiss();
         };
         send.setOnClickListener(listener);
@@ -86,14 +86,14 @@ public class SendMessage extends DialogFragment {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 }
 

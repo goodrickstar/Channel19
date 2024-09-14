@@ -56,6 +56,41 @@ public class GlideImageLoader {
         }).into(imageView);
     }
 
+    public void load(ImageView imageView, ProgressBar progressBar, final String url, final boolean crossfade) {
+        progressBar.setVisibility(View.VISIBLE);
+        if (crossfade){
+            Glide.with(context).load(url).transition(DrawableTransitionOptions.withCrossFade()).listener(new RequestListener<>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    return false;
+                }
+
+                @Override
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    imageView.setVisibility(View.VISIBLE);
+                    return false;
+                }
+            }).into(imageView);
+        }else{
+            Glide.with(context).load(url).listener(new RequestListener<>() {
+                @Override
+                public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    return false;
+                }
+
+                @Override
+                public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    imageView.setVisibility(View.VISIBLE);
+                    return false;
+                }
+            }).into(imageView);
+        }
+    }
+
     public void load(ImageView imageView, ProgressBar progressBar, final Uri uri) {
         progressBar.setVisibility(View.VISIBLE);
         Glide.with(context).load(uri).transition(DrawableTransitionOptions.withCrossFade()).listener(new RequestListener<>() {

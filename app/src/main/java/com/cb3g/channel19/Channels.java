@@ -52,7 +52,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
     }
 
     private void list_sidebands() {
@@ -83,7 +83,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                         if (responseChannelInfo.isEmpty() || (!owned && !RadioService.operator.getSilenced() && RadioService.operator.getChannel() != null))
                             responseChannelInfo.add(0, new ChannelInfo(0));
                         binding.recyclerView.post(() -> binding.recyclerView.setAdapter(new SideBandAdapter(responseChannelInfo)));
-                        binding.recyclerView.animate().alpha(1.0f).setDuration(1000);
+                        //binding.recyclerView.animate().alpha(1.0f).setDuration(1000);
                     } catch (JSONException e) {
                         LOG.e("list_sidebands", e.getMessage());
                     }
@@ -164,14 +164,14 @@ public class Channels extends DialogFragment implements View.OnClickListener {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
@@ -195,7 +195,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
         close.setOnClickListener(view -> {
             Utils.vibrate(v);
             if (RadioService.operator.getChannel() != null) {
-                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 dismiss();
             } else Toaster.toastlow(context, "Join a channel or create a new one");
         });
@@ -243,7 +243,7 @@ public class Channels extends DialogFragment implements View.OnClickListener {
                     ChannelCreatorHolder channelCreatorHolder = (ChannelCreatorHolder) holder;
                     channelCreatorHolder.itemView.setOnClickListener(v -> {
                         Utils.vibrate(v);
-                        context.sendBroadcast(new Intent("nineteenClickSound"));
+                        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                         if (MI != null) MI.createChannel();
                         dismiss();
                     });

@@ -95,7 +95,7 @@ public class UserListOptionsNew extends DialogFragment {
         });
         binding.largeProfile.setOnClickListener(v12 -> {
             Utils.vibrate(v12);
-            context.sendBroadcast(new Intent("nineteenBoxSound"));
+            context.sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
             if (MI != null) MI.streamFile(user.getProfileLink());
         });
         binding.optionMenu.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
@@ -182,7 +182,7 @@ public class UserListOptionsNew extends DialogFragment {
     public void onDismiss(@NotNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
@@ -243,7 +243,7 @@ public class UserListOptionsNew extends DialogFragment {
             @Override
             public void onClick(View v) {
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenBoxSound"));
+                context.sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
                 if (MI == null) return;
                 UserOption option = (UserOption) v.getTag(v.getId());
                 switch (option.getOption()) {
@@ -284,7 +284,7 @@ public class UserListOptionsNew extends DialogFragment {
                             databaseReference.child("autoSkip").child(RadioService.operator.getUser_id()).child(user.getUser_id()).removeValue();
                         else {
                             databaseReference.child("autoSkip").child(RadioService.operator.getUser_id()).child(user.getUser_id()).setValue(Instant.now().getEpochSecond());
-                            context.sendBroadcast(new Intent("purgeUser").putExtra("data", user.getUser_id()));
+                            context.sendBroadcast(new Intent("purgeUser").setPackage("com.cb3g.channel19").putExtra("data", user.getUser_id()));
                         }
                         dismiss();
                     }
@@ -318,7 +318,7 @@ public class UserListOptionsNew extends DialogFragment {
                     }
                     //Admin Actions
                     case INFO -> {
-                        context.sendBroadcast(new Intent("fetchInformation").putExtra("data", user.getUser_id()));
+                        context.sendBroadcast(new Intent("fetchInformation").setPackage("com.cb3g.channel19").putExtra("data", user.getUser_id()));
                         dismiss();
                     }
                     case FLAG_OUT -> {

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -108,19 +109,21 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         int id = v.getId();
         if (id == R.id.close) {
             Set<String> set = new HashSet<>(savedIds);
+            Log.i("logging", "Sending Photo");
             context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putStringSet("massIds", set).apply();
-            final List<String> sendingIds = new ArrayList<>();
+            final ArrayList<String> sendingIds = new ArrayList<>();
             for (MassPhotoUser user : working) {
                 if (user.isChecked) sendingIds.add(user.id);
             }
-            if (RadioService.operator.getAdmin()) sendingIds.add(RadioService.operator.getUser_id());
+            if (RadioService.operator.getAdmin())
+                sendingIds.add(RadioService.operator.getUser_id());
             if (!sendingIds.isEmpty() && resource != null) {
-                FileUpload upload = new FileUpload(uri, RequestCode.MASS_PHOTO, RadioService.gson.toJson(sendingIds), "", resource.getIntrinsicHeight(), resource.getIntrinsicWidth());
-                Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload);
+                FileUpload upload = new FileUpload(RequestCode.MASS_PHOTO, sendingIds, new Photo(Utils.getKey(), uri, resource.getIntrinsicHeight(), resource.getIntrinsicWidth(), Utils.UTC(), RadioService.operator.getUser_id(), RadioService.operator.getProfileLink(), RadioService.operator.getHandle(), RadioService.operator.getRank()));
+                Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload, RadioService.operator.getHandle());
                 uploader.uploadImage();
                 dismiss();
             }
@@ -146,14 +149,14 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     private boolean allChecked() {

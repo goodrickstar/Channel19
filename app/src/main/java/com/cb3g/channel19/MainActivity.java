@@ -65,10 +65,6 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.play.core.review.ReviewInfo;
-import com.google.android.play.core.review.ReviewManager;
-import com.google.android.play.core.review.ReviewManagerFactory;
-import com.google.android.play.core.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -115,18 +111,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 case "advertise" -> {
                     if (!RadioService.ghostUsers.contains(RadioService.operator.getUser_id()))
                         showRewardAd();
-                }
-                case "review" -> {
-                    ReviewManager manager = ReviewManagerFactory.create(MainActivity.this);
-                    Task<ReviewInfo> request = manager.requestReviewFlow();
-                    request.addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            ReviewInfo reviewInfo = task.getResult();
-                            Task<Void> flow = manager.launchReviewFlow(MainActivity.this, reviewInfo);
-                            flow.addOnCompleteListener(completeTask -> {
-                            });
-                        }
-                    });
                 }
                 case "nineteenGifChosen" -> {
                     ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
@@ -371,7 +355,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         overrideDown = settings.getBoolean("overidedown", false);
         tutorial_count = settings.getInt("tutorial", 0);
         if (tutorial_count == 5) finishTutorial(tutorial_count);
-        sendBroadcast(new Intent("checkForMessages"));
+        sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
         if (settings.getBoolean("custom", false)) {
             changeBackground(settings.getString("background", "default"));
         } else changeBackground(settings.getString("main_backdrop", ""));
@@ -433,14 +417,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     private void finishSilence(DeveloperPayload developerPayload) {
         databaseReference.child("silenced").child(developerPayload.id).setValue(Instant.now().getEpochSecond());
         showSnack(new Snack(developerPayload.handle + " has been silenced for an hour"));
-        sendBroadcast(new Intent("register"));
+        sendBroadcast(new Intent("register").setPackage("com.cb3g.channel19"));
         if (RS != null) RS.silence(developerPayload.id, developerPayload.handle);
     }
 
     private void finishUnsilence(DeveloperPayload developerPayload) {
         databaseReference.child("silenced").child(developerPayload.id).removeValue();
         showSnack(new Snack(developerPayload.handle + " has been unsilenced"));
-        sendBroadcast(new Intent("register"));
+        sendBroadcast(new Intent("register").setPackage("com.cb3g.channel19"));
         if (RS != null) RS.unsilence(developerPayload.id, developerPayload.handle);
     }
 
@@ -516,8 +500,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         delay = true;
         resetAnimation();
         if (!RadioService.operator.getAdmin()) {
-            sendBroadcast(new Intent("nineteenEmptyPlayer"));
-            sendBroadcast(new Intent("nineteenStaticSound"));
+            sendBroadcast(new Intent("nineteenEmptyPlayer").setPackage("com.cb3g.channel19"));
+            sendBroadcast(new Intent("nineteenStaticSound").setPackage("com.cb3g.channel19"));
             if (transmitFragment.isAdded()) {
                 transmitFragment.updateDisplay(new ProfileDisplay(), 0);
                 transmitFragment.updateQueue(0, RadioService.paused);
@@ -845,10 +829,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && overrideUp) {
-            sendBroadcast(new Intent("nineteenPlayPause"));
+            sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
             return true;
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && overrideDown) {
-            sendBroadcast(new Intent("purgeNineTeen"));
+            sendBroadcast(new Intent("purgeNineTeen").setPackage("com.cb3g.channel19"));
             return true;
         }
         return super.onKeyLongPress(keyCode, event);
@@ -864,7 +848,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 } else return super.onKeyUp(keyCode, event);
             } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
                 if (overrideDown) {
-                    sendBroadcast(new Intent("nineteenSkip"));
+                    sendBroadcast(new Intent("nineteenSkip").setPackage("com.cb3g.channel19"));
                     return true;
                 } else return super.onKeyUp(keyCode, event);
             }
@@ -903,7 +887,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             User user = returnTalkerEntry();
             if (user != null) {
                 Utils.vibrate(v);
-                sendBroadcast(new Intent("nineteenBoxSound"));
+                sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
                 streamFile(user.getProfileLink());
             }
         } else if (id == R.id.black_queue_tv) {
@@ -914,7 +898,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                     else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 }
                 Utils.vibrate(v);
-                sendBroadcast(new Intent("nineteenPlayPause"));
+                sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
             }
         } else if (id == R.id.ma_chat_history_button) {
             if (RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts())
@@ -924,7 +908,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
                 return;
             }
-            sendBroadcast(new Intent("nineteenClickSound"));
+            sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             display_message_history();
         } else if (id == R.id.ma_mass_photo_button) {
@@ -935,7 +919,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_SHORT));
                 return;
             }
-            sendBroadcast(new Intent("nineteenClickSound"));
+            sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             if (Utils.permissionsAccepted(this, Utils.getStoragePermissions())) {
                 massPhotoPicker.launch("image/*");
             } else {
@@ -943,16 +927,16 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             }
         } else if (id == R.id.ma_channels_button) {
             Utils.vibrate(v);
-            sendBroadcast(new Intent("nineteenClickSound"));
+            sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             selectChannel(true);
         } else if (id == R.id.ma_map_button) {
             if (RadioService.operator.getChannel() == null) return;
             Utils.vibrate(v);
-            sendBroadcast(new Intent("nineteenClickSound"));
+            sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             this.startActivity(new Intent(MainActivity.this, Locations.class));
         } else if (id == R.id.ma_reservoir_button) {
             if (RadioService.operator.getChannel() != null) {
-                sendBroadcast(new Intent("nineteenClickSound"));
+                sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 startActivity(new Intent(MainActivity.this, ReservoirActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
             }
@@ -963,11 +947,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             }
-            sendBroadcast(new Intent("nineteenPlayPause"));
+            sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
         } else if (id == R.id.black_skip_button) {
             if (RS != null) {
                 if (RS.getQueue() != 0) {
-                    sendBroadcast(new Intent("nineteenSkip"));
+                    sendBroadcast(new Intent("nineteenSkip").setPackage("com.cb3g.channel19"));
                     Utils.vibrate(v);
                 } else darkChange(false);
             }
@@ -978,10 +962,10 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         } else if (id == R.id.ma_skip_button) {
             Utils.vibrate(v);
             if (RadioService.operator.getChannel() == null) return;
-            sendBroadcast(new Intent("nineteenSkip"));
+            sendBroadcast(new Intent("nineteenSkip").setPackage("com.cb3g.channel19"));
         } else if (id == R.id.ma_settings_button) {
             Utils.vibrate(v);
-            sendBroadcast(new Intent("nineteenTabSound"));
+            sendBroadcast(new Intent("nineteenTabSound").setPackage("com.cb3g.channel19"));
             startActivity(new Intent(this, SettingsActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         }
     }
@@ -992,13 +976,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         int id = v.getId();
         if (id == R.id.ma_mass_photo_button) {
             Utils.vibrate(v);
-            sendBroadcast(new Intent("nineteenClickSound"));
+            sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             MassPast massPast = new MassPast();
             massPast.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
             massPast.show(fragmentManager, "massPast");
         } else if (id == R.id.ma_settings_button) {
             Utils.vibrate(v);
-            sendBroadcast(new Intent("nineteenStaticSound"));
+            sendBroadcast(new Intent("nineteenStaticSound").setPackage("com.cb3g.channel19"));
             showSnack(new Snack("Rewind Five", Snackbar.LENGTH_SHORT));
             RotateAnimation counterClockwise = new RotateAnimation(360, 0, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             counterClockwise.setDuration(2000);
@@ -1006,7 +990,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (RS != null) RS.rewind();
         } else if (id == R.id.ma_pause_button) {
             if (!isFinishing()) {
-                sendBroadcast(new Intent("nineteenClickSound"));
+                sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 QueueDialog qd = (QueueDialog) fragmentManager.findFragmentByTag("qd");
                 if (qd == null) {
@@ -1018,7 +1002,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         } else if (id == R.id.black_skip_button) {
             if (RS != null) {
                 if (RS.getQueue() != 0) {
-                    sendBroadcast(new Intent("purgeNineTeen"));
+                    sendBroadcast(new Intent("purgeNineTeen").setPackage("com.cb3g.channel19"));
                     Utils.vibrate(v);
                 } else darkChange(false);
             }
@@ -1028,12 +1012,12 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         } else if (id == R.id.ma_skip_button) {
             if (RS != null) if (RS.getQueue() != 0) {
                 Utils.vibrate(v);
-                sendBroadcast(new Intent("purgeNineTeen"));
+                sendBroadcast(new Intent("purgeNineTeen").setPackage("com.cb3g.channel19"));
             }
         } else if (id == R.id.black_profile_picture_iv_small) {
             User user = returnTalkerEntry();
             if (user != null) {
-                sendBroadcast(new Intent("nineteenClickSound"));
+                sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
                 if (cdf == null) {
@@ -1203,18 +1187,18 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                 rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                     @Override
                     public void onAdShowedFullScreenContent() {
-                        sendBroadcast(new Intent("nineteenPause"));
+                        sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
                         stopRecorder(false);
                     }
 
                     @Override
                     public void onAdFailedToShowFullScreenContent(@NotNull AdError adError) {
-                        sendBroadcast(new Intent("nineteenPlayPause"));
+                        sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
                     }
 
                     @Override
                     public void onAdDismissedFullScreenContent() {
-                        sendBroadcast(new Intent("nineteenPlayPause"));
+                        sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
                     }
                 });
                 rewardedAd.show(MainActivity.this, rewardItem -> {
@@ -1315,7 +1299,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     public void display_message_history() {
         if (isFinishing()) return;
-        sendBroadcast(new Intent("nineteenClickSound"));
+        sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         MessageHistory history = (MessageHistory) fragmentManager.findFragmentByTag("history");
         if (history == null) {
             history = new MessageHistory();
@@ -1331,7 +1315,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
 
     public void flip() {
         if (RadioService.operator.getChannel() == null) return;
-        sendBroadcast(new Intent("nineteenClickSound"));
+        sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         FragmentTransaction transaction = fragmentManager.beginTransaction();
         if (transmitFragment.isAdded()) transaction.replace(R.id.ma_bottom_frame, userFragment);
         else transaction.replace(R.id.ma_bottom_frame, transmitFragment);

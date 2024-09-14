@@ -37,20 +37,20 @@ class Blank : DialogFragment(), View.OnClickListener {
 
     override fun onClick(v: View) {
         Utils.vibrate(v)
-        requireContext().sendBroadcast(Intent("nineteenClickSound"))
-        if (title?.text.toString() == "Profile Picture") requireContext().sendBroadcast(Intent("nineteenPickProfile"))
+        requireContext().sendBroadcast(Intent("nineteenClickSound").setPackage("com.cb3g.channel19"))
+        if (title?.text.toString() == "Profile Picture") requireContext().sendBroadcast(Intent("nineteenPickProfile").setPackage("com.cb3g.channel19"))
         if (title?.text.toString() == "Please Update") gotoPlayStore()
         if (title?.text.toString() == ("Permissions Needed")) requireContext().sendBroadcast(
             Intent(
                 "nineteenAllow"
-            )
+            ).setPackage("com.cb3g.channel19")
         )
         if (title?.text.toString()
                 .contains("Location")
-        ) requireContext().sendBroadcast(Intent("requestGPS"))
+        ) requireContext().sendBroadcast(Intent("requestGPS").setPackage("com.cb3g.channel19"))
         if (title?.text.toString()
                 .contains("Camera")
-        ) requireContext().sendBroadcast(Intent("nineteenCamera"))
+        ) requireContext().sendBroadcast(Intent("nineteenCamera").setPackage("com.cb3g.channel19"))
         dismiss()
     }
 

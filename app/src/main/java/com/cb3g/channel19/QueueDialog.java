@@ -69,7 +69,7 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         dismiss();
     }
 
@@ -89,14 +89,14 @@ public class QueueDialog extends DialogFragment implements View.OnClickListener 
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     private void gather_data() {

@@ -41,7 +41,7 @@ public class BlockedByFragment extends DialogFragment {
         binding.recyclerView.setAdapter(new recycler_adapter(data));
         binding.okay.setOnClickListener(v -> {
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             dismiss();
         });
     }

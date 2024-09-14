@@ -17,6 +17,7 @@ public class FireBaseReceiver extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
+        Log.i("logging", "GCM Received");
         JSONObject messageData = new JSONObject(remoteMessage.getData());
         try {
             switch (messageData.getString("control")) {
@@ -38,8 +39,6 @@ public class FireBaseReceiver extends FirebaseMessagingService {
                         sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
                 case "toast" ->
                         sendBroadcast(new Intent("nineteenToast").putExtra("data", messageData.getString("content")).setPackage("com.cb3g.channel19"));
-                case "pulse" ->
-                        sendBroadcast(new Intent("nineteenPulse").setPackage("com.cb3g.channel19"));
                 case "removeAllOf" ->
                         sendBroadcast(new Intent("removeAllOf").putExtra("data", messageData.getString("id")).setPackage("com.cb3g.channel19"));
                 case "alert" -> {

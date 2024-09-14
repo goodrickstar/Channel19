@@ -57,7 +57,7 @@ public class TermsOfUse extends DialogFragment {
         binding.ok.setOnClickListener(v -> {
             Utils.vibrate(v);
             getContext().getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("accepted", true).apply();
-            getContext().sendBroadcast(new Intent("nineteenProve"));
+            getContext().sendBroadcast(new Intent("nineteenProve").setPackage("com.cb3g.channel19"));
             dismiss();
         });
         if (required) {

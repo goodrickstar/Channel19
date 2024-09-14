@@ -101,7 +101,7 @@ public class CreatePost extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("vibrate"));
+        context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
         if (RI == null) return;
         int id = v.getId();
         if (id == R.id.imageBox) {
@@ -121,7 +121,7 @@ public class CreatePost extends DialogFragment implements View.OnClickListener {
             dismiss();
         } else if (id == R.id.finish) {
             String content = "none";
-            if (this.content.getText().toString().trim().length() != 0)
+            if (!this.content.getText().toString().trim().isEmpty())
                 content = this.content.getText().toString().trim();
             if (content.equals("none") && gif == null)
                 return;

@@ -43,15 +43,13 @@ public class SendPhoto extends DialogFragment {
         binding.sendPhotoHandle.setText(photoArray[2]);
         final View.OnClickListener listener = v1 -> {
             Utils.vibrate(v1);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             int id = v1.getId();
             if (id == R.id.send) {
-                context.sendBroadcast(new Intent("upload").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", binding.captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", binding.image.getHeight()).putExtra("width", binding.image.getWidth()));
+                context.sendBroadcast(new Intent("upload").setPackage("com.cb3g.channel19").putExtra("uri", photoArray[0]).putExtra("mode", 2345).putExtra("caption", binding.captionTV.getText().toString().trim()).putExtra("sendToId", photoArray[1]).putExtra("sendToHandle", photoArray[2]).putExtra("height", binding.image.getHeight()).putExtra("width", binding.image.getWidth()));
                 dismiss();
             } else if (id == R.id.order) {
                 dismiss();
-            } else if (id == R.id.plus) {
-                context.sendBroadcast(new Intent("nineteenAddCaption").putExtra("data", binding.captionTV.getText().toString()));
             }
         };
         binding.send.setOnClickListener(listener);
@@ -73,14 +71,14 @@ public class SendPhoto extends DialogFragment {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
 

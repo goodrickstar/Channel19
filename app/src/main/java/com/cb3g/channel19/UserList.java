@@ -66,7 +66,7 @@ public class UserList extends Fragment {
         binding.userlistview.setAdapter(adapter);
         binding.swiper.setOnRefreshListener(() -> {
             Utils.vibrate(binding.swiper);
-            context.sendBroadcast(new Intent("fetch_users"));
+            context.sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
         });
         binding.swiper.setRefreshing(true);
         update_users_list(RadioService.userList);
@@ -132,7 +132,7 @@ public class UserList extends Fragment {
             public void onClick(View v) {
                 if (MI == null) return;
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenBoxSound"));
+                context.sendBroadcast(new Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"));
                 User user = (User) v.getTag(v.getId());
                 int id = v.getId();
                 if (id == R.id.mail) {

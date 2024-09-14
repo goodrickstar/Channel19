@@ -227,7 +227,7 @@ public class ImageSearch extends DialogFragment {
             Giph giph = (Giph) v.getTag();
             Gif gif = giph.getDownsized();
             gif.setId(giph.getId());
-            context.sendBroadcast(new Intent("nineteenGifChosen").putExtra("data", RadioService.gson.toJson(gif)));
+            context.sendBroadcast(new Intent("nineteenGifChosen").setPackage("com.cb3g.channel19").putExtra("data", RadioService.gson.toJson(gif)));
             dismiss();
         }
 

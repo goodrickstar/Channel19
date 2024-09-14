@@ -50,7 +50,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenPause"));
+        context.sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
         Utils.showRewardAd(context, RadioService.operator.getUser_id(), tokens, true);
     }
 
@@ -134,7 +134,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
                 Utils.vibrate(v);
                 ShopItem item = (ShopItem) v.getTag();
                 if (tokens < item.getCost()) {
-                    context.sendBroadcast(new Intent("wrong"));
+                    context.sendBroadcast(new Intent("wrong").setPackage("com.cb3g.channel19"));
                     return;
                 }
                 switch (item.getId()) {
@@ -146,7 +146,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
                         if (RadioService.silencedUsers.contains(RadioService.operator.getUser_id())) {
                             spent(item.getCost());
                             databaseReference.child("silenced").child(RadioService.operator.getUser_id()).removeValue();
-                        } else context.sendBroadcast(new Intent("wrong"));
+                        } else context.sendBroadcast(new Intent("wrong").setPackage("com.cb3g.channel19"));
                         break;
                     case 2:
                         spent(item.getCost());
@@ -158,7 +158,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
                         break;
                     case 4:
                         if (RadioService.ghostUsers.contains(RadioService.operator.getUser_id())) {
-                            context.sendBroadcast(new Intent("wrong"));
+                            context.sendBroadcast(new Intent("wrong").setPackage("com.cb3g.channel19"));
                             return;
                         }
                         spent(item.getCost());
@@ -169,7 +169,7 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
         };
 
         private void spent(int cost) {
-            context.sendBroadcast(new Intent("register"));
+            context.sendBroadcast(new Intent("register").setPackage("com.cb3g.channel19"));
             Utils.getTokens(RadioService.operator.getUser_id()).setValue(tokens - cost);
         }
 

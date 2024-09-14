@@ -26,6 +26,8 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.example.android.multidex.myapplication.R;
 
+import java.util.ArrayList;
+
 public class ImagePicker extends DialogFragment implements View.OnClickListener {
     private Context context;
     private final Gif gif = new Gif();
@@ -87,17 +89,23 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         int id = v.getId();
         if (id == R.id.accept) {
             UserListOptionsNew options = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
             if (options != null) options.dismiss();
             FileUpload fileUpload;
-            if (user != null)
-                fileUpload = new FileUpload(gif.getUrl(), requestCode, user.getUser_id(), user.getRadio_hanlde(), gif.getHeight(), gif.getWidth());
-            else
-                fileUpload = new FileUpload(gif.getUrl(), requestCode, RadioService.operator.getUser_id(), RadioService.operator.getHandle(), gif.getHeight(), gif.getWidth());
-            Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload);
+            Uploader uploader;
+            ArrayList<String> array = new ArrayList<>();
+            if (user != null) {
+                array.add(user.getUser_id());
+                fileUpload = new FileUpload(requestCode, array, new Photo(Utils.getKey(), gif.getUrl(), gif.getHeight(), gif.getWidth(), Utils.UTC(), user.getUser_id(), user.getProfileLink(), user.getRadio_hanlde(), user.getRank()));
+                uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload, user.getRadio_hanlde());
+            } else {
+                array.add(RadioService.operator.getUser_id());
+                fileUpload = new FileUpload(requestCode, array, new Photo(Utils.getKey(), gif.getUrl(), gif.getHeight(), gif.getWidth(), Utils.UTC(), RadioService.operator.getUser_id(), RadioService.operator.getProfileLink(), RadioService.operator.getHandle(), RadioService.operator.getRank()));
+                uploader = new Uploader(context, RadioService.operator, RadioService.client, fileUpload, RadioService.operator.getHandle());
+            }
             if (upload) uploader.uploadImage();
             else uploader.shareImage();
             dismiss();
@@ -152,13 +160,13 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 }

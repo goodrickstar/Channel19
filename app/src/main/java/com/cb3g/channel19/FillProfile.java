@@ -76,7 +76,7 @@ public class FillProfile extends DialogFragment {
         if (carrier != null) binding.carrierET.setText(carrier);
         if (location != null) binding.townET.setText(location);
         final View.OnClickListener listener = v -> {
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             final String newHandle = binding.handleET.getText().toString().trim();
             final String newCarrier = binding.carrierET.getText().toString().trim();
@@ -158,7 +158,7 @@ public class FillProfile extends DialogFragment {
     }
 
     private void updateProfile(String newHandle, String newCarrier, String newTown) {
-        context.sendBroadcast(new Intent("nineteenSendProfileToServer").putExtra("handle", newHandle).putExtra("carrier", newCarrier).putExtra("town", newTown).setPackage("com.cb3g.channel19"));
+        context.sendBroadcast(new Intent("nineteenSendProfileToServer").setPackage("com.cb3g.channel19").putExtra("handle", newHandle).putExtra("carrier", newCarrier).putExtra("town", newTown).setPackage("com.cb3g.channel19"));
         dismiss();
     }
 

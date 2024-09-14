@@ -65,7 +65,7 @@ public class Driver extends Fragment {
         if (!RadioService.operator.getDisableProfile()) {
             binding.driverProfilePictureIv.setOnClickListener(v -> {
                 Utils.vibrate(v);
-                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 ImagePicker imagePicker = (ImagePicker) fragmentManager.findFragmentByTag("imagePicker");
                 if (imagePicker == null) {
                     imagePicker = new ImagePicker(fragmentManager, null, RequestCode.PROFILE);
@@ -80,7 +80,7 @@ public class Driver extends Fragment {
         refreshRank();
         binding.blocked.setOnLongClickListener(v -> {
             if (SI != null) {
-                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 SI.checkBlocked();
             }
@@ -160,7 +160,7 @@ public class Driver extends Fragment {
                                 if (donations > 4)
                                     binding.driverStarIv.setOnClickListener(v -> {
                                         Utils.vibrate(v);
-                                        context.sendBroadcast(new Intent("nineteenClickSound"));
+                                        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                                         Stars starSelectionDialog = (Stars) fragmentManager.findFragmentByTag("ssd");
                                         if (starSelectionDialog == null) {
                                             starSelectionDialog = new Stars();

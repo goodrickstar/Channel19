@@ -22,9 +22,9 @@ android {
         applicationId "com.cb3g.channel19"
         minSdk 31
         //noinspection OldTargetApi
-        targetSdkVersion 33
-        versionCode 4942
-        versionName "3.0.0"
+        targetSdkVersion 34
+        versionCode 4945
+        versionName "3.0.3"
         multiDexEnabled true
     }
     compileSdk 34
@@ -60,9 +60,9 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
 
-    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'com.google.android.material:material:1.12.0'
 
     implementation 'com.github.amlcurran.showcaseview:library:5.4.3'
     implementation 'com.github.chrisbanes.photoview:library:1.2.4'
@@ -71,23 +71,25 @@ dependencies {
 
     implementation 'com.github.Priyansh-Kedia:OpenGraphParser:2.5.6'
 
-    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.6'
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.7'
     implementation 'com.jaredrummler:android-device-names:2.1.1'
 
-    implementation 'org.apache.commons:commons-lang3:3.11'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
 
-    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'org.jsoup:jsoup:1.17.2'
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    implementation 'com.squareup.okio:okio:3.3.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okio:okio:3.9.0'
+
+    //Carefull New Implementation!!
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
 
-    implementation 'com.github.bumptech.glide:okhttp3-integration:4.11.0'
+    implementation 'com.github.bumptech.glide:okhttp3-integration:4.16.0'
     implementation 'com.github.bumptech.glide:glide:4.16.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.15.1'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
-    implementation platform('com.google.firebase:firebase-bom:32.8.1')
+    implementation platform('com.google.firebase:firebase-bom:33.3.0')
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'com.google.firebase:firebase-storage'
     implementation 'com.google.firebase:firebase-database'
@@ -96,15 +98,13 @@ dependencies {
 
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
 
-    implementation 'com.google.android.gms:play-services-base:18.3.0'
-    implementation 'com.google.android.gms:play-services-location:21.2.0'
-    implementation 'com.google.android.gms:play-services-maps:18.2.0'
-    implementation 'com.google.android.gms:play-services-ads:23.0.0'
-    implementation "com.android.billingclient:billing:6.2.0"
+    implementation 'com.google.android.gms:play-services-base:18.5.0'
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'com.google.android.gms:play-services-maps:19.0.0'
+    implementation 'com.google.android.gms:play-services-ads:23.3.0'
+    implementation "com.android.billingclient:billing:7.0.0"
 
-    implementation 'com.google.android.play:core:1.10.3'
-
-    implementation 'com.google.guava:guava:27.0.1-jre'
+    implementation 'com.google.guava:guava:32.0.1-jre'
 
 }
 

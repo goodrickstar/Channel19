@@ -55,21 +55,14 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class Chat extends DialogFragment implements View.OnClickListener {
-    private final recycle_adapter adapter = new recycle_adapter();
-    private final List<ChatRow> list = new ArrayList<>();
+    private final ChatAdapter adapter = new ChatAdapter();
     private Context context;
-    private RecyclerView chat_view;
-    private TextView stamp;
+    private ChatBinding binding;
     private MI MI;
     private boolean launchHistory = false;
-    private ImageView starIV;
     private int screenWidth = 0;
     private final User user;
-    private ProgressBar loading;
-
-    private ChatBinding binding;
     private final FragmentManager fragmentManager;
-
     private GlideImageLoader glideImageLoader;
 
     public Chat(FragmentManager fragmentManager, User user) {
@@ -77,11 +70,71 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         this.user = user;
     }
 
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = ChatBinding.inflate(inflater);
+        return binding.getRoot();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
+        super.onViewCreated(v, savedInstanceState);
+        launchHistory = requireArguments().getBoolean("launch");
+        screenWidth = Utils.getScreenWidth(requireActivity());
+        glideImageLoader.load(binding.chatProfilePictureIv, user.getProfileLink(), RadioService.profileOptions);
+        glideImageLoader.load(binding.chatStarIv, Utils.parseRankUrl(user.getRank()));
+        binding.chatHandleTv.setText(user.getRadio_hanlde());
+        binding.chatView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, true));
+        binding.chatView.setHasFixedSize(true);
+        binding.chatView.setAdapter(adapter);
+        binding.imageBox.setOnClickListener(this);
+        binding.editBox.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.length() != 0) binding.imageBox.setImageResource(R.drawable.send);
+                else binding.imageBox.setImageResource(R.drawable.gallery);
+            }
+        });
+        String data = context.getSharedPreferences("message_history", Context.MODE_PRIVATE).getString(user.getUser_id(), null);
+        if (data != null)
+            adapter.updateData(parseJson(data));
+    }
+
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        this.context = context;
+        MI = (com.cb3g.channel19.MI) getActivity();
+        RadioService.chat.set(user.getUser_id());
+        glideImageLoader = new GlideImageLoader(context);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        gather_history(false, false);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        RadioService.chat.set("0");
+        if (MI != null && launchHistory) MI.display_message_history();
+    }
 
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         if (MI != null) {
             if (binding.editBox.getText().length() != 0) reply();
             else {
@@ -109,45 +162,28 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         RadioService.client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                chat_view.post(() -> loading.setVisibility(View.GONE));
+                binding.chatView.post(() -> binding.loading.setVisibility(View.GONE));
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
-                    if (sound) context.sendBroadcast(new Intent("nineteenChatSound"));
+                    if (sound) context.sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
                     assert response.body() != null;
                     final String data = response.body().string();
-                    chat_view.post(() -> {
-                        loading.setVisibility(View.GONE);
-                        try {
-                            JSONObject total = new JSONObject(data);
-                            glideImageLoader.load(starIV, Utils.parseRankUrl(total.getString("rank")));
-                            Log.i("logging", "online is "+ total.getBoolean("online"));
-                            if (total.getBoolean("online"))stamp.setText("Online");
-                            else stamp.setText("Offline");
-                            JSONArray quick = new JSONArray(total.getString("history"));
-                            List<ChatRow> newList = new ArrayList<>();
-                            for (int x = 0; x < quick.length(); x++) {
-                                newList.add(RadioService.gson.fromJson(quick.getJSONObject(x).toString(), ChatRow.class));
-                            }
-                            DiffUtil.DiffResult results = DiffUtil.calculateDiff(new MyDiffCallback(newList, list));
-                            list.clear();
-                            list.addAll(newList);
-                            results.dispatchUpdatesTo(adapter);
-                            if (scroll) {
-                                RecyclerView.SmoothScroller smoothScroller = new
-                                        LinearSmoothScroller(context) {
-                                            @Override
-                                            protected int getVerticalSnapPreference() {
-                                                return LinearSmoothScroller.SNAP_TO_START;
-                                            }
-                                        };
-                                smoothScroller.setTargetPosition(0);
-                                Objects.requireNonNull(chat_view.getLayoutManager()).startSmoothScroll(smoothScroller);
-                            }
-                        } catch (JSONException e) {
-                            Logger.INSTANCE.e(String.valueOf(e));
+                    context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().putString(user.getUser_id(), data).apply();
+                    binding.chatView.post(() -> {
+                        adapter.updateData(parseJson(data));
+                        if (scroll) {
+                            RecyclerView.SmoothScroller smoothScroller = new
+                                    LinearSmoothScroller(context) {
+                                        @Override
+                                        protected int getVerticalSnapPreference() {
+                                            return LinearSmoothScroller.SNAP_TO_START;
+                                        }
+                                    };
+                            smoothScroller.setTargetPosition(0);
+                            Objects.requireNonNull(binding.chatView.getLayoutManager()).startSmoothScroll(smoothScroller);
                         }
                     });
                 }
@@ -155,113 +191,42 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         });
     }
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        this.context = context;
-        MI = (com.cb3g.channel19.MI) getActivity();
-        RadioService.chat.set(user.getUser_id());
-        glideImageLoader = new GlideImageLoader(context);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        gather_history(false, false);
-        Utils.hideKeyboard(context, binding.editBox);
-    }
-
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = ChatBinding.inflate(inflater);
-        return binding.getRoot();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View v, Bundle savedInstanceState) {
-        super.onViewCreated(v, savedInstanceState);
-        final TextView title = v.findViewById(R.id.black_handle_tv);
-        final ImageView profile = v.findViewById(R.id.black_profile_picture_iv);
-        loading = v.findViewById(R.id.loading);
-        starIV = v.findViewById(R.id.black_star_iv);
-        stamp = v.findViewById(R.id.stamp);
-        glideImageLoader.load(profile, user.getProfileLink(), RadioService.profileOptions);
-        chat_view = v.findViewById(R.id.chat_view);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        linearLayoutManager.setReverseLayout(true);
-        chat_view.setLayoutManager(linearLayoutManager);
-        chat_view.setHasFixedSize(true);
-        chat_view.setAdapter(adapter);
-        launchHistory = requireArguments().getBoolean("launch");
-        title.setText(user.getRadio_hanlde());
-        final ImageView image_selector = v.findViewById(R.id.imageBox);
-        image_selector.setOnClickListener(this);
-        binding.editBox.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+    private List<ChatRow> parseJson(String data) {
+        try {
+            JSONObject total = new JSONObject(data);
+            if (total.getBoolean("online")) binding.stamp.setText("Online");
+            else binding.stamp.setText("Offline");
+            JSONArray quick = new JSONArray(total.getString("history"));
+            List<ChatRow> newList = new ArrayList<>();
+            for (int x = 0; x < quick.length(); x++) {
+                newList.add(RadioService.gson.fromJson(quick.getJSONObject(x).toString(), ChatRow.class));
             }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (s.length() != 0) image_selector.setImageResource(R.drawable.send);
-                else image_selector.setImageResource(R.drawable.gallery);
-            }
-        });
-        screenWidth = Utils.getScreenWidth(requireActivity());
+            return newList;
+        } catch (JSONException e) {
+            Logger.INSTANCE.e(String.valueOf(e));
+            return new ArrayList<>();
+        }
     }
 
     private void reply() {
         final String text = binding.editBox.getText().toString().trim();
         if (text.isEmpty()) return;
         binding.editBox.setText("");
-        context.sendBroadcast(new Intent("nineteenSendPM").putExtra("text", text).putExtra("id", user.getUser_id()));
+        context.sendBroadcast(new Intent("nineteenSendPM").setPackage("com.cb3g.channel19").putExtra("text", text).putExtra("id", user.getUser_id()));
     }
 
-    private void delete_message(final String messageId, final String url) {
-        final Map<String, Object> header = new HashMap<>();
-        header.put("typ", Header.JWT_TYPE);
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .claim("check", user.getUser_id())
-                .claim("messageId", messageId)
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_delete_message.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-            }
+    private class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private final List<ChatRow> list = new ArrayList<>();
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) {
-                if (response.isSuccessful() && isAdded()) {
-                    if (url != null) try {
-                        RadioService.storage.getReferenceFromUrl(url).delete();
-                    } catch (IllegalArgumentException e) {
-                        Logger.INSTANCE.e("delete_message() IllegalArgumentException " + e);
-                    }
-                    chat_view.post(() -> gather_history(false, false));
-                }
-            }
-        });
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        RadioService.chat.set("0");
-        if (MI != null && launchHistory) MI.display_message_history();
-    }
-
-    private class recycle_adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        public void updateData(List<ChatRow> data) {
+            binding.loading.setVisibility(View.GONE);
+            final ChatDiffCallBack diffCallback = new ChatDiffCallBack(list, data);
+            final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+            list.clear();
+            list.addAll(data);
+            diffResult.dispatchUpdatesTo(this);
+            if (list.isEmpty()) Utils.showKeyboard(context, binding.editBox);
+        }
 
         @NotNull
         @Override
@@ -341,7 +306,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                             if (id == R.id.delete_message) {
                                 delete_message(chatRow.getMessage_id(), chatRow.getUrl());
                             } else if (id == R.id.copy_text) {
-                                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", chatRow.getUrl()));
+                                context.sendBroadcast(new Intent("savePhotoToDisk").setPackage("com.cb3g.channel19").putExtra("url", chatRow.getUrl()));
                             }
                             return true;
                         });
@@ -366,7 +331,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             return list.size();
         }
 
-        private class ChatPhotoHolder extends RecyclerView.ViewHolder {
+        private static class ChatPhotoHolder extends RecyclerView.ViewHolder {
             ImageView image;
             RelativeLayout border;
             ProgressBar loading;
@@ -379,7 +344,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             }
         }
 
-        private class ChatTextHolder extends RecyclerView.ViewHolder {
+        private static class ChatTextHolder extends RecyclerView.ViewHolder {
             TextView text;
             RelativeLayout border;
 
@@ -389,44 +354,40 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                 border = convertView.findViewById(R.id.border);
             }
         }
-    }
 
-    public static class MyDiffCallback extends DiffUtil.Callback {
+        private void delete_message(final String messageId, final String url) {
+            final Map<String, Object> header = new HashMap<>();
+            header.put("typ", Header.JWT_TYPE);
+            final String data = Jwts.builder()
+                    .setHeader(header)
+                    .claim("userId", RadioService.operator.getUser_id())
+                    .claim("check", user.getUser_id())
+                    .claim("messageId", messageId)
+                    .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
+                    .compact();
+            final Request request = new Request.Builder()
+                    .url(RadioService.SITE_URL + "user_delete_message.php")
+                    .post(new FormBody.Builder().add("data", data).build())
+                    .build();
+            RadioService.client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                }
 
-        List<ChatRow> oldMessages;
-        List<ChatRow> newMessages;
-
-        public MyDiffCallback(List<ChatRow> newMessages, List<ChatRow> oldMessages) {
-            this.newMessages = newMessages;
-            this.oldMessages = oldMessages;
-        }
-
-        @Override
-        public int getOldListSize() {
-            return oldMessages.size();
-        }
-
-        @Override
-        public int getNewListSize() {
-            return newMessages.size();
-        }
-
-        @Override
-        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            return oldMessages.get(oldItemPosition).getMessage_id().equals(newMessages.get(newItemPosition).getMessage_id());
-        }
-
-        @Override
-        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            return oldMessages.get(oldItemPosition).equals(newMessages.get(newItemPosition));
-        }
-
-        @Nullable
-        @Override
-        public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-            //you can return particular field for changed item.
-            return super.getChangePayload(oldItemPosition, newItemPosition);
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) {
+                    if (response.isSuccessful() && isAdded()) {
+                        if (url != null) try {
+                            RadioService.storage.getReferenceFromUrl(url).delete();
+                        } catch (IllegalArgumentException e) {
+                            Logger.INSTANCE.e("delete_message() IllegalArgumentException " + e);
+                        }
+                        binding.chatView.post(() -> gather_history(false, false));
+                    }
+                }
+            });
         }
     }
+
 }
 

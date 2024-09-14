@@ -58,7 +58,7 @@ public class CreatePoll extends DialogFragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("vibrate"));
+        context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
         if (v.getId() == R.id.finish) {
             if (!content.getText().toString().trim().isEmpty())
                 RI.createNewPoll(content.getText().toString().trim(), postId);

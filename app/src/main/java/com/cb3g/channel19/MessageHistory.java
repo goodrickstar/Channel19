@@ -15,10 +15,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.MessageHistoryBinding;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -41,12 +43,13 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MessageHistory extends DialogFragment {
-    private final recycler_adapter adapter = new recycler_adapter();
     private Context context;
-    private final List<History> list = new ArrayList<>();
     private MI MI;
-    private RecyclerView history;
     private GlideImageLoader glideImageLoader;
+
+    private final HistoryAdapter adapter = new HistoryAdapter();
+
+    private MessageHistoryBinding binding;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,24 +59,24 @@ public class MessageHistory extends DialogFragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.message_history, container, false);
+        binding = MessageHistoryBinding.inflate(inflater);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        history = view.findViewById(R.id.ma_chat_history_button);
-        history.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
-        history.setHasFixedSize(true);
-        history.setAdapter(adapter);
-        history.setAdapter(adapter);
-        final TextView close = view.findViewById(R.id.close);
-        close.setOnClickListener(v -> {
+        binding.historyListView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
+        binding.historyListView.setHasFixedSize(true);
+        binding.historyListView.setAdapter(adapter);
+        binding.close.setOnClickListener(v -> {
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             dismiss();
         });
+        String data = context.getSharedPreferences("message_history", Context.MODE_PRIVATE).getString("data", null);
+        if (data != null) adapter.updateHistory(parseJsonAndSort(data));
     }
 
     @Override
@@ -102,54 +105,45 @@ public class MessageHistory extends DialogFragment {
                 if (response.isSuccessful() && isAdded()) {
                     assert response.body() != null;
                     final String data = response.body().string();
-                    history.post(() -> {
-                        try {
-                            JSONObject returnedObject = new JSONObject(data);
-                            JSONArray returnedList = returnedObject.getJSONArray("data");
-                            JSONArray onlineList = returnedObject.getJSONArray("online");
-                            final int timeStamp = returnedObject.getInt("time");
-                            list.clear();
-                            for (int i = 0; i < returnedList.length(); i++) {
-                                History entry = RadioService.gson.fromJson(returnedList.get(i).toString(), History.class);
-                                try {
-                                    final int online = onlineList.getInt(i);
-                                    if (online >= timeStamp) entry.setOnline(0);
-                                    else entry.setOnline(onlineList.getInt(i));
-                                } catch (JSONException e) {
-                                    Logger.INSTANCE.e("entry.setOnline", String.valueOf(e));
-                                }
-                                list.add(entry);
-                            }
-                            list.sort((one, two) -> two.getOnline() - one.getOnline());
-                            list.sort((o1, o2) -> {
-                                if (o1.getOnline() == 0 && o2.getOnline() == 0) return 0;
-                                if (o1.getOnline() == 0) return -1;
-                                if (o2.getOnline() == 0) return 1;
-                                return 0;
-                            });
-                            adapter.notifyDataSetChanged();
-                            history.animate().alpha(1.0f).setDuration(500);
-                            List<ShareTarget> shareList = new ArrayList<>();
-                            for (History entry : list){
-                                shareList.add(new ShareTarget(entry.getFrom_id(), entry.getF_handle(), entry.getProfileLink()));
-                            }
-                            context.getSharedPreferences("sharing", Context.MODE_PRIVATE).edit().putString("targets", RadioService.gson.toJson(shareList)).apply();
-                        } catch (JSONException e) {
-                            Logger.INSTANCE.e(String.valueOf(e));
-                        }
-                    });
+                    context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().putString("data", data).apply();
+                    List<History> dataset = parseJsonAndSort(data);
+                    binding.historyListView.post(() -> adapter.updateHistory(dataset));
                 }
             }
         });
     }
 
-    private void delete_chat(String from_id) {
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getFrom_id().equals(from_id)) {
-                list.remove(i);
-                adapter.notifyItemRemoved(i);
+    private List<History> parseJsonAndSort(String data) {
+        try {
+            JSONObject returnedObject = new JSONObject(data);
+            JSONArray returnedList = returnedObject.getJSONArray("data");
+            JSONArray onlineList = returnedObject.getJSONArray("online");
+            final int timeStamp = returnedObject.getInt("time");
+            final List<History> dataset = new ArrayList<>();
+            for (int i = 0; i < returnedList.length(); i++) {
+                History entry = RadioService.gson.fromJson(returnedList.get(i).toString(), History.class);
+                final int online = onlineList.getInt(i);
+                if (online >= timeStamp) entry.setOnline(0);
+                else entry.setOnline(onlineList.getInt(i));
+                dataset.add(entry);
             }
+            dataset.sort((one, two) -> two.getOnline() - one.getOnline());
+            dataset.sort((o1, o2) -> {
+                if (o1.getOnline() == 0 && o2.getOnline() == 0) return 0;
+                if (o1.getOnline() == 0) return -1;
+                if (o2.getOnline() == 0) return 1;
+                return 0;
+            });
+            return dataset;
+
+        } catch (JSONException e) {
+            Logger.INSTANCE.e(String.valueOf(e));
+            return new ArrayList<>();
         }
+    }
+
+    private void delete_chat(String from_id) {
+        context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().remove(from_id).apply();
         final Map<String, Object> header = new HashMap<>();
         header.put("typ", Header.JWT_TYPE);
         final String data = Jwts.builder()
@@ -200,53 +194,31 @@ public class MessageHistory extends DialogFragment {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
-    private class recycler_adapter extends RecyclerView.Adapter<MessageHistory.recycler_adapter.MyViewHolder> {
-        private final View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.vibrate(v);
-                History history = (History) v.getTag(v.getId());
-                int id = v.getId();
-                if (id == R.id.black_profile_picture_iv) {
-                    context.sendBroadcast(new Intent("nineteenClickSound"));
-                    if (MI != null) MI.streamFile(history.getProfileLink());
-                } else if (id == R.id.menu) {
-                    final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
-                    popupMenu.getMenu().add(1, R.id.delete_chat, 1, "Delete");
-                    popupMenu.setOnMenuItemClickListener(item -> {
-                        context.sendBroadcast(new Intent("nineteenVibrate"));
-                        delete_chat(history.getFrom_id());
-                        return false;
-                    });
-                    popupMenu.show();
-                } else if (id == R.id.clickPoint) {
-                    context.sendBroadcast(new Intent("nineteenClickSound"));
-                    User user = new User();
-                    user.setUser_id(history.getFrom_id());
-                    user.setRadio_hanlde(history.getF_handle());
-                    user.setProfileLink(history.getProfileLink());
-                    user.setRank(history.getProfileLink());
-                    if (MI != null)
-                        MI.displayChat(user, false, true);
-                    dismiss();
-                }
-            }
-        };
+    private class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.MyViewHolder> implements View.OnClickListener {
+        final List<History> list = new ArrayList<>();
+
+        public void updateHistory(List<History> data) {
+            final HistoryDiffCallBack diffCallback = new HistoryDiffCallBack(list, data);
+            final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+            list.clear();
+            list.addAll(data);
+            diffResult.dispatchUpdatesTo(this);
+        }
 
         @NotNull
         @Override
-        public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new MyViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.message_history_row, parent, false));
+        public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new MyViewHolder(getLayoutInflater().inflate(R.layout.message_history_row, parent, false));
         }
 
         @Override
@@ -258,9 +230,9 @@ public class MessageHistory extends DialogFragment {
             holder.menu.setTag(R.id.menu, object);
             holder.profile.setTag(R.id.black_profile_picture_iv, object);
             holder.clickPoint.setTag(R.id.clickPoint, object);
-            holder.menu.setOnClickListener(listener);
-            holder.profile.setOnClickListener(listener);
-            holder.clickPoint.setOnClickListener(listener);
+            holder.menu.setOnClickListener(this);
+            holder.profile.setOnClickListener(this);
+            holder.clickPoint.setOnClickListener(this);
             holder.lastOnline.setVisibility(View.VISIBLE);
             if (object.getOnline() == 0) holder.lastOnline.setText("Online");
             else
@@ -273,7 +245,39 @@ public class MessageHistory extends DialogFragment {
             return list.size();
         }
 
-        class MyViewHolder extends RecyclerView.ViewHolder {
+        @Override
+        public void onClick(View v) {
+            Utils.vibrate(v);
+            History history = (History) v.getTag(v.getId());
+            if (v.getId() == R.id.black_profile_picture_iv) {
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+                if (MI != null) MI.streamFile(history.getProfileLink());
+            } else if (v.getId() == R.id.menu) {
+                final PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
+                popupMenu.getMenu().add(1, R.id.delete_chat, 1, "Delete");
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    context.sendBroadcast(new Intent("nineteenVibrate").setPackage("com.cb3g.channel19"));
+                    delete_chat(history.getFrom_id());
+                    List<History> newData = new ArrayList<>(list);
+                    newData.remove(history);
+                    this.updateHistory(newData);
+                    return true;
+                });
+                popupMenu.show();
+            } else if (v.getId() == R.id.clickPoint) {
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+                User user = new User();
+                user.setUser_id(history.getFrom_id());
+                user.setRadio_hanlde(history.getF_handle());
+                user.setProfileLink(history.getProfileLink());
+                user.setRank(history.getProfileLink());
+                if (MI != null)
+                    MI.displayChat(user, false, true);
+                dismiss();
+            }
+        }
+
+        static class MyViewHolder extends RecyclerView.ViewHolder {
             TextView handle, text, lastOnline;
             ImageView profile, menu;
             View clickPoint;

@@ -66,7 +66,7 @@ class Controls : Fragment() {
         val pauseLimitInt = settings.getInt("pauseLimit", 150)
         checkListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             Utils.vibrate(buttonView)
-            requireContext().sendBroadcast(Intent("nineteenBoxSound"))
+            requireContext().sendBroadcast(Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"))
             when (buttonView.id) {
                 R.id.photoenable -> settings.edit().putBoolean("photos", isChecked).apply()
                 R.id.pmenable -> settings.edit().putBoolean("pmenabled", isChecked).apply()
@@ -81,7 +81,7 @@ class Controls : Fragment() {
                         Intent("sharingChange").putExtra(
                             "data",
                             isChecked
-                        )
+                        ).setPackage("com.cb3g.channel19")
                     )
                 }
 
@@ -95,7 +95,7 @@ class Controls : Fragment() {
                             Intent("nineteenShowBlank").putExtra(
                                 "title",
                                 resources.getString(R.string.gps_access_title)
-                            ).putExtra("content", resources.getString(R.string.gps_access_info))
+                            ).putExtra("content", resources.getString(R.string.gps_access_info)).setPackage("com.cb3g.channel19")
                         )
                     } else {
                         RadioService.operator.locationEnabled.set(isChecked)
@@ -105,7 +105,7 @@ class Controls : Fragment() {
                         Intent("sharingChange").putExtra(
                             "data",
                             isChecked
-                        )
+                        ).setPackage("com.cb3g.channel19")
                     )
                     if (!isChecked) RadioService.operator.userLocationString = ""
                 }
@@ -113,7 +113,7 @@ class Controls : Fragment() {
         }
         val radioListener = RadioGroup.OnCheckedChangeListener { group, checkedId ->
             Utils.vibrate(v)
-            requireContext().sendBroadcast(Intent("nineteenBoxSound"))
+            requireContext().sendBroadcast(Intent("nineteenBoxSound").setPackage("com.cb3g.channel19"))
             when (group.id) {
                 R.id.group40 -> settings.edit().putBoolean("darkmap", checkedId == R.id.themeDark)
                     .apply()
@@ -125,7 +125,7 @@ class Controls : Fragment() {
                     Intent("nineteenBluetoothSettingChange").putExtra(
                         "data",
                         checkedId == R.id.btOn
-                    )
+                    ).setPackage("com.cb3g.channel19")
                 )
 
                 R.id.behaviorswitch -> settings.edit().putBoolean("holdmic", checkedId == R.id.hold)
@@ -187,7 +187,7 @@ class Controls : Fragment() {
                         Intent("pauseLimitChange").putExtra(
                             "data",
                             seekBar.progress
-                        )
+                        ).setPackage("com.cb3g.channel19")
                     )
                 }
             }
@@ -206,8 +206,8 @@ class Controls : Fragment() {
         val browse = v.findViewById<TextView>(R.id.browse)
         browse.setOnClickListener {
             Utils.vibrate(it)
-            requireContext().sendBroadcast(Intent("nineteenClickSound"))
-            requireContext().sendBroadcast(Intent("browseBackgrounds"))
+            requireContext().sendBroadcast(Intent("nineteenClickSound").setPackage("com.cb3g.channel19"))
+            requireContext().sendBroadcast(Intent("browseBackgrounds").setPackage("com.cb3g.channel19"))
         }
         ringTV = v.findViewById(R.id.delayTV)
         purgeLimitTV = v.findViewById(R.id.purgeLimitTV)

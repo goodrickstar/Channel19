@@ -75,7 +75,7 @@ public class Stars extends DialogFragment {
         binding.selection.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         binding.selection.setHasFixedSize(true);
         binding.close.setOnClickListener(v1 -> {
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v1);
             dismiss();
         });
@@ -99,8 +99,8 @@ public class Stars extends DialogFragment {
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
             glideImageLoader.load(holder.star, Utils.parseRankUrl(stars.get(position)));
             holder.itemView.setOnClickListener(v -> {
-                context.sendBroadcast(new Intent("setStar").putExtra("data", stars.get(holder.getAdapterPosition())));
-                context.sendBroadcast(new Intent("nineteenClickSound"));
+                context.sendBroadcast(new Intent("setStar").setPackage("com.cb3g.channel19").putExtra("data", stars.get(holder.getAdapterPosition())));
+                context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 dismiss();
             });

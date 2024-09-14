@@ -55,6 +55,10 @@ import java.util.Locale;
 
 class Utils {
 
+    static String getKey(){
+        return getDatabase().getReference().push().getKey();
+    }
+
     static ColorFilter colorFilter(int color) {
         return new BlendModeColorFilter(color, BlendMode.SRC_ATOP);
     }

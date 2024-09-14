@@ -26,32 +26,34 @@ import java.io.IOException
 import java.io.InputStream
 
 class Uploader(
-    val context: Context,
-    val operator: Operator,
-    val client: OkHttpClient,
-    val upload: FileUpload,
+    val context: Context, val operator: Operator, val client: OkHttpClient, val upload: FileUpload, val recepient: String
 ) {
+    private val photoDatabase = Utils.getDatabase().reference.child("photos")
     private lateinit var reference: StorageReference
     private lateinit var request: Request
 
     fun uploadImage() {
-        val fileName = System.currentTimeMillis().toString() + returnFileTypeFromUri(Uri.parse(upload.getUri()))
-        val file = returnFileFromUri(Uri.parse(upload.getUri()), fileName)
+        val fileName = System.currentTimeMillis().toString() + returnFileTypeFromUri(Uri.parse(upload.photo.url))
+        val file = returnFileFromUri(Uri.parse(upload.photo.url), fileName)
         file.let {
-            when (upload.getCode()) {
+            when (upload.code) {
                 RequestCode.PRIVATE_PHOTO -> {
                     reference = FirebaseStorage.getInstance().reference.child("photos").child(fileName)
                 }
+
                 RequestCode.MASS_PHOTO -> {
                     reference = FirebaseStorage.getInstance("gs://nineteen-temporary").reference.child("mass").child(fileName)
                 }
+
                 RequestCode.PROFILE -> {
                     reference = FirebaseStorage.getInstance().reference.child("profiles").child(fileName)
                 }
+
                 else -> {}
             }
             reference.putFile(
-                Uri.fromFile(file)).continueWithTask { task ->
+                Uri.fromFile(file)
+            ).continueWithTask { task ->
                 if (!task.isSuccessful) {
                     task.exception?.let {
                         throw it
@@ -61,10 +63,9 @@ class Uploader(
             }.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val downloadUri = task.result
-                    upload.setUri(downloadUri.toString())
+                    upload.photo.url = downloadUri.toString()
                     shareImage()
-                } else {
-                    //TODO: handle failures
+                } else { //TODO: handle failures
                 }
             }
         }
@@ -74,62 +75,71 @@ class Uploader(
         val data: String
         when (upload.code) {
             RequestCode.PRIVATE_PHOTO -> {
-                data = Jwts.builder().setHeader(RadioService.header).claim("senderId", operator.user_id).claim("sendToId", upload.sendToId).claim("handle", operator.handle).claim("caption", upload.caption).claim("reciever", upload.sendToHandle).claim("silenced", operator.silenced.toString()).claim("url", upload.uri).claim("height", upload.height).claim("width", upload.width).claim("profileLink", operator.profileLink).signWith(SignatureAlgorithm.HS256, operator.key).compact()
+                data = Jwts.builder().setHeader(RadioService.header).claim("senderId", operator.user_id).claim("sendToId", upload.sendingIds[0]).claim("url", upload.photo.url).claim("height", upload.photo.height).claim("width", upload.photo.width).claim("reciever", recepient).claim("handle", operator.handle).claim("profileLink", operator.profileLink).signWith(SignatureAlgorithm.HS256, operator.key).compact()
                 request = Request.Builder().url(RadioService.SITE_URL + "user_send_photo.php").post(FormBody.Builder().add("data", data).build()).build()
             }
 
-            RequestCode.MASS_PHOTO -> {
-                data = Jwts.builder().setHeader(RadioService.header).claim("userId", operator.user_id).claim("userIds", upload.sendToId).claim("handle", operator.handle).claim("silenced", operator.silenced.toString()).claim("url", upload.uri).claim("height", upload.height).claim("width", upload.width).claim("profileLink", operator.profileLink).signWith(SignatureAlgorithm.HS256, operator.key).compact()
-                request = Request.Builder().url(RadioService.SITE_URL + "user_mass_photo.php").post(FormBody.Builder().add("data", data).build()).build()
-            }
-
-            RequestCode.PROFILE-> {
-                data = Jwts.builder().setHeader(RadioService.header).claim("userId", operator.user_id).claim("url", upload.uri).signWith(SignatureAlgorithm.HS256, operator.key).compact()
+            RequestCode.PROFILE -> {
+                data = Jwts.builder().setHeader(RadioService.header).claim("userId", operator.user_id).claim("url", upload.photo.url).signWith(SignatureAlgorithm.HS256, operator.key).compact()
                 request = Request.Builder().url(RadioService.SITE_URL + "user_post_profile.php").post(FormBody.Builder().add("data", data).build()).build()
             }
 
-            else -> {}
-        }
-        RadioService.client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                LOG.e("logging", "ShareGiphy client error $e")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    when (upload.code) {
-                        RequestCode.PRIVATE_PHOTO, RequestCode.MASS_PHOTO -> {
-                            RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
-                            context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
-                        }
-
-                        RequestCode.PROFILE -> {
-                            try {
-                                RadioService.storage.getReferenceFromUrl(RadioService.operator.profileLink).delete()
-                            } catch (e: IllegalArgumentException) {
-                                LOG.e("IllegalArgumentException", e.message)
-                            }
-                            updateProfilePhotoInReservoir(RadioService.operator.profileLink, upload.uri)
-                            RadioService.operator.profileLink = upload.uri
-                            context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profileLink", upload.uri).apply()
-                            context.sendBroadcast(Intent("updateProfilePicture").setPackage("com.cb3g.channel19"))
-                        }
-
-                        else -> {}
-                    }
+            RequestCode.MASS_PHOTO -> {
+                for (userId in upload.sendingIds) {
+                    photoDatabase.child(userId).child("mass").child(upload.photo.key).setValue(upload.photo)
                 }
             }
-        })
+
+        }
+
+        when (upload.code) {
+            RequestCode.MASS_PHOTO -> {
+                RadioService.snacks.add(Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT))
+                context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
+            }
+            else -> {
+                RadioService.client.newCall(request).enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        LOG.e("logging", "ShareGiphy client error $e")
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        if (response.isSuccessful) {
+                            when (upload.code) {
+                                RequestCode.PRIVATE_PHOTO, RequestCode.MASS_PHOTO -> {
+                                    RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
+                                    context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
+                                    for (userId in upload.sendingIds){
+                                        photoDatabase.child(userId).child("private").child(upload.photo.key).setValue(upload.photo)
+                                    }
+                                }
+
+                                RequestCode.PROFILE -> {
+                                    try {
+                                        RadioService.storage.getReferenceFromUrl(RadioService.operator.profileLink).delete()
+                                    } catch (e: IllegalArgumentException) {
+                                        LOG.e("IllegalArgumentException", e.message)
+                                    }
+                                    updateProfilePhotoInReservoir(RadioService.operator.profileLink, upload.photo.url)
+                                    RadioService.operator.profileLink = upload.photo.url
+                                    context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profileLink", upload.photo.url).apply()
+                                    context.sendBroadcast(Intent("updateProfilePicture").setPackage("com.cb3g.channel19"))
+                                }
+                            }
+                        }
+                    }
+                })
+            }
+        }
+
     }
 
     fun updateProfilePhotoInReservoir(oldLink: String, newLink: String?) {
         RadioService.databaseReference.child("reservoir").addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                //loop each channel
+            override fun onDataChange(dataSnapshot: DataSnapshot) { //loop each channel
                 for (channel in dataSnapshot.children) {
                     RadioService.databaseReference.child("reservoir").child(channel.key!!).child("posts").addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            //loop each post
+                        override fun onDataChange(dataSnapshot: DataSnapshot) { //loop each post
                             for (child in dataSnapshot.children) {
                                 val post = child.getValue(Post::class.java)
                                 val edited = post!!.profileLink == oldLink || post.latest_profileLink == oldLink
@@ -137,8 +147,7 @@ class Uploader(
                                     if (post.profileLink == oldLink) post.profileLink = newLink!!
                                     if (post.latest_profileLink == oldLink) post.latest_profileLink = newLink!!
                                     RadioService.databaseReference.child("reservoir").child(channel.key!!).child("posts").child(post.postId).setValue(post)
-                                }
-                                //loop each remark for this post
+                                } //loop each remark for this post
                                 RadioService.databaseReference.child("reservoir").child(channel.key!!).child("remarks").child(post.postId).addListenerForSingleValueEvent(object : ValueEventListener {
                                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                                         for (commentChild in dataSnapshot.children) {

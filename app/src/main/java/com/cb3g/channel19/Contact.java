@@ -48,7 +48,7 @@ public class Contact extends DialogFragment implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         Utils.vibrate(v);
-        context.sendBroadcast(new Intent("nineteenClickSound"));
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         int id = v.getId();
         if (id == R.id.like) {
             String FBPage = "100287816995904";

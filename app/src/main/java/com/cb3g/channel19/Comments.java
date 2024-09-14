@@ -98,7 +98,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
 
     @Override
     public void onClick(View v) {
-        context.sendBroadcast(new Intent("vibrate"));
+        context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
         int id = v.getId();
         if (id == R.id.imageBox) {
             if (editBox.length() > 0) {
@@ -179,7 +179,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         title.setText(R.string.comments);
         back.setImageResource(R.drawable.upbutton);
         back.setOnClickListener(v -> {
-            context.sendBroadcast(new Intent("vibrate"));
+            context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
             dismiss();
         });
         post = RadioService.gson.fromJson(requireArguments().getString("post"), Post.class);
@@ -434,14 +434,14 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     text_holder.name.setText(comment.getHandle());
                     text_holder.stamp.setText(Utils.showElapsed(comment.getStamp()));
                     text_holder.menu.setOnClickListener(v -> {
-                        context.sendBroadcast(new Intent("vibrate"));
+                        context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
                         PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
                         if (comment.getUserId().equals(RadioService.operator.getUser_id()))
                             popupMenu.getMenu().add(1, R.id.edit_remark, 2, "Edit");
                         if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
                             popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
-                            context.sendBroadcast(new Intent("vibrate"));
+                            context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
                             int id = item.getItemId();
                             if (id == R.id.delete_remark) {
                                 delete_remark(comment);
@@ -485,16 +485,16 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                             RI.action_view(comment.getProfileLink());
                     });
                     photo_holder.menu.setOnClickListener(v -> {
-                        context.sendBroadcast(new Intent("vibrate"));
+                        context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
                         PopupMenu popupMenu = new PopupMenu(context, v, Gravity.END, 0, R.style.PopupMenu);
                         popupMenu.getMenu().add(1, R.id.save_remark, 1, "Save Image");
                         if (comment.getUserId().equals(RadioService.operator.getUser_id()) || RadioService.operator.getAdmin())
                             popupMenu.getMenu().add(1, R.id.delete_remark, 2, "Delete");
                         popupMenu.setOnMenuItemClickListener(item -> {
                             Log.i("test", "menu item selected");
-                            context.sendBroadcast(new Intent("vibrate"));
+                            context.sendBroadcast(new Intent("vibrate").setPackage("com.cb3g.channel19"));
                             if (item.getItemId() == R.id.save_remark) {
-                                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", comment.getContent()));
+                                context.sendBroadcast(new Intent("savePhotoToDisk").setPackage("com.cb3g.channel19").putExtra("url", comment.getContent()));
                             } else if (item.getItemId() == R.id.delete_remark) {
                                 Log.i("test", "delete called");
                                 delete_remark(comment);

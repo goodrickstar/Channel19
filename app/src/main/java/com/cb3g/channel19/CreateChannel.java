@@ -51,7 +51,7 @@ public class CreateChannel extends DialogFragment {
     public void onDetach() {
         super.onDetach();
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
@@ -75,7 +75,7 @@ public class CreateChannel extends DialogFragment {
         });
         binding.close.setOnClickListener(v -> {
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             String name = binding.titleEt.getText().toString().trim();
             if (name.length() < 5) {
                 binding.titleEt.setError("5 char min");

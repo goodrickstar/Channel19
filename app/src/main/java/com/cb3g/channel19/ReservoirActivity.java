@@ -33,8 +33,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
@@ -70,9 +70,9 @@ import java.util.regex.Pattern;
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnCompressListener;
 
-@SuppressWarnings("ALL")
-public class ReservoirActivity extends AppCompatActivity implements ChildEventListener, RI {
+public class ReservoirActivity extends AppCompatActivity implements ValueEventListener, RI {
     static int screen_width;
+    public boolean prepaused = false;
     private final recycler_adapter containerAdapter = new recycler_adapter();
     private TextView emptyView;
     private final List<Post> posts = new ArrayList<>();
@@ -95,20 +95,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
     static DatabaseReference channelReservoirReference;
     private StorageReference storageReference;
     private final List<String> editing = new ArrayList<>();
-    private RecyclerView recyclerView;
-    private GlideImageLoader glideImageLoader = new GlideImageLoader(this);
-
-    private void snapToPosition(int position) {
-        RecyclerView.SmoothScroller smoothScroller = new
-                LinearSmoothScroller(this) {
-                    @Override
-                    protected int getVerticalSnapPreference() {
-                        return LinearSmoothScroller.SNAP_TO_START;
-                    }
-                };
-        smoothScroller.setTargetPosition(position);
-        recyclerView.getLayoutManager().startSmoothScroll(smoothScroller);
-    }
+    private final GlideImageLoader glideImageLoader = new GlideImageLoader(this);
 
     private void removeAllPosts(String userId) {
         for (Post post : posts) {
@@ -116,51 +103,6 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 channelReservoirReference.child("posts").child(post.getPostId()).removeValue();
             }
         }
-    }
-
-    @Override
-    public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-        Post post = dataSnapshot.getValue(Post.class);
-        if (!RadioService.blockListContainsId(RadioService.blockedIDs, post.getFacebookId()) || RadioService.operator.getAdmin())
-            posts.add(0, post);
-        containerAdapter.notifyItemInserted(0);
-        if (posts.isEmpty()) emptyView.setVisibility(View.VISIBLE);
-        else {
-            emptyView.setVisibility(View.GONE);
-            snapToPosition(findPost(post.getPostId()));
-        }
-    }
-
-    @Override
-    public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-        Post post = dataSnapshot.getValue(Post.class);
-        for (int i = 0; i < posts.size(); i++) {
-            if (posts.get(i).getPostId().equals(post.getPostId())) {
-                posts.set(i, post);
-                containerAdapter.notifyDataSetChanged();
-            }
-        }
-    }
-
-    @Override
-    public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-        Post post = dataSnapshot.getValue(Post.class);
-        for (int i = 0; i < posts.size(); i++) {
-            if (posts.get(i).getPostId().equals(post.getPostId())) {
-                posts.remove(i);
-                containerAdapter.notifyItemRemoved(i);
-            }
-        }
-        if (posts.isEmpty()) emptyView.setVisibility(View.VISIBLE);
-        else emptyView.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-    }
-
-    @Override
-    public void onCancelled(@NonNull DatabaseError databaseError) {
     }
 
     public void create_new_entry() {
@@ -238,7 +180,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         setContentView(R.layout.reservoir_activity);
         fragmentManager = getSupportFragmentManager();
         screen_width = Utils.getScreenWidth(this);
-        recyclerView = findViewById(R.id.container);
+        RecyclerView recyclerView = findViewById(R.id.container);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(containerAdapter);
@@ -270,22 +212,29 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 createPoll.show(fragmentManager, "createPoll");
             });
         }
-        channelReservoirReference.child("posts").addChildEventListener(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         ContextCompat.registerReceiver(this, receiver, returnFilter(), ContextCompat.RECEIVER_NOT_EXPORTED);
-        if (!RadioService.operator.getAdmin())
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        channelReservoirReference.child("posts").addValueEventListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (prepaused) {
+            prepaused = false;
+            sendBroadcast(new Intent("nineteenPlay").setPackage("com.cb3g.channel19"));
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        channelReservoirReference.child("posts").removeEventListener(this);
         unregisterReceiver(receiver);
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
     }
 
     @Override
@@ -333,7 +282,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                 @Override
                 public void onPostResponse(@NonNull OpenGraphResult openGraphResult) {
                     String imageLink = openGraphResult.getImage();
-                    if (imageLink != null){
+                    if (imageLink != null) {
                         post.setImageLink(imageLink);
                         post.setWebDescription(openGraphResult.getTitle());
                         if (post.getCaption().isEmpty())
@@ -508,7 +457,34 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
         }
     }
 
+    @Override
+    public void onDataChange(@NonNull DataSnapshot snapshot) {//Reservoir post updates
+        List<Post> data = new ArrayList<>();
+        for (DataSnapshot child : snapshot.getChildren()) {
+            Post post = child.getValue(Post.class);
+            if (post != null) {
+                if (!RadioService.blockListContainsId(RadioService.blockedIDs, post.getFacebookId()) || RadioService.operator.getAdmin()) {
+                    data.add(0, post);
+                }
+            }
+        }
+        final PostDiffCallBack diffCallback = new PostDiffCallBack(this.posts, data);
+        final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+        posts.clear();
+        posts.addAll(data);
+        diffResult.dispatchUpdatesTo(containerAdapter);
+        if (posts.isEmpty()) emptyView.setVisibility(View.VISIBLE);
+        else emptyView.setVisibility(View.INVISIBLE);
+
+    }
+
+    @Override
+    public void onCancelled(@NonNull DatabaseError error) {
+
+    }
+
     class recycler_adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
         @Override
         public int getItemViewType(int position) {
             return posts.get(position).getType();
@@ -542,7 +518,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                     simple_post.poster_profile_name.setText(post.getHandle());
                     simple_post.posting_stamp.setText(Utils.showElapsed(post.getStamp(), true));
                     String caption = post.getCaption();
-                    if (caption.equals("none") || caption.length() == 0) {
+                    if (caption.equals("none") || caption.isEmpty()) {
                         simple_post.caption.setVisibility(View.GONE);
                     } else {
                         simple_post.caption.setVisibility(View.VISIBLE);
@@ -554,8 +530,9 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                         simple_post.webDescription.setText(post.getWebDescription());
                         simple_post.webLink.setOnClickListener(v -> {
                             Utils.vibrate(v);
-                            sendBroadcast(new Intent("nineteenPause"));
+                            if (!RadioService.paused) prepaused = true;
                             Utils.launchUrl(ReservoirActivity.this, post.getWebLink());
+                            sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
                         });
                     } else {
                         simple_post.webLink.setVisibility(View.GONE);
@@ -568,7 +545,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             simple_post.image.getLayoutParams().height = new_height;
                             simple_post.image.getLayoutParams().width = new_width;
                             simple_post.loading.setVisibility(View.VISIBLE);
-                            glideImageLoader.load(simple_post.image, simple_post.loading, post.getImageLink());
+                            glideImageLoader.load(simple_post.image, simple_post.loading, post.getImageLink(), false);
                             if (post.getWebLink().equals("none")) {
                                 simple_post.image.setOnClickListener(v -> {
                                     Utils.vibrate(v);
@@ -577,7 +554,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             } else {
                                 simple_post.image.setOnClickListener(v -> {
                                     Utils.vibrate(v);
-                                    sendBroadcast(new Intent("nineteenPause"));
+                                    sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
                                     Utils.launchUrl(ReservoirActivity.this, post.getWebLink());
                                 });
                             }
@@ -691,7 +668,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
                             } else if (id == R.id.unlock_post) {
                                 channelReservoirReference.child("posts").child(post.getPostId()).child("locked").setValue(false);
                             } else if (id == R.id.save_post) {
-                                sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", post.getImageLink()));
+                                sendBroadcast(new Intent("savePhotoToDisk").setPackage("com.cb3g.channel19").putExtra("url", post.getImageLink()));
                             }
                             return true;
                         });
@@ -851,7 +828,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             return max;
         }
 
-        class PostHolder extends RecyclerView.ViewHolder {
+        static class PostHolder extends RecyclerView.ViewHolder {
             TextView caption, remarks, poster_profile_name, posting_stamp, remarker_text, remarker_name, likes, dislikes, webDescription;
             ImageView poster_profile_pic, remarker_profile_pic, image, menu, like, dislike;
             LinearLayout webLink, likebar;
@@ -885,7 +862,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             }
         }
 
-        class PollHolder extends RecyclerView.ViewHolder {
+        static class PollHolder extends RecyclerView.ViewHolder {
             TextView caption, poster_profile_name, posting_stamp, add_option;
             ImageView poster_profile_pic, menu;
             RecyclerView recyclerView;
@@ -908,7 +885,7 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             }
         }
 
-        class PollOptionHolder extends RecyclerView.ViewHolder {
+        static class PollOptionHolder extends RecyclerView.ViewHolder {
             TextView label, count;
             ImageView like;
             ProgressBar progressBar;
@@ -922,6 +899,8 @@ public class ReservoirActivity extends AppCompatActivity implements ChildEventLi
             }
         }
     }
+
+
 }
 
 

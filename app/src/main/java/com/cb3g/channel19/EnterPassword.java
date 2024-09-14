@@ -54,7 +54,7 @@ public class EnterPassword extends DialogFragment {
         binding.top.setText(channel.getChannel_name());
         binding.accept.setOnClickListener(v -> {
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             if (binding.pinEt.getText().length() > 0) {
                 if (Integer.parseInt(binding.pinEt.getText().toString().trim().replace(" ", "")) - channel.getPin() == 0) {
                     SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);
@@ -71,7 +71,7 @@ public class EnterPassword extends DialogFragment {
         });
         binding.cancel.setOnClickListener(v -> {
             Utils.vibrate(v);
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             if (MI != null) MI.selectChannel(false);
             dismiss();
         });
@@ -81,14 +81,14 @@ public class EnterPassword extends DialogFragment {
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 }
 

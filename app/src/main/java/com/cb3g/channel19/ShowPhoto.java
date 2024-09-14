@@ -39,19 +39,19 @@ public class ShowPhoto extends DialogFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         RadioService.occupied.set(true);
-        binding.showPhotoHandleTv.setText(photo.getHandle());
+        binding.showPhotoHandleTv.setText(photo.getSenderHandle());
         final View.OnClickListener onClickListener = v -> {
-            context.sendBroadcast(new Intent("nineteenClickSound"));
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             int id = v.getId();
             if (id == R.id.ok) {
-                context.sendBroadcast(new Intent("nineteenShowMessages"));
+                context.sendBroadcast(new Intent("nineteenShowMessages").setPackage("com.cb3g.channel19"));
                 dismiss();
             }
             if (id == R.id.save) {
                 if (saved) return;
                 saved = true;
-                context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
+                context.sendBroadcast(new Intent("savePhotoToDisk").setPackage("com.cb3g.channel19").putExtra("url", photo.getUrl()));
             }
             if (id == R.id.image) {
                 if (MI != null)
@@ -84,14 +84,14 @@ public class ShowPhoto extends DialogFragment {
     public void onDismiss(@NotNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NotNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 }
 

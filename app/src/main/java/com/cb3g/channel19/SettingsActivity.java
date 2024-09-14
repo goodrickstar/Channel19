@@ -210,7 +210,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                                     if (drifrag != null) if (drifrag.isAdded())
                                                         drifrag.updateGhostStatus();
                                                     showResult("Ghost Mode actived", "You will remain invisible and unblockable for 24 hours");
-                                                    sendBroadcast(new Intent("ghost"));
+                                                    sendBroadcast(new Intent("ghost").setPackage("com.cb3g.channel19"));
                                                 }
                                             });
                                             break;
@@ -290,7 +290,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     public void buy(View v) {
-        sendBroadcast(new Intent("nineteenClickSound"));
+        sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         Utils.vibrate(v);
         if (!settings.getBoolean("active", false)) {
             if (billingUtils.isConnected()) {
@@ -318,7 +318,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     @Override
     public void onBackPressed() {
-        sendBroadcast(new Intent("nineteenTabSound"));
+        sendBroadcast(new Intent("nineteenTabSound").setPackage("com.cb3g.channel19"));
         super.onBackPressed();
     }
 
@@ -747,7 +747,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     private void clickSound() {
-        sendBroadcast(new Intent("nineteenClickSound"));
+        sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
     }
 
     public void accountTouch(View v) {

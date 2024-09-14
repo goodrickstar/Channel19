@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/black_profile_picture_iv"
+            android:id="@+id/chat_profile_picture_iv"
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:layout_marginRight="@dimen/default_padding"
@@ -24,31 +24,31 @@
             android:scaleType="centerCrop" />
 
         <TextView
-            android:id="@+id/black_handle_tv"
+            android:id="@+id/chat_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/black_profile_picture_iv"
+            android:layout_toRightOf="@+id/chat_profile_picture_iv"
             android:background="@null"
             android:textAppearance="@style/title_font" />
 
         <ImageView
-            android:id="@+id/black_star_iv"
+            android:id="@+id/chat_star_iv"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/star_height"
-            android:layout_below="@+id/black_handle_tv"
+            android:layout_below="@+id/chat_handle_tv"
             android:layout_marginLeft="@dimen/star_margin_left"
             android:layout_marginTop="@dimen/star_margin_top"
-            android:layout_toRightOf="@+id/black_profile_picture_iv"
+            android:layout_toRightOf="@+id/chat_profile_picture_iv"
             android:scaleType="fitStart" />
 
         <TextView
             android:id="@+id/stamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/black_star_iv"
-            android:layout_alignBottom="@+id/black_profile_picture_iv"
+            android:layout_below="@+id/chat_star_iv"
+            android:layout_alignBottom="@+id/chat_profile_picture_iv"
             android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/black_profile_picture_iv"
+            android:layout_toRightOf="@+id/chat_profile_picture_iv"
             android:gravity="right|bottom"
             android:textAppearance="@style/tiny_font"
             android:textColor="@color/main_white" />
@@ -58,6 +58,7 @@
         android:id="@+id/chat_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layoutAnimation="@anim/layout_animation_reverse"
         android:paddingBottom="@dimen/default_padding"
         android:scrollbarSize="1dp"
         android:scrollbarStyle="insideOverlay"

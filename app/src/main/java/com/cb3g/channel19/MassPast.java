@@ -28,10 +28,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
-import org.threeten.bp.Instant;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 
@@ -83,19 +81,20 @@ public class MassPast extends DialogFragment implements ValueEventListener {
     public void onDismiss(@NotNull DialogInterface dialog) {
         super.onDismiss(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onCancel(@NotNull DialogInterface dialog) {
         super.onCancel(dialog);
         RadioService.occupied.set(false);
-        context.sendBroadcast(new Intent("checkForMessages"));
+        context.sendBroadcast(new Intent("checkForMessages").setPackage("com.cb3g.channel19"));
     }
 
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        if (staged) context.sendBroadcast(new Intent("nineteenToast").putExtra("data", "Photo Received").setPackage("com.cb3g.channel19"));
+        if (staged) context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "Photo Received").setPackage("com.cb3g.channel19"));
+        else binding.recyclerView.smoothScrollToPosition(0);
         staged = true;
         List<Photo> photos = new ArrayList<>();
         for (DataSnapshot child : dataSnapshot.getChildren()) {
@@ -107,7 +106,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
             }
         }
         if (photos.isEmpty()) {
-            context.sendBroadcast(new Intent("nineteenToast").putExtra("data", "No History Yet").setPackage("com.cb3g.channel19"));
+            context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "No History Yet").setPackage("com.cb3g.channel19"));
             dismiss();
         }
         else {
@@ -152,10 +151,10 @@ public class MassPast extends DialogFragment implements ValueEventListener {
         public void onBindViewHolder(@NonNull MassAdapter.MyViewHolder holder, int i) {
             Photo photo = photos.get(holder.getAdapterPosition());
             holder.image.getLayoutParams().height = (((photo.getHeight() * screenWidth) / photo.getWidth()));
-            holder.handle.setText(photo.getHandle());
+            holder.handle.setText(photo.getSenderHandle());
             holder.stamp.setText(Utils.showElapsed(photo.getStamp(), true));
-            glideImageLoader.load(holder.rank, Utils.parseRankUrl(photo.getRank()));
-            glideImageLoader.load(holder.profile, photo.getProfileLink(), RadioService.profileOptions);
+            glideImageLoader.load(holder.rank, Utils.parseRankUrl(photo.getSenderRank()));
+            glideImageLoader.load(holder.profile, photo.getSenderProfile(), RadioService.profileOptions);
             glideImageLoader.load(holder.image, holder.progressBar, photo.getUrl(), screenWidth);
             holder.image.setTag(photo);
             holder.save.setTag(photo);
@@ -172,7 +171,7 @@ public class MassPast extends DialogFragment implements ValueEventListener {
                 if (id == R.id.image) {
                     MI.streamFile(photo.getUrl());
                 } else if (id == R.id.save) {
-                    context.sendBroadcast(new Intent("savePhotoToDisk").putExtra("url", photo.getUrl()));
+                    context.sendBroadcast(new Intent("savePhotoToDisk").setPackage("com.cb3g.channel19").putExtra("url", photo.getUrl()));
                 }
             }
         };
