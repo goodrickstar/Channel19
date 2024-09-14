@@ -207,7 +207,7 @@ public class UserListOptionsNew extends DialogFragment {
         @NonNull
         @Override
         public options_adapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new options_adapter.MyViewHolder(getLayoutInflater().inflate(R.layout.user_option_row, parent, false));
+            return new MyViewHolder(getLayoutInflater().inflate(R.layout.user_option_row, parent, false));
         }
 
         @Override
@@ -346,7 +346,7 @@ public class UserListOptionsNew extends DialogFragment {
             return options.size();
         }
 
-        class MyViewHolder extends RecyclerView.ViewHolder {
+        static class MyViewHolder extends RecyclerView.ViewHolder {
             ImageView icon;
             TextView description;
 
