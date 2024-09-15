@@ -194,11 +194,9 @@ public class UserListOptionsNew extends DialogFragment {
 
     private void showSnack(Snack snack) {
         Snackbar snackbar = Snackbar.make(binding.topLevel, snack.getMessage(), snack.getLength());
+        snackbar.setActionTextColor(Color.WHITE);
         View view = snackbar.getView();
-        TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
-        tv.setTextColor(ContextCompat.getColor(context, R.color.main_white));
         view.setBackgroundColor(ContextCompat.getColor(context, R.color.main_black_transparent));
-        tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         snackbar.show();
     }
 

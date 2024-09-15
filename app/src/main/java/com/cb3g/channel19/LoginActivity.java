@@ -1,7 +1,6 @@
 package com.cb3g.channel19;
 
 import android.annotation.SuppressLint;
-import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -25,10 +24,15 @@ import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
@@ -41,7 +45,16 @@ import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.LoginBinding;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.appupdate.AppUpdateOptions;
+import com.google.android.play.core.install.model.ActivityResult;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -238,7 +251,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         super.onResume();
         binding.loginIntoServerWithGoogleButton.setEnabled(true);
         binding.version.setText("v(" + getVersionName() + ")");
-        if (Utils.serviceAlive(this) && !settings.getBoolean("exiting", false)) launch_main_activity();
+        if (Utils.serviceAlive(this) && !settings.getBoolean("exiting", false))
+            launch_main_activity();
         handleAuth(auth.getCurrentUser());
     }
 
@@ -328,6 +342,13 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                     JSONObject data = new JSONObject(image);
                                     if (data.getString("user_id").equals("0")) {
                                         show_result(data.getString("mode"), data.getString("msg"));
+                                        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(LoginActivity.this);
+                                        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+                                        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+                                            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                                                appUpdateManager.startUpdateFlowForResult(appUpdateInfo, null, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build());
+                                            }
+                                        });
                                     } else {
                                         final String handle = data.getString("radio_hanlde");
                                         if (handle.equals("default")) {
@@ -388,8 +409,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
         }
     }
-
-    /** @noinspection deprecation*/
 
     private float scaleVolume(int sliderValue) {
         return (float) sliderValue / 100;
@@ -479,7 +498,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             PackageInfo packageInfo = getPackageManager().getPackageInfo("com.cb3g.channel19", PackageManager.GET_META_DATA);
             version = (int) packageInfo.getLongVersionCode();
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            if (e.getMessage() != null)
+                Log.e("getVersion()", e.getMessage());
         }
         return version;
     }
@@ -490,7 +510,8 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
             PackageInfo packageInfo = getPackageManager().getPackageInfo("com.cb3g.channel19", PackageManager.GET_META_DATA);
             version = packageInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            if (e.getMessage() != null)
+                Log.e("getVersion()", e.getMessage());
         }
         return version;
     }

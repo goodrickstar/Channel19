@@ -29,7 +29,6 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -555,20 +554,14 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         else
             snackbar = Snackbar.make(findViewById(R.id.ma_bottom_frame), snack.getMessage(), snack.getLength());
         View view = snackbar.getView();
-        TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
-        tv.setTextColor(ContextCompat.getColor(this, R.color.main_white));
         if (dark) view.setBackgroundColor(ContextCompat.getColor(this, R.color.main_black));
         else view.setBackgroundColor(ContextCompat.getColor(this, R.color.main_black_transparent));
-        if (snack.getLength() == Snackbar.LENGTH_INDEFINITE) {
-            RadioService.occupied.set(false);
-            snackbar.setActionTextColor(Color.WHITE);
-            snackbar.setAction("10 4", v -> {
-                Utils.vibrate(v);
-                snackbar.dismiss();
-            });
-        } else {
-            tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        }
+        RadioService.occupied.set(false);
+        snackbar.setActionTextColor(Color.WHITE);
+        snackbar.setAction("10 4", v -> {
+            Utils.vibrate(v);
+            snackbar.dismiss();
+        });
         snackbar.addCallback(new Snackbar.Callback() {
             @Override
             public void onShown(Snackbar snackbar) {
@@ -616,6 +609,8 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             updateDarkDisplay(display, stamp);
             updateQueue(count, paused, poor);
             if (duration >= 0) animateMax(duration);
+            if (paused) binding.maPauseButton.setImageResource(R.drawable.resume_set);
+            else binding.maPauseButton.setImageResource(R.drawable.pause_set);
         });
     }
 

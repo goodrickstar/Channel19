@@ -75,7 +75,7 @@ public class UserList extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        context.sendBroadcast(new Intent("fetch_users"));
+        context.sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
     }
 
     class recycler_adapter extends RecyclerView.Adapter<recycler_adapter.MyViewHolder> {
