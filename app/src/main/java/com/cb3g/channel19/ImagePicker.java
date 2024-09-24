@@ -92,7 +92,7 @@ public class ImagePicker extends DialogFragment implements View.OnClickListener 
         context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
         int id = v.getId();
         if (id == R.id.accept) {
-            UserListOptionsNew options = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+            UserListOptions options = (UserListOptions) fragmentManager.findFragmentByTag("options");
             if (options != null) options.dismiss();
             FileUpload fileUpload;
             Uploader uploader;

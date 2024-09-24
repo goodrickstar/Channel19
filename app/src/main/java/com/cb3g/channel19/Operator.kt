@@ -15,10 +15,6 @@ class Operator internal constructor() {
     var silenced = false
     var subscribed = false
     var invisible = false
-    var blocking = false
-    var silencing = false
-    var radioShopOpen = false
-    var ghostModeAvailible = false
     var limit = 50
     var count = 0
     var salutes = 0
@@ -29,7 +25,6 @@ class Operator internal constructor() {
     var channel: Channel? = Channel()
     var hinderTexts = false
     var hinderPhotos = false
-    var flagsEnabled = true
     var blockedFromReservoir = false
     var disableProfile = false
     var searchLimit = 100

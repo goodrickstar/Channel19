@@ -31,7 +31,7 @@ import org.threeten.bp.Instant;
 
 import java.util.ArrayList;
 
-public class UserListOptionsNew extends DialogFragment {
+public class UserListOptions extends DialogFragment {
     private final options_adapter optionsAdapter = new options_adapter();
     private Context context;
     private MI MI;
@@ -42,7 +42,7 @@ public class UserListOptionsNew extends DialogFragment {
 
     private final FragmentManager fragmentManager;
 
-    public UserListOptionsNew(FragmentManager fragmentManager, User user) {
+    public UserListOptions(FragmentManager fragmentManager, User user) {
         this.user = user;
         this.fragmentManager = fragmentManager;
     }
@@ -110,7 +110,7 @@ public class UserListOptionsNew extends DialogFragment {
     @SuppressLint("NotifyDataSetChanged")
     private void buildOptions() {
         options.clear();
-        if ((RadioService.operator.getCount() > 19 && RadioService.operator.getBlocking()) || RadioService.operator.getAdmin()) {
+        if ((RadioService.operator.getCount() > 19 && RadioService.appOptions.getBlocking()) || RadioService.operator.getAdmin()) {
             options.add(new UserOption(ListOption.BLOCK, "Block"));
         }
         if (!RadioService.operator.getHinderTexts()) {
@@ -122,7 +122,7 @@ public class UserListOptionsNew extends DialogFragment {
         if (!RadioService.operator.getHinderPhotos() || RadioService.operator.getHinderTexts()) {
             options.add(new UserOption(ListOption.HISTORY, "Chat History"));
         }
-        if ((RadioService.operator.getFlagsEnabled() && RadioService.operator.getSalutes() > 79) || RadioService.operator.getAdmin()) {
+        if ((RadioService.appOptions.getFlagging() && RadioService.operator.getSalutes() > 79) || RadioService.operator.getAdmin()) {
             if ((!RadioService.pausedUsers.contains(user.getUser_id()) && !RadioService.onCallUsers.contains(user.getUser_id()) && !RadioService.silencedUsers.contains(user.getUser_id())) || RadioService.operator.getAdmin()) {
                 if (!Utils.alreadySaluted(user.getUser_id()) || RadioService.operator.getAdmin())
                     options.add(new UserOption(ListOption.SALUTE, "Salute"));
@@ -134,7 +134,7 @@ public class UserListOptionsNew extends DialogFragment {
                 }
             }
         }
-        if ((RadioService.operator.getSalutes() > 159 && RadioService.operator.getSilencing()) || RadioService.operator.getAdmin()) {
+        if ((RadioService.operator.getSalutes() > 159 && RadioService.appOptions.getSilencing()) || RadioService.operator.getAdmin()) {
             if ((!RadioService.pausedUsers.contains(user.getUser_id()) && !RadioService.onCallUsers.contains(user.getUser_id())) || RadioService.operator.getAdmin()) {
                 if (!RadioService.silencedUsers.contains(user.getUser_id()))
                     options.add(new UserOption(ListOption.SILENCE, "Silence"));

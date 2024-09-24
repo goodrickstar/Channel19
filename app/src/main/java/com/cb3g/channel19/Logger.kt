@@ -25,7 +25,7 @@ object Logger {
         println("I: !! : $tag $varible")
     }
 
-    fun i(tag: String, b: Boolean) {
+    fun i(tag: String, b: BooleanObject) {
         println("I: !! : $tag $b")
     }
 

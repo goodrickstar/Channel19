@@ -146,11 +146,11 @@ public class UserList extends Fragment {
                         MI.showSnack(new Snack("You are currently silenced", Snackbar.LENGTH_LONG));
                         return;
                     }
-                    UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                    UserListOptions cdf = (UserListOptions) fragmentManager.findFragmentByTag("options");
                     if (cdf == null) {
                         Bundle bundle = new Bundle();
                         bundle.putString("user", new Gson().toJson(user));
-                        cdf = new UserListOptionsNew(fragmentManager, user);
+                        cdf = new UserListOptions(fragmentManager, user);
                         cdf.setArguments(bundle);
                         cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                         cdf.show(fragmentManager, "options");

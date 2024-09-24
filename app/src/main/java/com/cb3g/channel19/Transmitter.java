@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -299,11 +298,11 @@ public class Transmitter extends Fragment implements SeekBar.OnSeekBarChangeList
         if (user != null) {
             context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
-            UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+            UserListOptions cdf = (UserListOptions) fragmentManager.findFragmentByTag("options");
             if (cdf == null) {
                 Bundle bundle = new Bundle();
                 bundle.putString("user", new Gson().toJson(user));
-                cdf = new UserListOptionsNew(fragmentManager, user);
+                cdf = new UserListOptions(fragmentManager, user);
                 cdf.setArguments(bundle);
                 cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                 cdf.show(fragmentManager, "options");

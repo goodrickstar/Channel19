@@ -568,7 +568,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         int id = v.getId();
         if (id == R.id.ghost) {
             clickSound();
-            if (!RadioService.operator.getGhostModeAvailible()) {
+            if (!RadioService.appOptions.getGhost_mode()) {
                 showResult("Temporarily Closed", "Ghost Mode is temporarily offline");
                 return;
             }
@@ -762,7 +762,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                 cdf.show(fragmentManager, "cdf");
             }
         } else if (id == R.id.shop) {
-            if (!RadioService.operator.getRadioShopOpen()) {
+            if (!RadioService.appOptions.getRadio_shop()) {
                 showResult("Temporarily Closed", "The Radio Shop is temporarily offline");
                 return;
             }

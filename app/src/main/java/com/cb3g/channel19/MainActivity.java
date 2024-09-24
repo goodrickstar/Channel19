@@ -120,7 +120,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                     if (!isFinishing())
                         showResult(intent.getStringExtra("title"), intent.getStringExtra("content"));
                 }
-                case "exitChannelNineTeen" -> finish();
+                case "killActivity" -> finish();
                 case "nineteenLockButtons" -> lockOthers(intent.getBooleanExtra("data", false));
                 case "nineteenAddCaption" -> {
                     if (!isFinishing()) {
@@ -131,10 +131,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         cd.setArguments(data);
                         cd.show(fragmentManager, "cd");
                     }
-                }
-                case "nineteenUpdateCaption" -> {
-                    SendPhoto sendF = (SendPhoto) fragmentManager.findFragmentByTag("sendF");
-                    if (sendF != null) sendF.updateCaption(intent.getStringExtra("data"));
                 }
                 case "nineteenSetPauseProgress" -> {
                     int[] set = intent.getIntArrayExtra("data");
@@ -160,17 +156,13 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                     }
                     Toaster.flipDaBird(MainActivity.this);
                 }
-                case "nineteenToast" -> {
+                case "alert" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) return;
                     Toaster.toastlow(MainActivity.this, intent.getStringExtra("data"));
                 }
-                case "toasting" -> {
+                case "nineteenToast" -> {
                     if (transmitFragment.isAdded()) if (RadioService.recording) return;
-                    Toaster.labelTwo(MainActivity.this, intent.getStringExtra("data"));
-                }
-                case "nineteenAlert" -> {
-                    if (transmitFragment.isAdded()) if (RadioService.recording) return;
-                    Toaster.online(MainActivity.this, intent.getStringExtra("data"), intent.getStringExtra("profileLink"));
+                    Toaster.toastlow(MainActivity.this, intent.getStringExtra("data"));
                 }
                 case "setMute" -> setMuteFromOutside(intent.getBooleanExtra("data", false));
                 case "recordFromMain" -> recordFromMain();
@@ -179,8 +171,6 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
                         ActivityCompat.requestPermissions(MainActivity.this, Utils.getAudioPermissions(), 1);
                 case "nineteenCamera" ->
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, 3);
-                case "nineteenCheck" -> Toaster.checkMark(MainActivity.this);
-                case "nineteenCross" -> Toaster.fail(MainActivity.this);
             }
         }
     };
@@ -754,7 +744,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         }
     }
 
-    private void darkChange(Boolean show) {
+    private void darkChange(boolean show) {
         if (tutorial_count < 6) return;
         dark = show;
         delay = true;
@@ -1014,11 +1004,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (user != null) {
                 sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
-                UserListOptionsNew cdf = (UserListOptionsNew) fragmentManager.findFragmentByTag("options");
+                UserListOptions cdf = (UserListOptions) fragmentManager.findFragmentByTag("options");
                 if (cdf == null) {
                     Bundle bundle = new Bundle();
                     bundle.putString("user", new Gson().toJson(user));
-                    cdf = new UserListOptionsNew(fragmentManager, user);
+                    cdf = new UserListOptions(fragmentManager, user);
                     cdf.setArguments(bundle);
                     cdf.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                     cdf.show(fragmentManager, "options");
@@ -1118,16 +1108,11 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         filter.addAction("review");
         filter.addAction("show_result");
         filter.addAction("nineteenPickProfile");
-        filter.addAction("exitChannelNineTeen");
+        filter.addAction("killActivity");
         filter.addAction("nineteenLockButtons");
         filter.addAction("recordFromMain");
-        filter.addAction("toasting");
-        filter.addAction("nineteenAlert");
-        filter.addAction("nineteenCross");
-        filter.addAction("nineteenCheck");
         filter.addAction("nineteenAddCaption");
         filter.addAction("nineteenSlide");
-        filter.addAction("nineteenUpdateCaption");
         filter.addAction("switchToPlay");
         filter.addAction("switchToPause");
         filter.addAction("nineteenSetPauseProgress");

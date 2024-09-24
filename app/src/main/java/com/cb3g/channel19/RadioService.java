@@ -29,6 +29,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Environment;
@@ -105,110 +106,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class RadioService extends Service implements ValueEventListener, AudioManager.OnAudioFocusChangeListener {
+public class RadioService extends Service implements ValueEventListener, AudioManager.OnAudioFocusChangeListener, ChildEventListener {
     static final OkHttpClient client = new OkHttpClient();
-
-    private final ChildEventListener massPhotoListener = new ChildEventListener() {
-        @Override //TODO: MASS Photos
-        public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-            final Photo photo = snapshot.getValue(Photo.class);
-            assert photo != null;
-            if (RadioService.blockListContainsId(photoIDs, photo.getSenderId())) return;
-            loader.preload(photo.getUrl(), new RequestListener<>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
-                    snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    if (!recording && MI != null)
-                        sp.play(glass, .1f, .1f, 1, 0, 1f);
-                    if (settings.getBoolean("photos", true) && !paused)
-                        photos.add(photo);
-                    else if (MI != null)
-                        snacks.add(new Snack(photo.getSenderHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
-                    databaseReference.child("photos").child(operator.getUser_id()).child("mass").child(photo.getKey()).removeValue();
-                    Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(photo);
-                    checkForMessages();
-                    return true;
-                }
-            });
-        }
-
-        @Override
-        public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-        }
-
-        @Override
-        public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
-        }
-
-        @Override
-        public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
-
-        }
-    };
-    private final ChildEventListener privatePhotoListener = new ChildEventListener() {
-        @Override //PRIVATE Photos
-        public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-            final Photo photo = snapshot.getValue(Photo.class);
-            assert photo != null;
-            if (RadioService.blockListContainsId(photoIDs, photo.getSenderId())) return;
-            loader.preload(photo.getUrl(), new RequestListener<>() {
-                @Override
-                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
-                    snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
-                    return false;
-                }
-
-                @Override
-                public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                    if (Objects.equals(chat.get(), photo.getSenderId())) {
-                        if (MI != null) MI.displayChat(null, true, false);
-                        else sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
-                    } else {
-                        if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
-                        if (settings.getBoolean("photos", true))
-                            photos.add(photo);
-                        else
-                            snacks.add(new Snack(photo.getSenderHandle() + " sent you a private photo", Snackbar.LENGTH_SHORT));
-                        databaseReference.child("photos").child(operator.getUser_id()).child("private").child(photo.getKey()).removeValue();
-                        checkForMessages();
-                    }
-                    return true;
-                }
-            });
-        }
-
-        @Override
-        public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-        }
-
-        @Override
-        public void onChildRemoved(@NonNull DataSnapshot snapshot) {
-
-        }
-
-        @Override
-        public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-
-        }
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError error) {
-
-        }
-    };
 
     final GlideImageLoader loader = new GlideImageLoader(this);
     private final List<String> nearby = new ArrayList<>();
@@ -263,13 +162,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     private RemoteViews notifyview;
     private FirebaseStorage temporaryStorage;
     private ChildEventListener audioListener;
+    static AppOptionsObject appOptions = new AppOptionsObject();
     private long enterStamp = Instant.now().getEpochSecond();
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             switch (Objects.requireNonNull(intent.getAction())) {
-                case "token"://TODO: update token on server
-                    break;
                 case "interrupt":
                     if (MI != null) MI.stopRecorder(false);
                     break;
@@ -306,24 +204,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     break;
                 case "ghost":
                     ghost();
-                    break;
-                case "clear":
-                    blockedIDs.clear();
-                    photoIDs.clear();
-                    textIDs.clear();
-                    salutedIds.clear();
-                    flaggedIds.clear();
-                    SharedPreferences.Editor editor = settings.edit();
-                    editor.putString("blockedIDs", "[]").apply();
-                    editor.putString("photoIDs", "[]").apply();
-                    editor.putString("textIDs", "[]").apply();
-                    editor.putString("salutedIDs", "[]").apply();
-                    editor.putString("flaggedIDs", "[]").apply();
-                    editor.apply();
-                    if (MI != null) {
-                        snacks.add(new Snack("Block Lists Cleared", Snackbar.LENGTH_INDEFINITE));
-                        checkForMessages();
-                    }
                     break;
                 case "alert":
                     if (blockListContainsId(blockedIDs, intent.getStringExtra("userId")) || MI == null)
@@ -443,26 +323,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 case "nineteenSendPM":
                     sendPrivate(intent.getStringExtra("text"), intent.getStringExtra("id"));
                     break;
-                case "nineteenReceivePM":
-                    Message message = gson.fromJson(intent.getStringExtra("data"), Message.class);
-                    if (settings.getBoolean("pmenabled", true)) {
-                        if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
-                            if (Objects.equals(chat.get(), message.getUser_id())) {
-                                if (MI != null) MI.displayChat(null, true, false);
-                                else sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
-                            } else {
-                                if (!recording) sp.play(chain, .1f, .1f, 1, 0, 1f);
-                                messages.add(message);
-                                checkForMessages();
-                            }
-                        }
-                    } else {
-                        if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
-                            snacks.add(new Snack(message.getHandle() + " sent you a private message", Snackbar.LENGTH_SHORT));
-                            checkForMessages();
-                        }
-                    }
-                    break;
                 case "nineteenBluetoothSettingChange":
                     bluetooth = intent.getBooleanExtra("data", false);
                     settings.edit().putBoolean("bluetooth", bluetooth).apply();
@@ -508,6 +368,63 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     private boolean callStateListenerRegistered = false;
 
+    private final ValueEventListener autoSkipEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            autoSkip.clear();
+            for (DataSnapshot child : snapshot.getChildren()) {
+                autoSkip.add(child.getKey());
+            }
+            userList = settleUserList(users);
+            if (MI != null) MI.updateUserList(userList);
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+
+        }
+    };
+
+    private final ChildEventListener volumeChildListener = new ChildEventListener() {
+        @Override
+        public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            UserVolume child = dataSnapshot.getValue(UserVolume.class);
+            volumes.add(child);
+            assert child != null;
+            if (isUpdatedVolumeUserZero(child.getId())) {
+                float volume = scaleVolume(returnUserVolume(child.getId()));
+                player.setVolume(volume, volume);
+            }
+        }
+
+        @Override
+        public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            UserVolume child = dataSnapshot.getValue(UserVolume.class);
+            for (int i = 0; i < volumes.size(); i++) {
+                assert child != null;
+                if (volumes.get(i).getId().equals(child.getId()))
+                    volumes.get(i).setVolume(child.getVolume());
+            }
+            assert child != null;
+            if (isUpdatedVolumeUserZero(child.getId())) {
+                float volume = scaleVolume(returnUserVolume(child.getId()));
+                player.setVolume(volume, volume);
+            }
+        }
+
+        @Override
+        public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+        }
+
+        @Override
+        public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+        }
+    };
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         registerCallStateListener();
@@ -549,7 +466,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         operator.setChannel(null);
         operator.getLocationEnabled().set(settings.getBoolean("locationEnabled", ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED));
         if (operator.getSubscribed()) blockLimit = 30;
-        enableDatabaseListeners();
+        enableListeners();
         pauseLimit = settings.getInt("pauseLimit", 150);
         bluetooth = settings.getBoolean("bluetooth", true);
         onlineStatus = "Online";
@@ -708,7 +625,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Log.i("logging", "pulse");
                 final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
                 client.newCall(new Request.Builder().url(SITE_URL + "user_pulse_response.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
                     @Override
@@ -717,6 +633,19 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
+                        if (response.isSuccessful()) {
+                            try (response) {
+                                assert response.body() != null;
+                                final String flagData = response.body().string();
+                                Log.i("logging", flagData);
+                                flaggedIds.clear();
+                                flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
+                                }.getType());
+                                settings.edit().putString("flaggedIDs", flagData).apply();
+                            } catch (IOException e) {
+                                LOG.e("user_pulse_response.php", e.getMessage());
+                            }
+                        }
                     }
                 });
 
@@ -724,18 +653,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         }, 300000, 300000);
     }
 
-    private void enableDatabaseListeners() {
+    private void enableListeners() {
         databaseReference.child("paused").child(operator.getUser_id()).removeValue();
         databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
         databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
         databaseReference.child("keychain").addValueEventListener(this);
-        databaseReference.child("blocking").addValueEventListener(this);
-        databaseReference.child("ghostModeAvailible").addValueEventListener(this);
-        databaseReference.child("flagsEnabled").addValueEventListener(this);
-        databaseReference.child("radioShopOpen").addValueEventListener(this);
-        databaseReference.child("silencing").addValueEventListener(this);
-
-
         databaseReference.child("ghost").addValueEventListener(this);
         databaseReference.child("paused").addValueEventListener(this);
         databaseReference.child("onCall").addValueEventListener(this);
@@ -744,63 +666,180 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         databaseReference.child("disableProfile").addValueEventListener(this);
         databaseReference.child("hinderTexts").addValueEventListener(this);
         databaseReference.child("hinderPhotos").addValueEventListener(this);
-        databaseReference.child("autoSkip").child(operator.getUser_id()).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                autoSkip.clear();
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    autoSkip.add(child.getKey());
+        databaseReference.child("autoSkip").child(operator.getUser_id()).addValueEventListener(autoSkipEventListener);
+        databaseReference.child("volumes").child(operator.getUser_id()).addChildEventListener(volumeChildListener);
+        databaseReference.child("controlling").child(operator.getUser_id()).addChildEventListener(this);
+        databaseReference.child("appOptions").addValueEventListener(appOptionsListener);
+
+        databaseReference.child("blocking").addValueEventListener(this);
+        databaseReference.child("ghostModeAvailible").addValueEventListener(this);
+        databaseReference.child("flagsEnabled").addValueEventListener(this);
+        databaseReference.child("radioShopOpen").addValueEventListener(this);
+        databaseReference.child("silencing").addValueEventListener(this);
+    }
+
+    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+        final ControlCode control = snapshot.child("control").getValue(ControlCode.class);
+        databaseReference.child("controlling").child(operator.getUser_id()).child(snapshot.getKey()).removeValue();
+        switch (control) {
+            case ALERT:
+                if (MI != null)
+                    MI.showSnack(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
+                break;
+            case TOAST:
+                if (MI != null)
+                    MI.showSnack(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
+                break;
+            case PRIVATE_MESSAGE:
+                final Message message = snapshot.child("data").getValue(Message.class);
+                if (settings.getBoolean("pmenabled", true)) {
+                    if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
+                        if (Objects.equals(chat.get(), message.getUser_id())) {
+                            if (MI != null) MI.displayChat(null, true, false);
+                            else
+                                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                        } else {
+                            if (!recording) sp.play(chain, .1f, .1f, 1, 0, 1f);
+                            messages.add(message);
+                            checkForMessages();
+                        }
+                    }
+                } else {
+                    if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
+                        snacks.add(new Snack(message.getHandle() + " sent you a private message", Snackbar.LENGTH_SHORT));
+                        checkForMessages();
+                    }
                 }
-                userList = settleUserList(users);
-                if (MI != null) MI.updateUserList(userList);
-            }
+                break;
+            case PRIVATE_PHOTO: //Private Photo
+                final Photo privatePhoto = snapshot.child("data").getValue(Photo.class);
+                assert privatePhoto != null;
+                if (RadioService.blockListContainsId(photoIDs, privatePhoto.getSenderId())) return;
+                loader.preload(privatePhoto.getUrl(), new RequestListener<>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                        snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
+                        return false;
+                    }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
+                    @Override
+                    public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                        if (Objects.equals(chat.get(), privatePhoto.getSenderId())) {
+                            if (MI != null) MI.displayChat(null, true, false);
+                            else
+                                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                        } else {
+                            if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
+                            if (settings.getBoolean("photos", true))
+                                photos.add(privatePhoto);
+                            else
+                                snacks.add(new Snack(privatePhoto.getSenderHandle() + " sent you a private photo", Snackbar.LENGTH_SHORT));
+                            checkForMessages();
+                        }
+                        return true;
+                    }
+                });
+                break;
+            case MASS_PHOTO: //Mass Photo
+                final Photo massPhoto = snapshot.child("data").getValue(Photo.class);
+                assert massPhoto != null;
+                if (RadioService.blockListContainsId(photoIDs, massPhoto.getSenderId())) return;
+                loader.preload(massPhoto.getUrl(), new RequestListener<>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                        snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
+                        return false;
+                    }
 
-            }
-        });
-        databaseReference.child("volumes").child(operator.getUser_id()).addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                UserVolume child = dataSnapshot.getValue(UserVolume.class);
-                volumes.add(child);
-                assert child != null;
-                if (isUpdatedVolumeUserZero(child.getId())) {
-                    float volume = scaleVolume(returnUserVolume(child.getId()));
-                    player.setVolume(volume, volume);
+                    @Override
+                    public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                        if (!recording && MI != null)
+                            sp.play(glass, .1f, .1f, 1, 0, 1f);
+                        if (settings.getBoolean("photos", true) && !paused)
+                            photos.add(massPhoto);
+                        else if (MI != null)
+                            snacks.add(new Snack(massPhoto.getSenderHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
+                        Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(massPhoto);
+                        checkForMessages();
+                        return true;
+                    }
+                });
+                break;
+            case SALUTE:
+                final ReputationMark salute = snapshot.child("data").getValue(ReputationMark.class);
+                if (MI != null)
+                    MI.showSnack(new Snack(salute.getHandle() + " sent you a SALUTE!", Snackbar.LENGTH_INDEFINITE));
+                break;
+            case FLAG:
+                final ReputationMark flag = snapshot.child("data").getValue(ReputationMark.class);
+                sendBroadcast(new Intent("bird").putExtra("userId", flag.getUserId()).setPackage("com.cb3g.channel19"));
+                if (MI != null)
+                    MI.showSnack(new Snack(flag.getHandle() + " sent you a FLAG!", Snackbar.LENGTH_LONG));
+                checkFlagOut();
+                break;
+            case LONG_FLAG:
+                final ReputationMark longFlag = snapshot.child("data").getValue(ReputationMark.class);
+                sendBroadcast(new Intent("longFlag").putExtra("userId", longFlag.getUserId()).putExtra("handle", longFlag.getHandle()).setPackage("com.cb3g.channel19"));
+                checkFlagOut();
+                break;
+            case KICK_USER:
+                stopSelf();
+                break;
+            case CLEAR_BLOCK_LISTS:
+                blockedIDs.clear();
+                photoIDs.clear();
+                textIDs.clear();
+                salutedIds.clear();
+                flaggedIds.clear();
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("blockedIDs", "[]").apply();
+                editor.putString("photoIDs", "[]").apply();
+                editor.putString("textIDs", "[]").apply();
+                editor.putString("salutedIDs", "[]").apply();
+                editor.putString("flaggedIDs", "[]").apply();
+                editor.apply();
+                if (MI != null) {
+                    snacks.add(new Snack("Block Lists Cleared", Snackbar.LENGTH_INDEFINITE));
+                    checkForMessages();
                 }
-            }
+                break;
+        }
+    }
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                UserVolume child = dataSnapshot.getValue(UserVolume.class);
-                for (int i = 0; i < volumes.size(); i++) {
-                    assert child != null;
-                    if (volumes.get(i).getId().equals(child.getId()))
-                        volumes.get(i).setVolume(child.getVolume());
-                }
-                assert child != null;
-                if (isUpdatedVolumeUserZero(child.getId())) {
-                    float volume = scaleVolume(returnUserVolume(child.getId()));
-                    player.setVolume(volume, volume);
-                }
-            }
+    private final ValueEventListener appOptionsListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            appOptions = snapshot.getValue(AppOptionsObject.class);
+        }
 
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-            }
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+        }
+    };
 
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-            }
+    private void removeListeners() {
+        databaseReference.child("controlling").child(operator.getUser_id()).removeEventListener((ChildEventListener) this);
+        databaseReference.child("appOptions").removeEventListener(appOptionsListener);
+        databaseReference.child("keychain").removeEventListener((ValueEventListener) this);
+        databaseReference.child("hinderPhotos").removeEventListener((ValueEventListener) this);
+        databaseReference.child("hinderTexts").removeEventListener((ValueEventListener) this);
+        databaseReference.child("disableProfile").removeEventListener((ValueEventListener) this);
+        databaseReference.child("blockedFromReservoir").removeEventListener((ValueEventListener) this);
+        databaseReference.child("silenced").removeEventListener((ValueEventListener) this);
+        databaseReference.child("paused").removeEventListener((ValueEventListener) this);
+        databaseReference.child("ghost").removeEventListener((ValueEventListener) this);
+        databaseReference.child("onCall").removeEventListener((ValueEventListener) this);
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-        databaseReference.child("photos").child(operator.getUser_id()).child("mass").addChildEventListener(massPhotoListener);
-        databaseReference.child("photos").child(operator.getUser_id()).child("private").addChildEventListener(privatePhotoListener);
+        databaseReference.child("autoSkip").child(operator.getUser_id()).removeEventListener(autoSkipEventListener);
+        databaseReference.child("volumes").child(operator.getUser_id()).removeEventListener(volumeChildListener);
+
+        databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
+        databaseReference.child("paused").child(operator.getUser_id()).removeValue();
+        databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
+
+        if (operator.getChannel() != null)
+            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
+        listenForCoordinates(false);
     }
 
     void registerDefaultNetworkCallback() {
@@ -810,13 +849,13 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
                 connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
                     @Override
-                    public void onAvailable(@NonNull android.net.Network network) {
+                    public void onAvailable(@NonNull Network network) {
                         super.onAvailable(network);
                         makePoor(false);
                     }
 
                     @Override
-                    public void onLost(@NonNull android.net.Network network) {
+                    public void onLost(@NonNull Network network) {
                         super.onLost(network);
                         makePoor(true);
                     }
@@ -1042,7 +1081,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 RadioService.databaseReference.child("locations").addValueEventListener(this);
             }
         } else {
-            RadioService.databaseReference.child("locations").removeEventListener(this);
+            RadioService.databaseReference.child("locations").removeEventListener((ValueEventListener) this);
             databaseReference.child("locations").child(operator.getUser_id()).removeValue();
             coordinates.clear();
             nearby.clear();
@@ -1130,21 +1169,26 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     coordinates.add(snapshot.getValue(Coordinates.class));
                 }
             }
-            case "blocking" ->
-                    operator.setBlocking(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "flagsEnabled" ->
-                    operator.setFlagsEnabled(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "ghostModeAvailible" ->
-                    operator.setGhostModeAvailible(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "radioShopOpen" ->
-                    operator.setRadioShopOpen(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
-            case "silencing" ->
-                    operator.setSilencing(Boolean.TRUE.equals(dataSnapshot.getValue(Boolean.class)));
             case "keychain" -> {
                 operator.setKey(Objects.requireNonNull(dataSnapshot.getValue(String.class)));
                 settings.edit().putString("keychain", operator.getKey()).apply();
             }
         }
+    }
+
+    @Override
+    public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+    }
+
+    @Override
+    public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+    }
+
+    @Override
+    public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
     }
 
     @Override
@@ -1505,35 +1549,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             telephonyManager.unregisterTelephonyCallback(callStateListener);
         }
         settings.edit().putBoolean("exiting", true).apply();
-        sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
         unregisterReceiver(receiver);
+        sendBroadcast(new Intent("killActivity").setPackage("com.cb3g.channel19"));
     }
 
-    private void removeListeners() {
-        if (operator.getChannel() != null)
-            databaseReference.child("audio").child(operator.getChannel().getChannel_name()).removeEventListener(audioListener);
-        databaseReference.child("blocking").removeEventListener(this);
-        databaseReference.child("ghostModeAvailible").removeEventListener(this);
-        databaseReference.child("flagsEnabled").removeEventListener(this);
-        databaseReference.child("radioShopOpen").removeEventListener(this);
-        databaseReference.child("silencing").removeEventListener(this);
-        databaseReference.child("keychain").removeEventListener(this);
-        databaseReference.child("hinderPhotos").removeEventListener(this);
-        databaseReference.child("hinderTexts").removeEventListener(this);
-        databaseReference.child("disableProfile").removeEventListener(this);
-        databaseReference.child("blockedFromReservoir").removeEventListener(this);
-        databaseReference.child("silenced").removeEventListener(this);
-        databaseReference.child("paused").removeEventListener(this);
-        databaseReference.child("ghost").removeEventListener(this);
-        databaseReference.child("onCall").removeEventListener(this);
-
-        databaseReference.child("autoSkip").child(operator.getUser_id()).removeValue();
-        databaseReference.child("paused").child(operator.getUser_id()).removeValue();
-        databaseReference.child("onCall").child(operator.getUser_id()).removeValue();
-        databaseReference.child("photos").child(operator.getUser_id()).child("mass").removeEventListener(massPhotoListener);
-        databaseReference.child("photos").child(operator.getUser_id()).child("private").removeEventListener(privatePhotoListener);
-        listenForCoordinates(false);
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -1634,7 +1653,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         sp = new SoundPool.Builder().build();
         glass = sp.load(this, R.raw.glass, 1);
         register = sp.load(this, R.raw.register, 1);
-        interrupt = sp.load(this, R.raw.interrupt, 1); //TODO:
+        interrupt = sp.load(this, R.raw.interrupt, 1);
         wrong = sp.load(this, R.raw.wrong, 1);
         confirm = sp.load(this, R.raw.confirm, 1);
         chain = sp.load(this, R.raw.chian, 1);
@@ -1670,7 +1689,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         filter.addAction("ghost");
         filter.addAction("purgeUser");
         filter.addAction("giphyupload");
-        filter.addAction("clear");
         filter.addAction("alert");
         filter.addAction("snack");
         filter.addAction("background");
@@ -1695,7 +1713,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         filter.addAction("purgeNineTeen");
         filter.addAction("muteChannelNineTeen");
         filter.addAction("nineteenSendPM");
-        filter.addAction("nineteenReceivePM");
         filter.addAction("nineteenSkip");
         filter.addAction("nineteenSkipTwo");
         filter.addAction("nineteenUpdateBlocks");
@@ -1788,9 +1805,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void buildNotification() {
-        PendingIntent skipping = PendingIntent.getBroadcast(this, 0, new Intent("nineteenSkip"), PendingIntent.FLAG_IMMUTABLE);
-        PendingIntent pausing = PendingIntent.getBroadcast(this, 0, new Intent("nineteenPlayPause"), PendingIntent.FLAG_IMMUTABLE);
-        PendingIntent opench19 = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent skipping = PendingIntent.getBroadcast(this, 0, new Intent("nineteenSkip").setPackage("com.cb3g.channel19"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pausing = PendingIntent.getBroadcast(this, 0, new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent opench19 = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class).setPackage("com.cb3g.channel19"), PendingIntent.FLAG_IMMUTABLE);
         notifyview.setOnClickPendingIntent(R.id.skipping, skipping);
         notifyview.setTextViewText(R.id.black_handle_tv, onlineStatus);
         notifyview.setOnClickPendingIntent(R.id.exitstrategy, pausing);
@@ -1849,7 +1866,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
+                if (response.isSuccessful())
+                    sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
                 response.close();
             }
         });
@@ -1899,14 +1917,15 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void saluteUser(final User entry) {
+    void saluteUser(final User target) {
         if (operator.getSilenced()) return;
-        if (salutedIds.contains(entry.getUser_id()) && !operator.getAdmin()) {
+        if (salutedIds.contains(target.getUser_id()) && !operator.getAdmin()) {
             snacks.add(new Snack("Already Saluted", Snackbar.LENGTH_SHORT));
             checkForMessages();
             return;
         }
-        final String data = Jwts.builder().setHeader(header).claim("userId", entry.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.SALUTE, new ReputationMark(operator.getUser_id(), operator.getHandle())));
+        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_salute_new.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1916,10 +1935,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 if (response.isSuccessful()) {
-                    snacks.add(new Snack("Saluted " + entry.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                    snacks.add(new Snack("Saluted " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
                     checkForMessages();
                     if (!operator.getAdmin()) {
-                        salutedIds.add(entry.getUser_id());
+                        salutedIds.add(target.getUser_id());
                         uploadListToDB("salutedIDs", new JSONArray(salutedIds));
                     }
                 }
@@ -1928,8 +1947,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void flagUser(User entry) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", entry.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+    void flagUser(User target) {
+        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
+        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1939,11 +1959,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 if (response.isSuccessful()) {
-                    snacks.add(new Snack("Flagged " + entry.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                    snacks.add(new Snack("Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
                     checkForMessages();
                     if (!operator.getAdmin()) {
-                        flaggedIds.add(entry.getUser_id());
+                        flaggedIds.add(target.getUser_id());
                         uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
+                        checkFlagOut();
                     }
                 }
                 response.close();
@@ -1951,8 +1972,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    public void longFlagUser(User user) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+    public void longFlagUser(User target) {
+        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
+        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_long_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1962,10 +1984,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
                 if (response.isSuccessful()) {
-                    snacks.add(new Snack("LONG Flagged " + user.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                    snacks.add(new Snack("LONG Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
                     checkForMessages();
                     if (!operator.getAdmin()) {
-                        flaggedIds.add(user.getUser_id());
+                        flaggedIds.add(target.getUser_id());
                         uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
                     }
                 }
@@ -2152,7 +2174,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     }
                 }
                 indexList.sort(Comparator.comparingLong(Inbound::getStamp));
-                if (indexList.size() > 0) {
+                if (!indexList.isEmpty()) {
                     List<Inbound> deletionArray = new ArrayList<>();
                     if (indexList.size() > limit - 1 && limit != 0) {
                         for (int i = 0; i <= limit - 1; i++) {
@@ -2190,6 +2212,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void sendPrivate(final String messageTxt, final String reciever) {
+        final Message message = new Message(operator.getUser_id(), operator.getHandle(), messageTxt, operator.getRank(), operator.getProfileLink());
+        if (operator.getUser_id().equals("JJ7SAoyqRsS7GQixEL8pbziWguV2") && !reciever.equals("JJ7SAoyqRsS7GQixEL8pbziWguV2"))
+            Utils.control().child("JJ7SAoyqRsS7GQixEL8pbziWguV2").child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
+        Utils.control().child(reciever).child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
         final String data = Jwts.builder().setHeader(header).claim("to", reciever).claim("text", messageTxt).claim("from", operator.getUser_id()).claim("handle", operator.getHandle()).claim("rank", operator.getRank()).claim("silenced", String.valueOf(operator.getSilenced())).claim("profileLink", operator.getProfileLink()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         client.newCall(new Request.Builder().url(SITE_URL + "user_send_pm.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
             @Override
@@ -2300,6 +2326,29 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
         DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
         manager.enqueue(request);
+    }
+
+    private void checkFlagOut() {
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        client.newCall(new Request.Builder().url(SITE_URL + "user_check_flags.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                LOG.e("get_users_on_channel IOException " + e);
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull final Response response) {
+                if (response.isSuccessful()) {
+                    try (response) {
+                        assert response.body() != null;
+                        int flags = Integer.parseInt(response.body().string());
+                        if (flags >= 20 && !operator.getAdmin()) stopSelf();
+                    } catch (IOException e) {
+                        LOG.e("get_users_on_channel", e.getMessage());
+                    }
+                }
+            }
+        });
     }
 
     @Override

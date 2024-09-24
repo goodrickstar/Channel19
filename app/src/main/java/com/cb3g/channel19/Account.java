@@ -32,7 +32,7 @@ public class Account extends Fragment {
         setStatus(RadioService.operator.getSubscribed());
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(boolean status) {
         if (status) this.status.setText(R.string.pro_mode);
         else this.status.setText(R.string.peak_tune);
     }

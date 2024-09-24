@@ -54,6 +54,9 @@ import java.util.Date;
 import java.util.Locale;
 
 class Utils {
+    static DatabaseReference control(){
+        return getDatabase().getReference().child("controlling");
+    }
 
     static String getKey(){
         return getDatabase().getReference().push().getKey();

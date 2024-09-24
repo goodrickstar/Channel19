@@ -33,7 +33,7 @@ public class ExecutorUtils {
         }
     }
 
-    public static Boolean getFutureBoolean(ExecutorService executorService, Callable<Boolean> callable) {
+    public static boolean getFutureBoolean(ExecutorService executorService, Callable<Boolean> callable) {
         Future<Boolean> future = executorService.submit(callable);
         try {
             return future.get();

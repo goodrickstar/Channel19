@@ -1,0 +1,6 @@
+package com.cb3g.channel19
+
+enum class ControlCode {
+    TOAST, PRIVATE_MESSAGE, PRIVATE_PHOTO, MASS_PHOTO, SALUTE, LONG_FLAG, FLAG,
+    KICK_USER, ALERT, CLEAR_BLOCK_LISTS
+}

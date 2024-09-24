@@ -16,7 +16,6 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -26,7 +25,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -38,8 +36,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.ReservoirActivityBinding;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -72,9 +70,9 @@ import me.shaohui.advancedluban.OnCompressListener;
 
 public class ReservoirActivity extends AppCompatActivity implements ValueEventListener, RI {
     static int screen_width;
+    private ReservoirActivityBinding binding;
     public boolean prepaused = false;
     private final recycler_adapter containerAdapter = new recycler_adapter();
-    private TextView emptyView;
     private final List<Post> posts = new ArrayList<>();
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -177,35 +175,31 @@ public class ReservoirActivity extends AppCompatActivity implements ValueEventLi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         CACHE_DIRECTORY = getCacheDir() + "/";
-        setContentView(R.layout.reservoir_activity);
+        binding = ReservoirActivityBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         fragmentManager = getSupportFragmentManager();
         screen_width = Utils.getScreenWidth(this);
-        RecyclerView recyclerView = findViewById(R.id.container);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(containerAdapter);
+        binding.container.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        binding.container.setHasFixedSize(true);
+        binding.container.setAdapter(containerAdapter);
         channelReservoirReference = RadioService.databaseReference.child("reservoir").child(String.valueOf(RadioService.operator.getChannel().getChannel()));
         storageReference = FirebaseStorage.getInstance("gs://weeklystorage").getReference();
         SharedPreferences settings = getSharedPreferences("settings", MODE_PRIVATE);
-        emptyView = findViewById(R.id.hour_glass);
-        ImageView backDrop = findViewById(R.id.backdrop);
         String background = settings.getString("settings_backdrop", "");
         if (settings.getBoolean("custom", false))
             background = settings.getString("background", "default");
-        glideImageLoader.load(backDrop, background);
-        TextView post = findViewById(R.id.post);
-        TextView poll = findViewById(R.id.poll);
+        glideImageLoader.load(binding.backdrop, background);
         if (RadioService.operator.getBlockedFromReservoir()) {
-            post.setCompoundDrawablesWithIntrinsicBounds(getDrawable(R.drawable.post_g), null, null, null);
-            poll.setCompoundDrawablesWithIntrinsicBounds(getDrawable(R.drawable.poll_g), null, null, null);
-            post.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
-            poll.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
+            binding.post.setCompoundDrawablesWithIntrinsicBounds(getDrawable(R.drawable.post_g), null, null, null);
+            binding.poll.setCompoundDrawablesWithIntrinsicBounds(getDrawable(R.drawable.poll_g), null, null, null);
+            binding.post.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
+            binding.poll.setTextColor(ContextCompat.getColor(this, R.color.greyed_out));
         } else {
-            post.setOnClickListener(v -> {
+            binding.post.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 create_new_entry();
             });
-            poll.setOnClickListener(v -> {
+            binding.poll.setOnClickListener(v -> {
                 Utils.vibrate(v);
                 CreatePoll createPoll = new CreatePoll(null);
                 createPoll.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
@@ -266,7 +260,7 @@ public class ReservoirActivity extends AppCompatActivity implements ValueEventLi
 
     @Override
     public void simple_post(final Gif gif, String content, boolean upload) {
-        if (gif == null && content.trim().length() == 0) return;
+        if (gif == null && content.trim().isEmpty()) return;
         Post post = new Post();
         post.setType(1);
         post.setPostId(channelReservoirReference.child("posts").push().getKey());
@@ -470,12 +464,13 @@ public class ReservoirActivity extends AppCompatActivity implements ValueEventLi
         }
         final PostDiffCallBack diffCallback = new PostDiffCallBack(this.posts, data);
         final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+        final boolean newPost = posts.size() < data.size();
         posts.clear();
         posts.addAll(data);
         diffResult.dispatchUpdatesTo(containerAdapter);
-        if (posts.isEmpty()) emptyView.setVisibility(View.VISIBLE);
-        else emptyView.setVisibility(View.INVISIBLE);
-
+        if (posts.isEmpty()) binding.hourGlass.setVisibility(View.VISIBLE);
+        else binding.hourGlass.setVisibility(View.INVISIBLE);
+        if (newPost) binding.container.postDelayed(() -> binding.container.smoothScrollToPosition(0), 500);
     }
 
     @Override
@@ -493,22 +488,21 @@ public class ReservoirActivity extends AppCompatActivity implements ValueEventLi
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            switch (viewType) {
-                case 1:
-                    return new PostHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.simple_post, parent, false));
-                case 2:
-                    return new PollHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.poll_post, parent, false));
-                default:
-                    return null;
-            }
+            return switch (viewType) {
+                case 1 ->
+                        new PostHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.simple_post, parent, false));
+                case 2 ->
+                        new PollHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.poll_post, parent, false));
+                default -> null;
+            };
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
             Post post = posts.get(holder.getAdapterPosition());
-            boolean ownerOfPost = post.getFacebookId().equals(RadioService.operator.getUser_id());
+            final boolean ownerOfPost = post.getFacebookId().equals(RadioService.operator.getUser_id());
             switch (holder.getItemViewType()) {
-                case 1: //TODO links
+                case 1:
                     PostHolder simple_post = (PostHolder) holder;
                     glideImageLoader.load(simple_post.poster_profile_pic, post.getProfileLink(), RadioService.profileOptions);
                     simple_post.poster_profile_pic.setOnClickListener(v -> {
@@ -716,7 +710,7 @@ public class ReservoirActivity extends AppCompatActivity implements ValueEventLi
                     }
                     int max = returnMax(post.getOptions());
                     boolean alreadyVoted = alreadyVoted(post.getOptions());
-                    RecyclerView.Adapter<RecyclerView.ViewHolder> adapter = new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+                    RecyclerView.Adapter<RecyclerView.ViewHolder> adapter = new RecyclerView.Adapter<>() {
                         @NonNull
                         @Override
                         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {

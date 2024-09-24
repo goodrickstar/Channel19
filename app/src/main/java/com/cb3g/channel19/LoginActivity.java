@@ -22,13 +22,10 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
-import android.widget.TextView;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContract;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,14 +42,12 @@ import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.LoginBinding;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.play.core.appupdate.AppUpdateInfo;
 import com.google.android.play.core.appupdate.AppUpdateManager;
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
 import com.google.android.play.core.appupdate.AppUpdateOptions;
-import com.google.android.play.core.install.model.ActivityResult;
 import com.google.android.play.core.install.model.AppUpdateType;
 import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.FirebaseApp;
@@ -341,14 +336,44 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                 try (response) {
                                     JSONObject data = new JSONObject(image);
                                     if (data.getString("user_id").equals("0")) {
-                                        show_result(data.getString("mode"), data.getString("msg"));
-                                        AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(LoginActivity.this);
-                                        Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
-                                        appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
-                                            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
-                                                appUpdateManager.startUpdateFlowForResult(appUpdateInfo, null, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build());
-                                            }
-                                        });
+                                        final String mode = data.getString("mode");
+                                        final String message = data.getString("mode");
+                                        if (mode.equals("Update Required")) {
+                                            AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(LoginActivity.this);
+                                            Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
+                                            appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
+                                                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+                                                    appUpdateManager.startUpdateFlowForResult(appUpdateInfo, new ActivityResultLauncher<>() {
+                                                        @Override
+                                                        public void launch(IntentSenderRequest input, @Nullable ActivityOptionsCompat options) {
+
+                                                        }
+
+                                                        @Override
+                                                        public void unregister() {
+
+                                                        }
+
+                                                        @NonNull
+                                                        @Override
+                                                        public ActivityResultContract<IntentSenderRequest, ?> getContract() {
+                                                            return null;
+                                                        }
+                                                    }, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build());
+                                                }
+                                            }).addOnFailureListener(e -> {
+                                                show_result(mode, message);
+                                                final String appPackageName = getPackageName();
+                                                try {
+                                                    Intent appStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
+                                                    appStoreIntent.setPackage("com.android.vending");
+                                                    startActivity(appStoreIntent);
+                                                } catch (
+                                                        android.content.ActivityNotFoundException exception) {
+                                                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)).setPackage("com.cb3g.channel19"));
+                                                }
+                                            });
+                                        } else show_result(mode, message);
                                     } else {
                                         final String handle = data.getString("radio_hanlde");
                                         if (handle.equals("default")) {
@@ -357,7 +382,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                         }
                                         final String profile = data.getString("profileLink");
                                         final boolean invisible = Boolean.parseBoolean(data.getString("invisible"));
-                                        welcome(handle, profile);
                                         final SharedPreferences.Editor edit = settings.edit();
                                         edit.putString("email", data.getString("email"));
                                         edit.putString("userId", data.getString("user_id"));
@@ -434,16 +458,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     @Override
     public void rotate_logo() {
         runOnUiThread(() -> binding.spinner.startAnimation(rotate));
-    }
-
-    @Override
-    public void toast(final String text) {
-        Toaster.toastlow(this, text);
-    }
-
-    @Override
-    public void welcome(final String text, final String profileLink) {
-        runOnUiThread(() -> Toaster.online(LoginActivity.this, "Welcome " + text, profileLink));
     }
 
     @Override
@@ -543,18 +557,12 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     public void showSnack(Snack snack) {
         Snackbar snackbar = Snackbar.make(binding.coordinator, snack.getMessage(), snack.getLength());
         View view = snackbar.getView();
-        TextView tv = view.findViewById(com.google.android.material.R.id.snackbar_text);
-        tv.setTextColor(ContextCompat.getColor(this, R.color.main_white));
         view.setBackgroundColor(ContextCompat.getColor(this, R.color.main_black));
-        if (snack.getLength() == Snackbar.LENGTH_INDEFINITE) {
-            snackbar.setActionTextColor(Color.WHITE);
-            snackbar.setAction("10 4", v -> {
-                Utils.vibrate(v);
-                snackbar.dismiss();
-            });
-        } else {
-            tv.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        }
+        snackbar.setActionTextColor(Color.WHITE);
+        snackbar.setAction("10 4", v -> {
+            Utils.vibrate(v);
+            snackbar.dismiss();
+        });
         snackbar.show();
     }
 

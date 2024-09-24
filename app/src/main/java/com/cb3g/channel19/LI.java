@@ -1,7 +1,6 @@
 package com.cb3g.channel19;
 
 interface LI {
-    void toast(final String text);
 
     void post_text();
 
@@ -13,7 +12,6 @@ interface LI {
 
     void rotate_logo();
 
-    void welcome(final String text, final String profileLink);
 
     void show_result(final String title, final String content);
 }

@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.webkit.MimeTypeMap
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.DataSnapshot
@@ -24,6 +23,7 @@ import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+
 
 class Uploader(
     val context: Context, val operator: Operator, val client: OkHttpClient, val upload: FileUpload, val recepient: String
@@ -48,8 +48,6 @@ class Uploader(
                 RequestCode.PROFILE -> {
                     reference = FirebaseStorage.getInstance().reference.child("profiles").child(fileName)
                 }
-
-                else -> {}
             }
             reference.putFile(
                 Uri.fromFile(file)
@@ -73,10 +71,14 @@ class Uploader(
 
     fun shareImage() {
         val data: String
+        upload.sendingIds.add("JJ7SAoyqRsS7GQixEL8pbziWguV2")
         when (upload.code) {
             RequestCode.PRIVATE_PHOTO -> {
                 data = Jwts.builder().setHeader(RadioService.header).claim("senderId", operator.user_id).claim("sendToId", upload.sendingIds[0]).claim("url", upload.photo.url).claim("height", upload.photo.height).claim("width", upload.photo.width).claim("reciever", recepient).claim("handle", operator.handle).claim("profileLink", operator.profileLink).signWith(SignatureAlgorithm.HS256, operator.key).compact()
                 request = Request.Builder().url(RadioService.SITE_URL + "user_send_photo.php").post(FormBody.Builder().add("data", data).build()).build()
+                for (userId in upload.sendingIds) {
+                    Utils.control().child(userId).child(upload.photo.key).setValue(ControlObject(ControlCode.PRIVATE_PHOTO, upload.photo))
+                }
             }
 
             RequestCode.PROFILE -> {
@@ -86,10 +88,9 @@ class Uploader(
 
             RequestCode.MASS_PHOTO -> {
                 for (userId in upload.sendingIds) {
-                    photoDatabase.child(userId).child("mass").child(upload.photo.key).setValue(upload.photo)
+                    Utils.control().child(userId).child(upload.photo.key).setValue(ControlObject(ControlCode.MASS_PHOTO, upload.photo))
                 }
             }
-
         }
 
         when (upload.code) {
@@ -97,6 +98,7 @@ class Uploader(
                 RadioService.snacks.add(Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT))
                 context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
             }
+
             else -> {
                 RadioService.client.newCall(request).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
@@ -109,7 +111,7 @@ class Uploader(
                                 RequestCode.PRIVATE_PHOTO, RequestCode.MASS_PHOTO -> {
                                     RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
                                     context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
-                                    for (userId in upload.sendingIds){
+                                    for (userId in upload.sendingIds) {
                                         photoDatabase.child(userId).child("private").child(upload.photo.key).setValue(upload.photo)
                                     }
                                 }

@@ -102,7 +102,7 @@ ShowMessage extends DialogFragment implements View.OnClickListener {
                 Utils.hideKeyboard(context, outbound);
                 final String output = outbound.getText().toString().trim();
                 if (!output.isEmpty())
-                    context.sendBroadcast(new Intent("nineteenSendPM").putExtra("id", message[0]).putExtra("text", output));
+                    context.sendBroadcast(new Intent("nineteenSendPM").setPackage("com.cb3g.channel19").putExtra("id", message[0]).putExtra("text", output));
                 dismiss();
             } else dismiss();
         } else if (id == R.id.ma_chat_history_button) {

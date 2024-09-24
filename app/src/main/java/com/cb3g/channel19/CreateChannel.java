@@ -73,6 +73,7 @@ public class CreateChannel extends DialogFragment {
             else binding.pinEt.setVisibility(View.INVISIBLE
             );
         });
+        binding.lockOption.setEnabled(RadioService.appOptions.getPrivate_channels());
         binding.close.setOnClickListener(v -> {
             Utils.vibrate(v);
             context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));

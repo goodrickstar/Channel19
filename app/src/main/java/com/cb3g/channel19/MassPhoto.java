@@ -119,14 +119,10 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             for (MassPhotoUser user : working) {
                 if (user.isChecked) sendingIds.add(user.id);
             }
-            if (RadioService.operator.getAdmin())
-                sendingIds.add(RadioService.operator.getUser_id());
-            if (!sendingIds.isEmpty() && resource != null) {
-                FileUpload upload = new FileUpload(RequestCode.MASS_PHOTO, sendingIds, new Photo(Utils.getKey(), uri, resource.getIntrinsicHeight(), resource.getIntrinsicWidth(), Utils.UTC(), RadioService.operator.getUser_id(), RadioService.operator.getProfileLink(), RadioService.operator.getHandle(), RadioService.operator.getRank()));
-                Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload, RadioService.operator.getHandle());
-                uploader.uploadImage();
-                dismiss();
-            }
+            FileUpload upload = new FileUpload(RequestCode.MASS_PHOTO, sendingIds, new Photo(Utils.getKey(), uri, resource.getIntrinsicHeight(), resource.getIntrinsicWidth(), Utils.UTC(), RadioService.operator.getUser_id(), RadioService.operator.getProfileLink(), RadioService.operator.getHandle(), RadioService.operator.getRank()));
+            Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload, RadioService.operator.getHandle());
+            uploader.uploadImage();
+            dismiss();
         } else if (id == R.id.selector) {
             if (allChecked()) {
                 for (int x = 0; x < working.size(); x++) {
