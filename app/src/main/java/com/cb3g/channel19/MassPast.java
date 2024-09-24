@@ -93,7 +93,8 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
     @Override
     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-        if (staged) context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "Photo Received").setPackage("com.cb3g.channel19"));
+        if (staged)
+            context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "Photo Received").setPackage("com.cb3g.channel19"));
         else binding.recyclerView.smoothScrollToPosition(0);
         staged = true;
         List<Photo> photos = new ArrayList<>();
@@ -106,10 +107,16 @@ public class MassPast extends DialogFragment implements ValueEventListener {
             }
         }
         if (photos.isEmpty()) {
-            context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "No History Yet").setPackage("com.cb3g.channel19"));
-            dismiss();
-        }
-        else {
+            final String data = context.getSharedPreferences("massPast", Context.MODE_PRIVATE).getString("history", "");
+            if (!data.isEmpty()) {
+                adapter.updatePhotos(new Gson().fromJson(data, new TypeToken<List<Photo>>() {
+                }.getType()));
+                binding.massProgress.setVisibility(View.INVISIBLE);
+            } else {
+                context.sendBroadcast(new Intent("nineteenToast").setPackage("com.cb3g.channel19").putExtra("data", "No History Yet").setPackage("com.cb3g.channel19"));
+                dismiss();
+            }
+        } else {
             binding.massProgress.setVisibility(View.INVISIBLE);
             adapter.updatePhotos(photos);
         }
@@ -118,27 +125,24 @@ public class MassPast extends DialogFragment implements ValueEventListener {
 
     @Override
     public void onCancelled(@NonNull DatabaseError databaseError) {
-
+        final String data = context.getSharedPreferences("massPast", Context.MODE_PRIVATE).getString("history", "");
+        if (!data.isEmpty()) {
+            adapter.updatePhotos(new Gson().fromJson(data, new TypeToken<List<Photo>>() {
+            }.getType()));
+            binding.massProgress.setVisibility(View.INVISIBLE);
+        }
     }
 
     class MassAdapter extends RecyclerView.Adapter<MassAdapter.MyViewHolder> {
-        private List<Photo> photos;
-
-        public MassAdapter() {
-            final String data = context.getSharedPreferences("massPast", Context.MODE_PRIVATE).getString("history", "");
-            if (!data.isEmpty()) {
-                photos = new Gson().fromJson(data, new TypeToken<List<Photo>>() {
-                }.getType());
-                binding.massProgress.setVisibility(View.INVISIBLE);
-            }
-            else photos = new ArrayList<>();
-        }
+        private List<Photo> photos = new ArrayList<>();
 
         public void updatePhotos(List<Photo> photos) {
             final MassPhotoDiffCallBack diffCallback = new MassPhotoDiffCallBack(this.photos, photos);
             final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffCallback);
+            final boolean newPost = this.photos.size() < photos.size();
             this.photos = photos;
             diffResult.dispatchUpdatesTo(this);
+            if (newPost) binding.recyclerView.postDelayed(() -> binding.recyclerView.smoothScrollToPosition(0), 500);
         }
 
         @NonNull

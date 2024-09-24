@@ -108,6 +108,7 @@ public class MessageHistory extends DialogFragment {
                     context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().putString("data", data).apply();
                     List<History> dataset = parseJsonAndSort(data);
                     binding.historyListView.post(() -> adapter.updateHistory(dataset));
+                    binding.historyListView.postDelayed(() -> binding.historyListView.smoothScrollToPosition(0), 500);
                 }
             }
         });
