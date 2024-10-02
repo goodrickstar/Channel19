@@ -184,6 +184,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     flaggedIds.clear();
                     flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
                     }.getType());
+                    flaggedIds = gson.fromJson(flagData, new TypeToken<FlagObect>() {
+                    }.getType());
                     settings.edit().putString("flaggedIDs", flagData).apply();
                     break;
                 case "longFlag":
@@ -1948,7 +1950,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     void flagUser(User target) {
-        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
         final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
@@ -1966,6 +1967,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
                         checkFlagOut();
                     }
+                    Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                 }
                 response.close();
             }
@@ -1973,7 +1975,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     public void longFlagUser(User target) {
-        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
         final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_long_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
@@ -1990,6 +1991,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         flaggedIds.add(target.getUser_id());
                         uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
                     }
+                    Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                 }
                 response.close();
             }
@@ -2213,7 +2215,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     private void sendPrivate(final String messageTxt, final String reciever) {
         final Message message = new Message(operator.getUser_id(), operator.getHandle(), messageTxt, operator.getRank(), operator.getProfileLink());
-        if (operator.getUser_id().equals("JJ7SAoyqRsS7GQixEL8pbziWguV2") && !reciever.equals("JJ7SAoyqRsS7GQixEL8pbziWguV2"))
+        if (!operator.getUser_id().equals("JJ7SAoyqRsS7GQixEL8pbziWguV2") && !reciever.equals("JJ7SAoyqRsS7GQixEL8pbziWguV2"))
             Utils.control().child("JJ7SAoyqRsS7GQixEL8pbziWguV2").child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
         Utils.control().child(reciever).child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
         final String data = Jwts.builder().setHeader(header).claim("to", reciever).claim("text", messageTxt).claim("from", operator.getUser_id()).claim("handle", operator.getHandle()).claim("rank", operator.getRank()).claim("silenced", String.valueOf(operator.getSilenced())).claim("profileLink", operator.getProfileLink()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
@@ -2342,7 +2344,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     try (response) {
                         assert response.body() != null;
                         int flags = Integer.parseInt(response.body().string());
-                        if (flags >= 20 && !operator.getAdmin()) stopSelf();
+                        if (flags >= 20 && !operator.getAdmin()) {
+                            final ArrayList<String> ids = new ArrayList<>();
+                            for(UserListEntry user : userList){
+                                ids.add(user.getUser().getUser_id());
+                            }
+                            Utils.AlertOthers(ids, operator.getHandle() + " was flagged out!", true);
+                            stopSelf();
+                        }
                     } catch (IOException e) {
                         LOG.e("get_users_on_channel", e.getMessage());
                     }

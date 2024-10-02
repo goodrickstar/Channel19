@@ -11,9 +11,6 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +30,7 @@ import com.android.billingclient.api.ProductDetailsResponseListener;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.example.android.multidex.myapplication.R;
+import com.example.android.multidex.myapplication.databinding.SettingsBinding;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -70,9 +68,8 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     public final String GHOST = "ghost";
     public final String DONATE = "donation";
     private int stage = 1, post = 2;
-    private TextView label;
-    private ViewGroup tbb1, tbb2, tbb3;
     private FragmentManager fragmentManager;
+    private SettingsBinding binding;
 
     private GlideImageLoader glideImageLoader = new GlideImageLoader(this);
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -369,14 +366,25 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         super.onCreate(savedInstanceState);
         settings = getSharedPreferences("settings", MODE_PRIVATE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        setContentView(R.layout.settings);
+        binding = SettingsBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
         billingUtils = new BillingUtils(this, this);
         fragmentManager = getSupportFragmentManager();
-        ImageView backDrop = findViewById(R.id.backdrop);
         String background = settings.getString("settings_backdrop", "");
         if (settings.getBoolean("custom", false))
             background = settings.getString("background", "default");
-        glideImageLoader.load(backDrop, background);
+        glideImageLoader.load(binding.backdrop, background);
+        binding.menu.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                Utils.vibrate(view);
+                sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+                AppOptionsDialogFragment fragment = new AppOptionsDialogFragment();
+                fragment.setStyle(androidx.fragment.app.DialogFragment.STYLE_NO_TITLE, R.style.DialogTheme);
+                fragment.show(fragmentManager, "appOptions");
+                return true;
+            }
+        });
     }
 
     @Override
@@ -399,9 +407,8 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             sendBroadcast(new Intent("exitChannelNineTeen").setPackage("com.cb3g.channel19"));
             return;
         }
-        findbyid();
         chstage();
-        label.setText(R.string.menu_control_panel);
+        binding.tubular.setText(R.string.menu_control_panel);
     }
 
     @Override
@@ -524,43 +531,36 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             switch (post) {
                 case 1:
-                    tbb1.setBackgroundResource(R.drawable.empty_box_white_outline);
+                    binding.tab1.setBackgroundResource(R.drawable.empty_box_white_outline);
                 case 2:
-                    tbb2.setBackgroundResource(R.drawable.empty_box_white_outline);
+                    binding.tab2.setBackgroundResource(R.drawable.empty_box_white_outline);
                 case 3:
-                    tbb3.setBackgroundResource(R.drawable.empty_box_white_outline);
+                    binding.tab3.setBackgroundResource(R.drawable.empty_box_white_outline);
             }
             switch (stage) {
                 case 1:
                     transaction.replace(R.id.setswap, confrag, "cfrag");
                     transaction.commit();
                     post = stage;
-                    tbb1.setBackground(null);
-                    label.setText(R.string.menu_control_panel);
+                    binding.tab1.setBackground(null);
+                    binding.tubular.setText(R.string.menu_control_panel);
                     break;
                 case 2:
                     transaction.replace(R.id.setswap, drifrag, "dfrag");
                     transaction.commit();
                     post = stage;
-                    tbb2.setBackground(null);
-                    label.setText(R.string.menu_driver_info);
+                    binding.tab2.setBackground(null);
+                    binding.tubular.setText(R.string.menu_driver_info);
                     break;
                 case 3:
                     transaction.replace(R.id.setswap, accfrag, "afrag");
                     transaction.commit();
                     post = stage;
-                    tbb3.setBackground(null);
-                    label.setText(R.string.menu_account_info);
+                    binding.tab3.setBackground(null);
+                    binding.tubular.setText(R.string.menu_account_info);
                     break;
             }
         }
-    }
-
-    private void findbyid() {
-        label = findViewById(R.id.tubular);
-        tbb1 = findViewById(R.id.tab1);
-        tbb2 = findViewById(R.id.tab2);
-        tbb3 = findViewById(R.id.tab3);
     }
 
     public void touch(View v) {

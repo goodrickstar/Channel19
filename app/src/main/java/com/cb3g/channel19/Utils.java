@@ -50,15 +50,42 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 class Utils {
-    static DatabaseReference control(){
+
+    static void AlertOthers(final ArrayList<String> userIds, final String message, boolean confirm) {
+        for (String userId : userIds) {
+            if (confirm)
+                control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
+            else
+                control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
+        }
+    }
+
+    static void AlertUserList(final ArrayList<UserListEntry> users, final String message, boolean confirm) {
+        for (UserListEntry user : users) {
+            if (confirm)
+                control().child(user.getUser().getUser_id()).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
+            else
+                control().child(user.getUser().getUser_id()).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
+        }
+    }
+
+    static void AlertOther(final String userId, final String message, boolean confirm) {
+        if (confirm)
+            control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
+        else
+            control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
+    }
+
+    static DatabaseReference control() {
         return getDatabase().getReference().child("controlling");
     }
 
-    static String getKey(){
+    static String getKey() {
         return getDatabase().getReference().push().getKey();
     }
 

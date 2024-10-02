@@ -320,6 +320,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
     @Override
     protected void onResume() {
         super.onResume();
+        //Utils.AlertOther("JJ7SAoyqRsS7GQixEL8pbziWguV2", "Testing...123", true);
         if (RadioService.operator == null) {
             finish();
             return;

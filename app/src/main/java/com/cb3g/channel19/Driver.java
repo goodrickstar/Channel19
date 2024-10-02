@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.strictmode.FragmentStrictMode;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.DriverBinding;
@@ -83,6 +84,17 @@ public class Driver extends Fragment {
                 context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
                 Utils.vibrate(v);
                 SI.checkBlocked();
+            }
+            return true;
+        });
+        binding.stats.setOnLongClickListener(v ->{
+            context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+            Utils.vibrate(v);
+            FlaggingDialog flaggingDialog = (FlaggingDialog) fragmentManager.findFragmentByTag("FlaggingDialog");
+            if (flaggingDialog == null) {
+                flaggingDialog = new FlaggingDialog();
+                flaggingDialog.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                flaggingDialog.show(fragmentManager, "FlaggingDialog");
             }
             return true;
         });
