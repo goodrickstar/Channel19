@@ -1,5 +1,9 @@
 package com.cb3g.channel19
 
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +14,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import androidx.recyclerview.widget.RecyclerView.inflate
 import com.example.android.multidex.myapplication.R
 import com.example.android.multidex.myapplication.databinding.FlaggingDialogBinding
 import com.google.gson.Gson
@@ -28,8 +31,15 @@ import java.util.Date
 class FlaggingDialog : DialogFragment() {
     lateinit var binding: FlaggingDialogBinding
     lateinit var adapter: CustomRecycler
-    var flagsIn: List<FlagObect> = ArrayList()
-    var flagsOut: List<FlagObect> = ArrayList()
+    private lateinit var preferences: SharedPreferences
+    var flagsIn: List<FlagObject> = ArrayList()
+    var flagsOut: List<FlagObject> = ArrayList()
+    var flagCount: Int = 0
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        preferences = context.getSharedPreferences("flaggingDialog", Context.MODE_PRIVATE)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FlaggingDialogBinding.inflate(inflater)
@@ -37,7 +47,7 @@ class FlaggingDialog : DialogFragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    @SuppressLint("NotifyDataSetChanged") override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.close.setOnClickListener {
             Utils.vibrate(it)
@@ -46,62 +56,61 @@ class FlaggingDialog : DialogFragment() {
         binding.flagsRecycler.setLayoutManager(LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false))
         binding.flagsRecycler.setHasFixedSize(true)
         binding.flagsRecycler.setAdapter(adapter)
+        binding.flagsChip.isChecked = preferences.getBoolean("option", false)
         binding.flagsChip.setOnCheckedChangeListener { button, checked ->
             Utils.vibrate(button)
-            if (checked) binding.flagsChip.text = "Flags In"
-            else binding.flagsChip.text = "Flags Out"
+            if (checked) binding.flagsChip.text = getString(R.string.flags_in)
+            else binding.flagsChip.text = getString(R.string.flags_out)
             updateList()
+            preferences.edit().putBoolean("option", checked).apply()
         }
+        adapter.notifyDataSetChanged()
         checkFlagOut()
     }
 
-    private fun updateList() {
+    @SuppressLint("NotifyDataSetChanged", "SetTextI18n") private fun updateList() {
         this.activity?.runOnUiThread {
-            if (binding.flagsChip.isChecked) {
-                adapter.updateList(flagsIn)
-            } else {
-                adapter.updateList(flagsOut)
-            }
+            if (binding.flagsChip.isChecked) adapter.updateList(flagsIn)
+            else adapter.updateList(flagsOut)
             adapter.notifyDataSetChanged()
+            binding.boxTitle.text = "Total Flags $flagCount"
         }
     }
 
     private fun checkFlagOut() {
         val data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.user_id).setIssuedAt(Date(System.currentTimeMillis())).setExpiration(Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.key).compact()
-        UtilsK().call("http://23.111.159.2/~channel1/" + "public/data.php", RadioService.operator.user_id, object : Callback {
+        Utils.call(RadioService.client, data, "user_flag_counting.php", object : Callback{
+            override fun onFailure(call: Call, e: IOException) {
+                e.message.toString().log()
+            }
+
             override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    response.body?.let { body -> //body.string().log()
-                        try {
-                            val jsonObject = JSONObject(body.string())
-                            val flagsInData = jsonObject.getJSONArray("in").toString()
-                            val flagsOutData = jsonObject.getJSONArray("out").toString()
-                            flagsIn = Gson().fromJson(flagsInData, object : TypeToken<List<FlagObect>>() {}.type)
-                            flagsOut = Gson().fromJson(flagsOutData, object : TypeToken<List<FlagObect>>() {}.type)
-
-
-                        } catch (e: JSONException) {
-                            e.message?.log()
+                response.use {
+                    if (it.isSuccessful) {
+                        it.body?.let { body ->
+                            try {
+                                val jsonObject = JSONObject(body.string())
+                                flagCount = jsonObject.getInt("flags")
+                                flagsIn = Gson().fromJson(jsonObject.getJSONArray("in").toString(), object : TypeToken<List<FlagObject>>() {}.type)
+                                flagsOut = Gson().fromJson(jsonObject.getJSONArray("out").toString(), object : TypeToken<List<FlagObject>>() {}.type)
+                                updateList()
+                            } catch (e: JSONException) {
+                                e.message?.log()
+                            }
                         }
                     }
                 }
             }
-
-            override fun onFailure(call: Call, e: IOException) {
-                e.let { it.message?.log() }
-            }
         })
     }
 
-
 }
 
-class CustomRecycler(private val inflator: LayoutInflater) : RecyclerView.Adapter<CustomRecycler.FlagViewHolder>() {
-    var list: ArrayList<FlagObect> = ArrayList()
+class CustomRecycler(private val inflation: LayoutInflater) : RecyclerView.Adapter<CustomRecycler.FlagViewHolder>() {
+    var list: List<FlagObject> = ArrayList()
 
-    fun updateList(update: List<FlagObect>) {
-        list.clear()
-        list.addAll(update)
+    fun updateList(update: List<FlagObject>) {
+        list = update
     }
 
     inner class FlagViewHolder(view: View) : ViewHolder(view) {
@@ -110,22 +119,22 @@ class CustomRecycler(private val inflator: LayoutInflater) : RecyclerView.Adapte
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FlagViewHolder {
-        return FlagViewHolder(inflator.inflate(R.layout.flag_row, parent, false))
+        return FlagViewHolder(inflation.inflate(R.layout.flag_row, parent, false))
     }
 
     override fun onBindViewHolder(holder: FlagViewHolder, position: Int) {
+        "OnBind $position".log()
         val entry = list[position]
         holder.title.text = entry.handle
         if (entry.count == 5) holder.image.setImageResource(R.drawable.flag_red)
+        else holder.image.setImageResource(R.drawable.flag)
     }
 
     override fun getItemCount(): Int {
-        "List size ${list.size}".log()
+        Gson().toJson(list).log()
+        "size ${list.size}".log()
         return list.size
     }
-
-
-
 }
 
-class FlagObect(val handle: String, val count: Int)
+class FlagObject(val handle: String, val count: Int)

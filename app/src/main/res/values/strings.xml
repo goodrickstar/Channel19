@@ -293,4 +293,6 @@
     <string name="save_photo">Save Photo</string>
     <string name="copy_text">Copy Text</string>
     <string name="blocked_by">Blocked By</string>
+    <string name="flags_out">Flags Out</string>
+    <string name="flags_in">Flags In</string>
 </resources>

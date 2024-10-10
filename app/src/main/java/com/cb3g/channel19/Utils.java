@@ -37,6 +37,7 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.reflect.TypeToken;
 
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
@@ -52,7 +53,19 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttp;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
 
 class Utils {
 
@@ -79,6 +92,10 @@ class Utils {
             control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
         else
             control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
+    }
+
+    static void call(final OkHttpClient client, final String data, final String phpFile, final Callback callback){
+        client.newCall(new okhttp3.Request.Builder().url(RadioService.SITE_URL + phpFile).post(new FormBody.Builder().add("data", data).build()).build()).enqueue(callback);
     }
 
     static DatabaseReference control() {

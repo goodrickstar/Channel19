@@ -185,7 +185,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     flaggedIds.clear();
                     flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
                     }.getType());
-                    flaggedIds = gson.fromJson(flagData, new TypeToken<FlagObect>() {
+                    flaggedIds = gson.fromJson(flagData, new TypeToken<FlagObject>() {
                     }.getType());
                     settings.edit().putString("flaggedIDs", flagData).apply();
                     break;
