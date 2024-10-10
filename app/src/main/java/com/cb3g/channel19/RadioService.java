@@ -167,7 +167,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
-            switch (Objects.requireNonNull(intent.getAction())) {
+            if (intent.getAction() == null) return;
+            switch (intent.getAction()) {
                 case "interrupt":
                     if (MI != null) MI.stopRecorder(false);
                     break;
@@ -206,26 +207,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     break;
                 case "ghost":
                     ghost();
-                    break;
-                case "alert":
-                    if (blockListContainsId(blockedIDs, intent.getStringExtra("userId")) || MI == null)
-                        return;
-                    snacks.add(gson.fromJson(intent.getStringExtra("data"), Snack.class));
-                    checkForMessages();
-                    break;
-                case "snack":
-                    snacks.add(gson.fromJson(intent.getStringExtra("data"), Snack.class));
-                    checkForMessages();
-                    break;
-                case "background":
-                    try {
-                        JSONObject backgrounds = new JSONObject(Objects.requireNonNull(intent.getStringExtra("data")));
-                        settings.edit().putString("main_backdrop", backgrounds.getString("one")).apply();
-                        settings.edit().putString("settings_backdrop", backgrounds.getString("two")).apply();
-                        if (MI != null) MI.changeBackground(backgrounds.getString("one"));
-                    } catch (JSONException e) {
-                        LOG.e(e.getMessage());
-                    }
                     break;
                 case "checkForMessages":
                     checkForMessages();
@@ -636,7 +617,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         if (response.isSuccessful()) {
-                            try (response) {
+                            try (response; response) {
                                 assert response.body() != null;
                                 final String flagData = response.body().string();
                                 Log.i("logging", flagData);
@@ -680,17 +661,17 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         databaseReference.child("silencing").addValueEventListener(this);
     }
 
-    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+    public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { //TODO: Conrolling
         final ControlCode control = snapshot.child("control").getValue(ControlCode.class);
         databaseReference.child("controlling").child(operator.getUser_id()).child(snapshot.getKey()).removeValue();
         switch (control) {
             case ALERT:
-                if (MI != null)
-                    MI.showSnack(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
+                snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
+                checkForMessages();
                 break;
             case TOAST:
-                if (MI != null)
-                    MI.showSnack(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
+                snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
+                checkForMessages();
                 break;
             case PRIVATE_MESSAGE:
                 final Message message = snapshot.child("data").getValue(Message.class);
@@ -1046,7 +1027,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
                     @Override
                     public void onResponse(@NotNull Call call, @NotNull Response response) {
-                        try (response) {
+                        try (response; response) {
                             if (response.isSuccessful()) {
                                 assert response.body() != null;
                                 JSONObject data = new JSONObject(response.body().string());
@@ -1268,7 +1249,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull final Response response) {
                 if (response.isSuccessful()) {
-                    try (response) {
+                    try (response; response) {
                         assert response.body() != null;
                         users = returnFilteredList(returnUserListObjectFromJson(response.body().string()));
                         userList = settleUserList(users);
@@ -1615,7 +1596,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                try (response) {
+                try (response; response) {
                     if (response.isSuccessful()) {
                         assert response.body() != null;
                         final JSONObject object = new JSONObject(response.body().string());
@@ -1642,7 +1623,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                response.close();
             }
         });
     }
@@ -1691,9 +1671,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         filter.addAction("ghost");
         filter.addAction("purgeUser");
         filter.addAction("giphyupload");
-        filter.addAction("alert");
-        filter.addAction("snack");
-        filter.addAction("background");
         filter.addAction("checkForMessages");
         filter.addAction("fetch_users");
         filter.addAction("keyUpdate");
@@ -1838,9 +1815,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         }
     }
 
-    void flag_out(final String id) {
-        if (operator.getSilenced()) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+    void flag_out(final String targetId) {
+        final String data = Jwts.builder().setHeader(header).claim("userId", targetId).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_flag_out.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1849,17 +1825,19 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
+                try (response) {
+                    if (response.isSuccessful()) {
+                        sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
+                        Utils.control().child(targetId).child(Utils.getKey()).setValue(new ControlObject(ControlCode.KICK_USER, targetId));
+                    }
                 }
-                response.close();
             }
         });
     }
 
-    void bannUser(final String id) {
+    void bannUser(final String targetId) {
         if (operator.getSilenced()) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        final String data = Jwts.builder().setHeader(header).claim("userId", targetId).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_ban.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -1868,9 +1846,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful())
-                    sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
-                response.close();
+                try (response) {
+                    if (response.isSuccessful()) {
+                        sendBroadcast(new Intent("fetch_users").setPackage("com.cb3g.channel19"));
+                        kick(targetId);
+                    }
+                }
             }
         });
     }
@@ -1936,15 +1917,16 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    snacks.add(new Snack("Saluted " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
-                    checkForMessages();
-                    if (!operator.getAdmin()) {
-                        salutedIds.add(target.getUser_id());
-                        uploadListToDB("salutedIDs", new JSONArray(salutedIds));
+                try (response) {
+                    if (response.isSuccessful()) {
+                        snacks.add(new Snack("Saluted " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                        checkForMessages();
+                        if (!operator.getAdmin()) {
+                            salutedIds.add(target.getUser_id());
+                            uploadListToDB("salutedIDs", new JSONArray(salutedIds));
+                        }
                     }
                 }
-                response.close();
             }
         });
     }
@@ -1959,17 +1941,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    snacks.add(new Snack("Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
-                    checkForMessages();
-                    if (!operator.getAdmin()) {
-                        flaggedIds.add(target.getUser_id());
-                        uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
-                        checkFlagOut();
+                try (response) {
+                    if (response.isSuccessful()) {
+                        snacks.add(new Snack("Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                        checkForMessages();
+                        if (!operator.getAdmin()) {
+                            flaggedIds.add(target.getUser_id());
+                            uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
+                            checkFlagOut();
+                        }
+                        kick(target.getUser_id());
                     }
-                    Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                 }
-                response.close();
             }
         });
     }
@@ -1984,16 +1967,17 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    snacks.add(new Snack("LONG Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
-                    checkForMessages();
-                    if (!operator.getAdmin()) {
-                        flaggedIds.add(target.getUser_id());
-                        uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
+                try (response) {
+                    if (response.isSuccessful()) {
+                        snacks.add(new Snack("LONG Flagged " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
+                        checkForMessages();
+                        if (!operator.getAdmin()) {
+                            flaggedIds.add(target.getUser_id());
+                            uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
+                        }
+                        Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                     }
-                    Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                 }
-                response.close();
             }
         });
     }
@@ -2037,9 +2021,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
+                kick(user.getUser_id());
                 getUsersOnChannel();
             }
         });
+    }
+
+    private void kick(String targetId) {
+        Utils.control().child(targetId).child(Utils.getKey()).setValue(new ControlObject(ControlCode.KICK_USER, targetId));
     }
 
     void blockAll(String id, String handle) {
@@ -2226,17 +2215,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                if (response.isSuccessful()) {
-                    handler.post(() -> {
-                        if (MI != null) {
-                            if (Objects.equals(chat.get(), "0")) {
-                                snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
-                                checkForMessages();
-                            } else MI.displayChat(null, false, false);
-                        }
-                    });
+                try (response) {
+                    if (response.isSuccessful()) {
+                        handler.post(() -> {
+                            if (MI != null) {
+                                if (Objects.equals(chat.get(), "0")) {
+                                    snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
+                                    checkForMessages();
+                                } else MI.displayChat(null, false, false);
+                            }
+                        });
+                    }
                 }
-                response.close();
             }
         });
     }
@@ -2341,12 +2331,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull final Response response) {
                 if (response.isSuccessful()) {
-                    try (response) {
+                    try (response; response; response) {
                         assert response.body() != null;
                         int flags = Integer.parseInt(response.body().string());
                         if (flags >= 20 && !operator.getAdmin()) {
                             final ArrayList<String> ids = new ArrayList<>();
-                            for(UserListEntry user : userList){
+                            for (UserListEntry user : userList) {
                                 ids.add(user.getUser().getUser_id());
                             }
                             Utils.AlertOthers(ids, operator.getHandle() + " was flagged out!", true);
