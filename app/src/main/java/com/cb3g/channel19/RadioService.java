@@ -620,7 +620,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                             try (response; response) {
                                 assert response.body() != null;
                                 final String flagData = response.body().string();
-                                Log.i("logging", flagData);
                                 flaggedIds.clear();
                                 flaggedIds = gson.fromJson(flagData, new TypeToken<List<String>>() {
                                 }.getType());
@@ -634,6 +633,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             }
         }, 300000, 300000);
+        if (!operator.getSubscribed()) timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+            }
+        }, 900000, 900000);
     }
 
     private void enableListeners() {
@@ -663,129 +668,139 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) { //TODO: Conrolling
         final ControlCode control = snapshot.child("control").getValue(ControlCode.class);
-        databaseReference.child("controlling").child(operator.getUser_id()).child(snapshot.getKey()).removeValue();
-        switch (control) {
-            case ALERT:
-                snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
-                checkForMessages();
-                break;
-            case TOAST:
-                snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
-                checkForMessages();
-                break;
-            case PRIVATE_MESSAGE:
-                final Message message = snapshot.child("data").getValue(Message.class);
-                if (settings.getBoolean("pmenabled", true)) {
-                    if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
-                        if (Objects.equals(chat.get(), message.getUser_id())) {
-                            if (MI != null) MI.displayChat(null, true, false);
-                            else
-                                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
-                        } else {
-                            if (!recording) sp.play(chain, .1f, .1f, 1, 0, 1f);
-                            messages.add(message);
-                            checkForMessages();
-                        }
-                    }
-                } else {
-                    if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
-                        snacks.add(new Snack(message.getHandle() + " sent you a private message", Snackbar.LENGTH_SHORT));
-                        checkForMessages();
-                    }
-                }
-                break;
-            case PRIVATE_PHOTO: //Private Photo
-                final Photo privatePhoto = snapshot.child("data").getValue(Photo.class);
-                assert privatePhoto != null;
-                if (RadioService.blockListContainsId(photoIDs, privatePhoto.getSenderId())) return;
-                loader.preload(privatePhoto.getUrl(), new RequestListener<>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
-                        snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                        if (Objects.equals(chat.get(), privatePhoto.getSenderId())) {
-                            if (MI != null) MI.displayChat(null, true, false);
-                            else
-                                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
-                        } else {
-                            if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
-                            if (settings.getBoolean("photos", true))
-                                photos.add(privatePhoto);
-                            else
-                                snacks.add(new Snack(privatePhoto.getSenderHandle() + " sent you a private photo", Snackbar.LENGTH_SHORT));
-                            checkForMessages();
-                        }
-                        return true;
-                    }
-                });
-                break;
-            case MASS_PHOTO: //Mass Photo
-                final Photo massPhoto = snapshot.child("data").getValue(Photo.class);
-                assert massPhoto != null;
-                if (RadioService.blockListContainsId(photoIDs, massPhoto.getSenderId())) return;
-                loader.preload(massPhoto.getUrl(), new RequestListener<>() {
-                    @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
-                        snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
-                        return false;
-                    }
-
-                    @Override
-                    public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                        if (!recording && MI != null)
-                            sp.play(glass, .1f, .1f, 1, 0, 1f);
-                        if (settings.getBoolean("photos", true) && !paused)
-                            photos.add(massPhoto);
-                        else if (MI != null)
-                            snacks.add(new Snack(massPhoto.getSenderHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
-                        Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(massPhoto);
-                        checkForMessages();
-                        return true;
-                    }
-                });
-                break;
-            case SALUTE:
-                final ReputationMark salute = snapshot.child("data").getValue(ReputationMark.class);
-                if (MI != null)
-                    MI.showSnack(new Snack(salute.getHandle() + " sent you a SALUTE!", Snackbar.LENGTH_INDEFINITE));
-                break;
-            case FLAG:
-                final ReputationMark flag = snapshot.child("data").getValue(ReputationMark.class);
-                sendBroadcast(new Intent("bird").putExtra("userId", flag.getUserId()).setPackage("com.cb3g.channel19"));
-                if (MI != null)
-                    MI.showSnack(new Snack(flag.getHandle() + " sent you a FLAG!", Snackbar.LENGTH_LONG));
-                checkFlagOut();
-                break;
-            case LONG_FLAG:
-                final ReputationMark longFlag = snapshot.child("data").getValue(ReputationMark.class);
-                sendBroadcast(new Intent("longFlag").putExtra("userId", longFlag.getUserId()).putExtra("handle", longFlag.getHandle()).setPackage("com.cb3g.channel19"));
-                checkFlagOut();
-                break;
-            case KICK_USER:
-                stopSelf();
-                break;
-            case CLEAR_BLOCK_LISTS:
-                blockedIDs.clear();
-                photoIDs.clear();
-                textIDs.clear();
-                salutedIds.clear();
-                flaggedIds.clear();
-                SharedPreferences.Editor editor = settings.edit();
-                editor.putString("blockedIDs", "[]").apply();
-                editor.putString("photoIDs", "[]").apply();
-                editor.putString("textIDs", "[]").apply();
-                editor.putString("salutedIDs", "[]").apply();
-                editor.putString("flaggedIDs", "[]").apply();
-                editor.apply();
-                if (MI != null) {
-                    snacks.add(new Snack("Block Lists Cleared", Snackbar.LENGTH_INDEFINITE));
+        final String key = snapshot.getKey();
+        if (key != null)
+            databaseReference.child("controlling").child(operator.getUser_id()).child(key).removeValue();
+        if (control != null) {
+            switch (control) {
+                case ALERT:
+                    snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
                     checkForMessages();
-                }
-                break;
+                    break;
+                case TOAST:
+                    snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
+                    checkForMessages();
+                    break;
+                case PRIVATE_MESSAGE:
+                    final Message message = snapshot.child("data").getValue(Message.class);
+                    assert message != null;
+                    if (settings.getBoolean("pmenabled", true)) {
+                        if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
+                            if (Objects.equals(chat.get(), message.getUser_id())) {
+                                if (MI != null) MI.displayChat(null, true, false);
+                                else
+                                    sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                            } else {
+                                if (!recording) sp.play(chain, .1f, .1f, 1, 0, 1f);
+                                messages.add(message);
+                                checkForMessages();
+                            }
+                        }
+                    } else {
+                        if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
+                            snacks.add(new Snack(message.getHandle() + " sent you a private message", Snackbar.LENGTH_SHORT));
+                            checkForMessages();
+                        }
+                    }
+                    break;
+                case PRIVATE_PHOTO: //Private Photo
+                    final Photo privatePhoto = snapshot.child("data").getValue(Photo.class);
+                    assert privatePhoto != null;
+                    if (RadioService.blockListContainsId(photoIDs, privatePhoto.getSenderId()))
+                        return;
+                    loader.preload(privatePhoto.getUrl(), new RequestListener<>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                            snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                            if (Objects.equals(chat.get(), privatePhoto.getSenderId())) {
+                                if (MI != null) MI.displayChat(null, true, false);
+                                else
+                                    sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                            } else {
+                                if (!recording) sp.play(glass, .1f, .1f, 1, 0, 1f);
+                                if (settings.getBoolean("photos", true))
+                                    photos.add(privatePhoto);
+                                else
+                                    snacks.add(new Snack(privatePhoto.getSenderHandle() + " sent you a private photo", Snackbar.LENGTH_SHORT));
+                                checkForMessages();
+                            }
+                            return true;
+                        }
+                    });
+                    break;
+                case MASS_PHOTO: //Mass Photo
+                    final Photo massPhoto = snapshot.child("data").getValue(Photo.class);
+                    assert massPhoto != null;
+                    if (RadioService.blockListContainsId(photoIDs, massPhoto.getSenderId())) return;
+                    loader.preload(massPhoto.getUrl(), new RequestListener<>() {
+                        @Override
+                        public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<File> target, boolean isFirstResource) {
+                            snacks.add(new Snack("Failed to download image", Snackbar.LENGTH_SHORT));
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                            if (!recording && MI != null)
+                                sp.play(glass, .1f, .1f, 1, 0, 1f);
+                            if (settings.getBoolean("photos", true) && !paused)
+                                photos.add(massPhoto);
+                            else if (MI != null)
+                                snacks.add(new Snack(massPhoto.getSenderHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
+                            Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(massPhoto);
+                            checkForMessages();
+                            return true;
+                        }
+                    });
+                    break;
+                case SALUTE:
+                    final ReputationMark salute = snapshot.child("data").getValue(ReputationMark.class);
+                    assert salute != null;
+                    if (MI != null) {
+                        MI.showSnack(new Snack(salute.getHandle() + " sent you a SALUTE!", Snackbar.LENGTH_INDEFINITE));
+                    }
+                    break;
+                case FLAG:
+                    final ReputationMark flag = snapshot.child("data").getValue(ReputationMark.class);
+                    assert flag != null;
+                    sendBroadcast(new Intent("bird").putExtra("userId", flag.getUserId()).setPackage("com.cb3g.channel19"));
+                    if (MI != null)
+                        MI.showSnack(new Snack(flag.getHandle() + " sent you a FLAG!", Snackbar.LENGTH_LONG));
+                    checkFlagOut();
+                    break;
+                case LONG_FLAG:
+                    final ReputationMark longFlag = snapshot.child("data").getValue(ReputationMark.class);
+                    assert longFlag != null;
+                    sendBroadcast(new Intent("longFlag").putExtra("userId", longFlag.getUserId()).putExtra("handle", longFlag.getHandle()).setPackage("com.cb3g.channel19"));
+                    checkFlagOut();
+                    break;
+                case KICK_USER:
+                    stopSelf();
+                    break;
+                case CLEAR_BLOCK_LISTS:
+                    blockedIDs.clear();
+                    photoIDs.clear();
+                    textIDs.clear();
+                    salutedIds.clear();
+                    flaggedIds.clear();
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putString("blockedIDs", "[]").apply();
+                    editor.putString("photoIDs", "[]").apply();
+                    editor.putString("textIDs", "[]").apply();
+                    editor.putString("salutedIDs", "[]").apply();
+                    editor.putString("flaggedIDs", "[]").apply();
+                    editor.apply();
+                    if (MI != null) {
+                        snacks.add(new Snack("Block Lists Cleared", Snackbar.LENGTH_INDEFINITE));
+                        checkForMessages();
+                    }
+                    break;
+            }
         }
     }
 
