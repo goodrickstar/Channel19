@@ -1,8 +1,6 @@
 package com.cb3g.channel19;
 
 
-import static com.cb3g.channel19.RadioService.client;
-import static com.cb3g.channel19.RadioService.header;
 import static com.cb3g.channel19.RadioService.operator;
 
 import android.Manifest;
@@ -60,40 +58,12 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 
 class Utils {
 
     static void clickSound(Context context){
         context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
-    }
-
-    static void AlertOthers(final ArrayList<String> userIds, final String message, boolean confirm) {
-        for (String userId : userIds) {
-            if (confirm)
-                control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
-            else
-                control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
-        }
-    }
-
-    static void AlertUserList(final ArrayList<UserListEntry> users, final String message, boolean confirm) {
-        for (UserListEntry user : users) {
-            if (confirm)
-                control().child(user.getUser().getUser_id()).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
-            else
-                control().child(user.getUser().getUser_id()).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
-        }
-    }
-
-    static void AlertOther(final String userId, final String message, boolean confirm) {
-        if (confirm)
-            control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.ALERT, message));
-        else
-            control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
     }
 
     static void usersInChannel(final Callback callback){

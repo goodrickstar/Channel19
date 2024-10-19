@@ -25,6 +25,10 @@ class OkUtil {
         val formBody = FormBody.Builder().add("data", compact(claims, RadioService.operator.key)).build()
         return Request.Builder().url(url).post(formBody).build()
     }
+    fun request(url: String, claims: Map<String, Any>, key: String) : Request{
+        val formBody = FormBody.Builder().add("data", compact(claims, key)).build()
+        return Request.Builder().url(url).post(formBody).build()
+    }
 
     private fun compact(key: String): String {
         val keyBytes = Decoders.BASE64.decode(key)
@@ -33,7 +37,7 @@ class OkUtil {
     }
 
     fun call(client: OkHttpClient, url: String, claims: Map<String, Any>, signingKey: String, callback: Callback) {
-        client.newCall(request(url, claims)).enqueue(callback)
+        client.newCall(request(url, claims, signingKey)).enqueue(callback)
     }
 
     fun call(file: String, claims: Map<String, Any>, callback: Callback) {

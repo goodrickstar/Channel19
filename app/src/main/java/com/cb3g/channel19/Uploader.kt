@@ -84,9 +84,7 @@ class Uploader(
                 claims["handle"] = operator.handle
                 claims["profileLink"] = operator.profileLink
                 request = OkUtil().request(RadioService.SITE_URL + "user_send_photo.php", claims)
-                for (userId in upload.sendingIds) {
-                    Utils.control().child(userId).child(upload.photo.key).setValue(ControlObject(ControlCode.PRIVATE_PHOTO, upload.photo))
-                }
+                ControlObject(ControlCode.PRIVATE_PHOTO, upload.photo).send(upload.sendingIds)
             }
 
             RequestCode.PROFILE -> {
@@ -97,9 +95,7 @@ class Uploader(
             }
 
             RequestCode.MASS_PHOTO -> {
-                for (userId in upload.sendingIds) {
-                    Utils.control().child(userId).child(upload.photo.key).setValue(ControlObject(ControlCode.MASS_PHOTO, upload.photo))
-                }
+                ControlObject(ControlCode.MASS_PHOTO, upload.photo).send(upload.sendingIds)
             }
         }
 

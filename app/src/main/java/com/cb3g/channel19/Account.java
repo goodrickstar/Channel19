@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -62,16 +62,14 @@ public class Account extends Fragment {
                 public void onResponse(@NonNull Call call, @NonNull Response response) {
                     try (response) {
                         if (response.isSuccessful()) {
+                            assert response.body() != null;
                             final String data = response.body().string();
                             final ArrayList<String> ids = new Gson().fromJson(data, new TypeToken<ArrayList<String>>() {
                             }.getType());
-                            for (String id : ids){
-                               Utils.control().child(id).child(Utils.getKey()).setValue(new ControlObject(ControlCode.KICK_USER, id));
-                            }
-                            //Utils.control().child(operator.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.KICK_USER, operator.getUser_id()));
+                            UtilsKKt.sendControl(ids, new ControlObject(ControlCode.KICK_USER, "kick"));
                         }
                     } catch (IOException e) {
-                        Log.e("user_in_channel.php", e.getMessage());
+                        Log.e("user_in_channel.php", Objects.requireNonNull(e.getMessage()));
                     }
                 }
             });

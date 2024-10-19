@@ -24,12 +24,9 @@ import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.IntentSenderRequest;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
@@ -42,43 +39,33 @@ import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.LoginBinding;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.play.core.appupdate.AppUpdateInfo;
-import com.google.android.play.core.appupdate.AppUpdateManager;
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
-import com.google.android.play.core.appupdate.AppUpdateOptions;
-import com.google.android.play.core.install.model.AppUpdateType;
-import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.jaredrummler.android.device.DeviceName;
 
+import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 
 public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpdatedListener, View.OnClickListener {
@@ -93,7 +80,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private int clickTwo;
     private RotateAnimation rotate;
     private BroadcastReceiver receiver;
-    private Map<String, Object> header;
     private final Object serial = "unknown";
     private BillingUtils billingUtils;
 
@@ -154,8 +140,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         settings = getSharedPreferences("settings", MODE_PRIVATE);
         binding.tvStatus.setText(R.string.TM);
         volumeE = scaleVolume(settings.getInt("eVolume", 50));
-        header = new HashMap<>();
-        header.put("typ", Header.JWT_TYPE);
         sp = new SoundPool.Builder().build();
         clickTwo = sp.load(this, R.raw.clicktwo, 1);
         binding.backdrop.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -178,6 +162,22 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                         showSnack(new Snack("There was an issue registering this device with Firebase"));
                     }
                 });
+        binding.loginIntoServerWithGoogleButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Utils.vibrate(v);
+                ArrayList<String> ids = new ArrayList<>();
+                String user1 = "UserId ONE";
+                String user2 = "UserId TWO";
+                String user3 = "UserId THREE";
+                ids.add(user1);
+                ids.add(user2);
+                ids.add(user3);
+                ControlObject object = new ControlObject(ControlCode.TOAST, "This is a test!");
+                UtilsKKt.sendControl(ids, object);
+                return true;
+            }
+        });
     }
 
     @Override

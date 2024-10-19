@@ -119,6 +119,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             for (MassPhotoUser user : working) {
                 if (user.isChecked) sendingIds.add(user.id);
             }
+            sendingIds.addAll(RadioService.ghostUsers);
             FileUpload upload = new FileUpload(RequestCode.MASS_PHOTO, sendingIds, new Photo(Utils.getKey(), uri, resource.getIntrinsicHeight(), resource.getIntrinsicWidth(), Utils.UTC(), RadioService.operator.getUser_id(), RadioService.operator.getProfileLink(), RadioService.operator.getHandle(), RadioService.operator.getRank()));
             Uploader uploader = new Uploader(context, RadioService.operator, RadioService.client, upload, RadioService.operator.getHandle());
             uploader.uploadImage();
@@ -206,7 +207,7 @@ public class MassPhoto extends DialogFragment implements View.OnClickListener {
             return working.size();
         }
 
-        class Holder extends RecyclerView.ViewHolder {
+        static class Holder extends RecyclerView.ViewHolder {
             TextView handle;
             ImageView profile;
 
