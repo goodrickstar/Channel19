@@ -162,22 +162,6 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                         showSnack(new Snack("There was an issue registering this device with Firebase"));
                     }
                 });
-        binding.loginIntoServerWithGoogleButton.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                Utils.vibrate(v);
-                ArrayList<String> ids = new ArrayList<>();
-                String user1 = "UserId ONE";
-                String user2 = "UserId TWO";
-                String user3 = "UserId THREE";
-                ids.add(user1);
-                ids.add(user2);
-                ids.add(user3);
-                ControlObject object = new ControlObject(ControlCode.TOAST, "This is a test!");
-                UtilsKKt.sendControl(ids, object);
-                return true;
-            }
-        });
     }
 
     @Override
