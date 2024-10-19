@@ -86,22 +86,16 @@ public class MessageHistory extends DialogFragment {
     }
 
     private void return_history() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_chat_history.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        new OkUtil().call("user_chat_history.php", claims, new Callback() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
                     assert response.body() != null;
                     final String data = response.body().string();
@@ -145,30 +139,22 @@ public class MessageHistory extends DialogFragment {
 
     private void delete_chat(String from_id) {
         context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().remove(from_id).apply();
-        final Map<String, Object> header = new HashMap<>();
-        header.put("typ", Header.JWT_TYPE);
-        final String data = Jwts.builder()
-                .setHeader(header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .claim("check", from_id)
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_delete_all_messages.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        claims.put("check", from_id);
+        new OkUtil().call("user_delete_all_messages.php", claims, new Callback() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
-                    try {
+                    try (response) {
                         assert response.body() != null;
                         JSONArray returnedList = new JSONArray(response.body().string());
-                        for (int x = 0; x < data.length(); x++) {
+                        for (int x = 0; x < returnedList.length(); x++) {
                             try {
                                 RadioService.storage.getReferenceFromUrl(returnedList.getString(x)).delete();
                             } catch (IllegalArgumentException e) {

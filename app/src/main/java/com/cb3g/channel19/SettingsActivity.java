@@ -1,6 +1,7 @@
 package com.cb3g.channel19;
 
 import static com.cb3g.channel19.RadioService.databaseReference;
+import static com.cb3g.channel19.RadioService.operator;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -47,8 +48,10 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -87,25 +90,17 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     Toaster.toastlow(SettingsActivity.this, intent.getStringExtra("data"));
                     break;
                 case "setStar":
-                    final String data = Jwts.builder()
-                            .setHeader(RadioService.header)
-                            .claim("userId", RadioService.operator.getUser_id())
-                            .claim("rank", intent.getStringExtra("data"))
-                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                            .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                            .compact();
-                    final Request request = new Request.Builder()
-                            .url(RadioService.SITE_URL + "user_set_star.php")
-                            .post(new FormBody.Builder().add("data", data).build())
-                            .build();
-                    RadioService.client.newCall(request).enqueue(new Callback() {
+                    final Map<String, Object> claims = new HashMap<>();
+                    claims.put("userId", operator.getUser_id());
+                    claims.put("rank", intent.getStringExtra("data"));
+                    new OkUtil().call("user_set_star.php", claims, new Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
                         }
 
                         @Override
-                        public void onResponse(@NonNull Call call, @NonNull Response response) {
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                             if (drifrag.isAdded() && response.isSuccessful()) drifrag.refreshRank();
                         }
                     });
@@ -150,26 +145,18 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     @Override
     public void checkBlocked() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_blocked_by.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        new OkUtil().call("user_blocked_by.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 if (response.isSuccessful()) {
-                    try {
+                    try (response) {
                         BlockedByFragment blockedByFragment = (BlockedByFragment) fragmentManager.findFragmentByTag("bbf");
                         if (blockedByFragment == null) {
                             blockedByFragment = new BlockedByFragment();
@@ -184,7 +171,6 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                         e.printStackTrace();
                     }
                 }
-                response.close();
             }
         });
     }
@@ -202,7 +188,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                 public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String s) {
                                     switch (purchase.getProducts().get(0)) {
                                         case GHOST:
-                                            databaseReference.child("ghost").child(RadioService.operator.getUser_id()).setValue(Instant.now().getEpochSecond()).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            databaseReference.child("ghost").child(operator.getUser_id()).setValue(Instant.now().getEpochSecond()).addOnSuccessListener(new OnSuccessListener<Void>() {
                                                 @Override
                                                 public void onSuccess(@NotNull Void aVoid) {
                                                     if (drifrag != null) if (drifrag.isAdded())
@@ -225,7 +211,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                             billingUtils.acknowledgePurchase(purchase, new AcknowledgePurchaseResponseListener() {
                                 @Override
                                 public void onAcknowledgePurchaseResponse(@NonNull BillingResult billingResult) {
-                                    RadioService.operator.setSubscribed(true);
+                                    operator.setSubscribed(true);
                                     settings.edit().putBoolean("active", true).apply();
                                     showResult("Peaked And Tuned", "Subscription successful! You will no longer recieve advertising");
                                     final Account af = (Account) fragmentManager.findFragmentByTag("afrag");
@@ -252,9 +238,9 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                             //loop each post
                             for (DataSnapshot child : dataSnapshot.getChildren()) {
                                 Post post = child.getValue(Post.class);
-                                if (post.getFacebookId().equals(RadioService.operator.getUser_id()))
+                                if (post.getFacebookId().equals(operator.getUser_id()))
                                     RadioService.databaseReference.child("reservoir").child(channel.getKey()).child("posts").child(post.getPostId()).child("handle").setValue(handle);
-                                if (post.getLatest_facebookId().equals(RadioService.operator.getUser_id()))
+                                if (post.getLatest_facebookId().equals(operator.getUser_id()))
                                     RadioService.databaseReference.child("reservoir").child(channel.getKey()).child("posts").child(post.getPostId()).child("latest_handle").setValue(handle);
                                 //loop each remark for this post
                                 RadioService.databaseReference.child("reservoir").child(channel.getKey()).child("remarks").child(post.getPostId()).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -262,7 +248,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                         for (DataSnapshot commentChild : dataSnapshot.getChildren()) {
                                             Comment comment = commentChild.getValue(Comment.class);
-                                            if (comment.getUserId().equals(RadioService.operator.getUser_id()))
+                                            if (comment.getUserId().equals(operator.getUser_id()))
                                                 RadioService.databaseReference.child("reservoir").child(channel.getKey()).child("remarks").child(post.getPostId()).child(comment.getRemarkId()).child("handle").setValue(handle);
                                         }
                                     }
@@ -321,19 +307,15 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     private void sendProfileToServer(final String radio_handle, final String carrier, final String hometown) {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .claim("radio_handle", radio_handle)
-                .claim("carrier", carrier)
-                .claim("stamp", hometown)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_create_profile.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("radio_handle", radio_handle);
+        claims.put("carrier", carrier);
+        claims.put("stamp", hometown);
+        new OkUtil().call("user_create_profile.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -345,9 +327,9 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                         public void run() {
                             try {
                                 if (new JSONObject(data).getString("success").equals("1")) {
-                                    RadioService.operator.setHandle(radio_handle);
-                                    RadioService.operator.setCarrier(carrier);
-                                    RadioService.operator.setTown(hometown);
+                                    operator.setHandle(radio_handle);
+                                    operator.setCarrier(carrier);
+                                    operator.setTown(hometown);
                                     refreshLocalProfile();
                                     showResult("Profile Change", "Your profile was updated successfully!");
                                     updateHandleInReservoir(radio_handle);
@@ -419,47 +401,15 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
     }
 
     private void userDonated() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_donated.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        new OkUtil().call("user_donated.php", claims);
     }
 
     private void userSubscribed() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_subscribed.php")
-                        .post(new FormBody.Builder().add("data", data).build()).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    }
-                });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        new OkUtil().call("user_subscribed.php", claims);
     }
 
     private void showResult(String title, String content) {
@@ -476,30 +426,24 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         }
     }
 
-    private void refreshLocalProfile() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_info.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+    private void refreshLocalProfile() { //TODO: show user account info
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        new OkUtil().call("user_info.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    try {
-                        parseProfile(new JSONObject(response.body().string()));
-                    } catch (JSONException e) {
-                        LOG.e("refreshLocalProfile", e.getMessage());
+                try (response) {
+                    if (response.isSuccessful()) {
+                        try {
+                            parseProfile(new JSONObject(response.body().string()));
+                        } catch (JSONException e) {
+                            LOG.e("refreshLocalProfile", e.getMessage());
+                        }
                     }
                 }
             }
@@ -508,11 +452,11 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
 
     private void parseProfile(final JSONObject response) {
         try {
-            RadioService.operator.setHandle(response.getString("radio_hanlde"));
-            RadioService.operator.setCarrier(response.getString("carrier"));
-            RadioService.operator.setStamp(response.getString("stamp"));
-            RadioService.operator.setStamp(response.getString("stamp").replace("\\", ""));
-            RadioService.operator.setRank(response.getString("rank"));
+            operator.setHandle(response.getString("radio_hanlde"));
+            operator.setCarrier(response.getString("carrier"));
+            operator.setStamp(response.getString("stamp"));
+            operator.setStamp(response.getString("stamp").replace("\\", ""));
+            operator.setRank(response.getString("rank"));
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -584,32 +528,24 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             }
         } else if (id == R.id.stats) {
             clickSound();
-            final String stats = Jwts.builder()
-                    .setHeader(RadioService.header)
-                    .claim("userId", RadioService.operator.getUser_id())
-                    .setIssuedAt(new Date(System.currentTimeMillis()))
-                    .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                    .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                    .compact();
-            final Request request = new Request.Builder()
-                    .url(RadioService.SITE_URL + "user_stats.php")
-                    .post(new FormBody.Builder().add("data", stats).build())
-                    .build();
-            RadioService.client.newCall(request).enqueue(new Callback() {
+            final Map<String, Object> claims = new HashMap<>();
+            claims.put("userId", operator.getUser_id());
+            new OkUtil().call("user_stats.php", claims, new Callback() {
                 @Override
                 public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
                 }
 
                 @Override
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    try {
+                    try (response) {
                         if (response.isSuccessful()) {
                             final JSONObject data = new JSONObject(response.body().string());
-                            String content = "User ID: " + RadioService.operator.getUser_id() + " Version: " + data.getString("version_name") + " (" + data.getString("version") + ")";
+                            String content = "User ID: " + operator.getUser_id() + " Version: " + data.getString("version_name") + " (" + data.getString("version") + ")";
                             if (!data.getString("created").equals("2015-01-01 00:00:00"))
                                 content += "\n" + "Created: " + data.getString("created");
                             content += "Salutes: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("salutes")) + ", Flags: " + NumberFormat.getNumberInstance(Locale.US).format(data.getInt("flags"));
-                            showResult(RadioService.operator.getHandle(), content);
+                            showResult(operator.getHandle(), content);
                         }
                     } catch (JSONException e) {
                         LOG.e("touch", e.getMessage());
@@ -632,64 +568,58 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
             chstage();
         } else if (id == R.id.update) {
             clickSound();
-            if (RadioService.operator.getAdmin()) {
+            if (operator.getAdmin()) {
                 FillProfile sdf = (FillProfile) fragmentManager.findFragmentByTag("sdf");
                 if (sdf == null) {
                     sdf = new FillProfile();
-                    userbundle.putString("profileLink", RadioService.operator.getProfileLink());
-                    userbundle.putString("handle", RadioService.operator.getHandle());
-                    userbundle.putString("carrier", RadioService.operator.getCarrier());
-                    userbundle.putString("location", RadioService.operator.getTown());
+                    userbundle.putString("profileLink", operator.getProfileLink());
+                    userbundle.putString("handle", operator.getHandle());
+                    userbundle.putString("carrier", operator.getCarrier());
+                    userbundle.putString("location", operator.getTown());
                     sdf.setArguments(userbundle);
                     sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                     sdf.show(fragmentManager, "sdf");
                 }
             } else {
-                final String data = Jwts.builder()
-                        .setHeader(RadioService.header)
-                        .claim("userId", RadioService.operator.getUser_id())
-                        .setIssuedAt(new Date(System.currentTimeMillis()))
-                        .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                        .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                        .compact();
-                RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_check_time.php")
-                                .post(new FormBody.Builder().add("data", data).build()).build())
-                        .enqueue(new Callback() {
-                            @Override
-                            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            }
+                final Map<String, Object> claims = new HashMap<>();
+                claims.put("userId", operator.getUser_id());
+                new OkUtil().call("user_check_time.php", claims, new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
 
-                            @Override
-                            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                                if (response.isSuccessful()) {
-                                    final String data = response.body().string();
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            try {
-                                                final JSONObject object = new JSONObject(data);
-                                                if (object.getString("success").equals("1")) {
-                                                    FillProfile sdf = (FillProfile) fragmentManager.findFragmentByTag("sdf");
-                                                    if (sdf == null) {
-                                                        sdf = new FillProfile();
-                                                        userbundle.putString("profileLink", RadioService.operator.getProfileLink());
-                                                        userbundle.putString("handle", RadioService.operator.getHandle());
-                                                        userbundle.putString("carrier", RadioService.operator.getCarrier());
-                                                        userbundle.putString("location", RadioService.operator.getTown());
-                                                        sdf.setArguments(userbundle);
-                                                        sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
-                                                        sdf.show(fragmentManager, "sdf");
-                                                    }
-                                                } else
-                                                    showResult(object.getString("title"), object.getString("message"));
-                                            } catch (JSONException e) {
-                                                LOG.e("update", e.getMessage());
+                    }
+
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            final String data = response.body().string();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try (response) {
+                                        final JSONObject object = new JSONObject(data);
+                                        if (object.getString("success").equals("1")) {
+                                            FillProfile sdf = (FillProfile) fragmentManager.findFragmentByTag("sdf");
+                                            if (sdf == null) {
+                                                sdf = new FillProfile();
+                                                userbundle.putString("profileLink", operator.getProfileLink());
+                                                userbundle.putString("handle", operator.getHandle());
+                                                userbundle.putString("carrier", operator.getCarrier());
+                                                userbundle.putString("location", operator.getTown());
+                                                sdf.setArguments(userbundle);
+                                                sdf.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
+                                                sdf.show(fragmentManager, "sdf");
                                             }
-                                        }
-                                    });
+                                        } else
+                                            showResult(object.getString("title"), object.getString("message"));
+                                    } catch (JSONException e) {
+                                        LOG.e("update", e.getMessage());
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
+                    }
+                });
             }
         } else if (id == R.id.blocked) {
             clickSound();
@@ -772,7 +702,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                 shop = new RadioShop();
                 shop.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                 Bundle bundle = new Bundle();
-                bundle.putString("userId", RadioService.operator.getUser_id());
+                bundle.putString("userId", operator.getUser_id());
                 shop.setArguments(bundle);
                 shop.show(fragmentManager, "shop");
             }

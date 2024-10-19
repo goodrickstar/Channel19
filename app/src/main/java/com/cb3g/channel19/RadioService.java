@@ -162,6 +162,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     private RemoteViews notifyview;
     private FirebaseStorage temporaryStorage;
     private ChildEventListener audioListener;
+    private final OkUtil okUtil = new OkUtil();
     static AppOptionsObject appOptions = new AppOptionsObject();
     private long enterStamp = Instant.now().getEpochSecond();
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -608,8 +609,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-                client.newCall(new Request.Builder().url(SITE_URL + "user_pulse_response.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+                final Map<String, Object> claims = new HashMap<>();
+                claims.put("userId", operator.getUser_id());
+                okUtil.call("user_pulse_response.php", claims, new Callback() {
                     @Override
                     public void onFailure(@NonNull Call call, @NonNull IOException e) {
                     }
@@ -1037,9 +1039,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
                 });
                 file.delete();
-                final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-                final Request request = new Request.Builder().url(SITE_URL + "user_key_count.php").post(new FormBody.Builder().add("data", data).build()).build();
-                client.newCall(request).enqueue(new Callback() {
+                final Map<String, Object> claims = new HashMap<>();
+                claims.put("userId", operator.getUser_id());
+                okUtil.call("user_key_count.php", claims, new Callback() {
                     @Override
                     public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
@@ -1259,8 +1261,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     private void getUsersOnChannel() {
         if (operator.getChannel() == null) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("channel", operator.getChannel().getChannel()).claim("language", language).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_list.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("channel", operator.getChannel().getChannel());
+        claims.put("language", language);
+        okUtil.call("user_list.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 LOG.e("get_users_on_channel IOException " + e);
@@ -1460,17 +1465,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     private void update_block_list(final List<Block> blockList, final String field) {
         settings.edit().putString(field, gson.toJson(blockList)).apply();
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("list", gson.toJson(blockList)).claim("field", field).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_update_block_list.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("list", gson.toJson(blockList));
+        claims.put("field", field);
+        okUtil.call("user_update_block_list.php", claims);
     }
 
     private List<User> returnFilteredList(final List<User> inbound) {
@@ -1488,17 +1487,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void uploadLocation(final String location_string) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("location", location_string).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_change_location.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("location", location_string);
+        okUtil.call("user_change_location.php", claims);
     }
 
     @Override
@@ -1518,17 +1510,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     public void logOut() {
         removeListeners();
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_log_out.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        okUtil.call("user_log_out.php", claims);
         emptyPlayer(true);
         sp.release();
         if (settings.getBoolean("kicksound", true)) {
@@ -1619,11 +1603,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void user_info_lookup(final String id) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", id).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_info_lookup.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        okUtil.call("user_info_lookup.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -1646,17 +1631,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void uploadListToDB(final String field, @NonNull final JSONArray list) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("list", list.toString()).claim("field", field).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_list_update.php").post(new FormBody.Builder().add("data", data).build()).tag("none").build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("list", list.toString());
+        claims.put("field", field);
+        okUtil.call("user_list_update.php", claims);
     }
 
     private float scaleVolume(int sliderValue) {
@@ -1848,11 +1827,13 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     void flag_out(final String targetId) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", targetId).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_flag_out.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", targetId);
+        claims.put("adminId", operator.getUser_id());
+        okUtil.call("user_flag_out.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -1869,11 +1850,13 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     void bannUser(final String targetId) {
         if (operator.getSilenced()) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", targetId).claim("adminId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_ban.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", targetId);
+        claims.put("adminId", operator.getUser_id());
+        okUtil.call("user_ban.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -1888,48 +1871,30 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         });
     }
 
-    void silence(final String id, final String handle) {
+    void silence(final String targetId, final String handle) {
         if (operator.getAdmin()) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("userHandle", handle).claim("adminId", operator.getUser_id()).claim("adminHandle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_silence_new.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", targetId);
+        claims.put("userHandle", handle);
+        claims.put("adminId", operator.getUser_id());
+        claims.put("adminHandle", operator.getHandle());
+        okUtil.call("user_silence_new.php", claims);
     }
 
     void ghost() {
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_ghost_new.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        okUtil.call("user_ghost_new.php", claims);
     }
 
-    void unsilence(final String id, final String handle) {
+    void unsilence(final String targetId, final String handle) {
         if (operator.getAdmin()) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", id).claim("userHandle", handle).claim("adminId", operator.getUser_id()).claim("adminHandle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_unsilence_new.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", targetId);
+        claims.put("userHandle", handle);
+        claims.put("adminId", operator.getUser_id());
+        claims.put("adminHandle", operator.getHandle());
+        okUtil.call("user_unsilence_new.php", claims);
     }
 
     void saluteUser(final User target) {
@@ -1940,15 +1905,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             return;
         }
         Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.SALUTE, new ReputationMark(operator.getUser_id(), operator.getHandle())));
-        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_salute_new.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", target.getUser_id());
+        claims.put("handle", operator.getHandle());
+        okUtil.call("user_salute_new.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 try (response) {
                     if (response.isSuccessful()) {
                         snacks.add(new Snack("Saluted " + target.getRadio_hanlde() + "!", Snackbar.LENGTH_SHORT));
@@ -1964,11 +1932,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     void flagUser(User target) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("operatorId", operator.getUser_id());
+        claims.put("handle", operator.getHandle());
+        okUtil.call("user_flag.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -1988,11 +1959,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     public void longFlagUser(User target) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", target.getUser_id()).claim("operatorId", operator.getUser_id()).claim("handle", operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_long_flag.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("operatorId", operator.getUser_id());
+        claims.put("handle", operator.getHandle());
+        okUtil.call("user_long_flag.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -2012,29 +1986,22 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     public void keyUpWasInterupted(String userId) {
-        Log.i("Interrupt", "Calling interrupted.php " + userId);
-        final String data = Jwts.builder().setHeader(header).claim("userId", userId).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "interupted.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        okUtil.call("interupted.php", claims);
     }
 
     void pauseOrplay(@NonNull User user) {
-        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_play_pause.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getUser_id());
+        okUtil.call("user_play_pause.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 getUsersOnChannel();
             }
         });
@@ -2042,15 +2009,16 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     void kickUser(@NonNull User user) {
         kick(user.getUser_id());
-        final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        final Request request = new Request.Builder().url(SITE_URL + "user_kick.php").post(new FormBody.Builder().add("data", data).build()).build();
-        client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getUser_id());
+        okUtil.call("user_kick.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                 getUsersOnChannel();
             }
         });
@@ -2236,10 +2204,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (!operator.getUser_id().equals("JJ7SAoyqRsS7GQixEL8pbziWguV2") && !reciever.equals("JJ7SAoyqRsS7GQixEL8pbziWguV2"))
             Utils.control().child("JJ7SAoyqRsS7GQixEL8pbziWguV2").child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
         Utils.control().child(reciever).child(Utils.getKey()).setValue(new ControlObject(ControlCode.PRIVATE_MESSAGE, message));
-        final String data = Jwts.builder().setHeader(header).claim("to", reciever).claim("text", messageTxt).claim("from", operator.getUser_id()).claim("handle", operator.getHandle()).claim("rank", operator.getRank()).claim("silenced", String.valueOf(operator.getSilenced())).claim("profileLink", operator.getProfileLink()).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_send_pm.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("to", reciever);
+        claims.put("text", messageTxt);
+        claims.put("from", operator.getUser_id());
+        claims.put("handle", operator.getHandle());
+        claims.put("rank", operator.getRank());
+        claims.put("silenced", String.valueOf(operator.getSilenced()));
+        claims.put("profileLink", operator.getProfileLink());
+        okUtil.call("user_send_pm.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -2350,8 +2326,9 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void checkFlagOut() {
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_check_flags.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        okUtil.call("user_check_flags.php", claims, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 LOG.e("user_check_flags.php" + e);
@@ -2374,6 +2351,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                                 public void onResponse(@NonNull Call call, @NonNull Response response) {
                                     try (response) {
                                         if (response.isSuccessful()) {
+                                            assert response.body() != null;
                                             final String data = response.body().string();
                                             final ArrayList<String> ids = new Gson().fromJson(data, new TypeToken<ArrayList<String>>() {
                                             }.getType());
@@ -2381,7 +2359,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                                                 Utils.AlertOthers(ids, operator.getHandle() + " was flagged out!", true);
                                         }
                                     } catch (IOException e) {
-                                        Log.e("checkFlagOut() - user_in_channel.php", e.getMessage());
+                                        if (e.getMessage() != null) Log.e("checkFlagOut() - user_in_channel.php", e.getMessage());
                                     }
                                 }
                             });

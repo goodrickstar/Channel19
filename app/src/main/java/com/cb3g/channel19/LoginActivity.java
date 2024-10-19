@@ -90,7 +90,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
     private LoginBinding binding;
     private float volumeE;
     private SoundPool sp;
-    private int clicktwo;
+    private int clickTwo;
     private RotateAnimation rotate;
     private BroadcastReceiver receiver;
     private Map<String, Object> header;
@@ -101,7 +101,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
     private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(new FirebaseAuthUIActivityResultContract(), (result) -> {
         if (result.getResultCode() == RESULT_OK) {
-            showSnack(new Snack("Login succesful", Snackbar.LENGTH_SHORT));
+            showSnack(new Snack("Login successful", Snackbar.LENGTH_SHORT));
         } else {
             showSnack(new Snack("Google sign in failed", Snackbar.LENGTH_LONG));
             Log.e("Firebase Auth Error", "Login error code" + result.getResultCode());
@@ -157,7 +157,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         header = new HashMap<>();
         header.put("typ", Header.JWT_TYPE);
         sp = new SoundPool.Builder().build();
-        clicktwo = sp.load(this, R.raw.clicktwo, 1);
+        clickTwo = sp.load(this, R.raw.clicktwo, 1);
         binding.backdrop.setScaleType(ImageView.ScaleType.FIT_XY);
         binding.backdrop.setImageResource(R.drawable.login);
         rotate = new RotateAnimation(0, 358, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
@@ -197,22 +197,13 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                             Utils.getDatabase().getReference().child("keychain").addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                                    final String compactJws = Jwts.builder()
-                                            .setHeader(header)
-                                            .claim("userId", user.getUid())
-                                            .claim("radio_handle", intent.getStringExtra("handle"))
-                                            .claim("carrier", intent.getStringExtra("carrier"))
-                                            .claim("title", intent.getStringExtra("title"))
-                                            .claim("hometown", intent.getStringExtra("town"))
-                                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                                            .signWith(SignatureAlgorithm.HS256, snapshot.getValue(String.class))
-                                            .compact();
-                                    final Request request = new Request.Builder()
-                                            .url(SITE_URL + "user_create_profile.php")
-                                            .post(new FormBody.Builder().add("data", compactJws).build())
-                                            .build();
-                                    okClient.newCall(request).enqueue(new Callback() {
+                                    final Map<String, Object> claims = new HashMap<>();
+                                    claims.put("userId", user.getUid());
+                                    claims.put("radio_handle", intent.getStringExtra("handle"));
+                                    claims.put("carrier", intent.getStringExtra("carrier"));
+                                    claims.put("title", intent.getStringExtra("title"));
+                                    claims.put("hometown", intent.getStringExtra("town"));
+                                    new OkUtil().call("user_create_profile.php", claims, new Callback() {
                                         @Override
                                         public void onFailure(@NotNull Call call, @NotNull IOException e) {
                                             show_result("Network Error", e.getMessage());
@@ -297,34 +288,26 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     String KEY = snapshot.getValue(String.class);
+                    assert KEY != null;
                     settings.edit().putString("keychain", KEY).apply();
-                    String compactJws = Jwts.builder()
-                            .setHeader(header)
-                            .claim("userId", user.getUid())
-                            .claim("email", user.getEmail())
-                            .claim("name", user.getDisplayName())
-                            .claim("reg_id", TOKEN)
-                            .claim("deviceId", deviceId())
-                            .claim("gsf", returnGSF())
-                            .claim("imei", "")
-                            .claim("serial", serial)
-                            .claim("language", Locale.getDefault().getDisplayLanguage())
-                            .claim("deviceName", info.marketName)
-                            .claim("active", !subscriptions.isEmpty())
-                            .claim("version", String.valueOf(getVersion()))
-                            .claim("version_name", getVersionName())
-                            .claim("build", getBuildVersion())
-                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                            .signWith(SignatureAlgorithm.HS256, KEY)
-                            .compact();
-                    Request request = new Request.Builder()
-                            .url(SITE_URL + "google_login.php")
-                            .post(new FormBody.Builder().add("data", compactJws).build())
-                            .build();
-                    okClient.newCall(request).enqueue(new Callback() {
+                    final Map<String, Object> claims = new HashMap<>();
+                    claims.put("userId", user.getUid());
+                    claims.put("email", user.getEmail());
+                    claims.put("name", user.getDisplayName());
+                    claims.put("reg_id", TOKEN);
+                    claims.put("deviceId", deviceId());
+                    claims.put("gsf", returnGSF());
+                    claims.put("imei", "");
+                    claims.put("serial", serial);
+                    claims.put("language", Locale.getDefault().getDisplayLanguage());
+                    claims.put("deviceName", info.marketName);
+                    claims.put("active", !subscriptions.isEmpty());
+                    claims.put("version", String.valueOf(getVersion()));
+                    claims.put("version_name", getVersionName());
+                    claims.put("build", getBuildVersion());
+                    new OkUtil().call(okClient, SITE_URL + "google_login.php", claims, KEY, new Callback() {
                         @Override
-                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
                             show_result("Network Error", e.getMessage());
                         }
 
@@ -339,40 +322,16 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                         final String mode = data.getString("mode");
                                         final String message = data.getString("mode");
                                         if (mode.equals("Update Required")) {
-                                            AppUpdateManager appUpdateManager = AppUpdateManagerFactory.create(LoginActivity.this);
-                                            Task<AppUpdateInfo> appUpdateInfoTask = appUpdateManager.getAppUpdateInfo();
-                                            appUpdateInfoTask.addOnSuccessListener(appUpdateInfo -> {
-                                                if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
-                                                    appUpdateManager.startUpdateFlowForResult(appUpdateInfo, new ActivityResultLauncher<>() {
-                                                        @Override
-                                                        public void launch(IntentSenderRequest input, @Nullable ActivityOptionsCompat options) {
-
-                                                        }
-
-                                                        @Override
-                                                        public void unregister() {
-
-                                                        }
-
-                                                        @NonNull
-                                                        @Override
-                                                        public ActivityResultContract<IntentSenderRequest, ?> getContract() {
-                                                            return null;
-                                                        }
-                                                    }, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build());
-                                                }
-                                            }).addOnFailureListener(e -> {
-                                                show_result(mode, message);
-                                                final String appPackageName = getPackageName();
-                                                try {
-                                                    Intent appStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
-                                                    appStoreIntent.setPackage("com.android.vending");
-                                                    startActivity(appStoreIntent);
-                                                } catch (
-                                                        android.content.ActivityNotFoundException exception) {
-                                                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)).setPackage("com.cb3g.channel19"));
-                                                }
-                                            });
+                                            show_result(mode, message);
+                                            final String appPackageName = getPackageName();
+                                            try {
+                                                Intent appStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
+                                                appStoreIntent.setPackage("com.android.vending");
+                                                startActivity(appStoreIntent);
+                                            } catch (
+                                                    android.content.ActivityNotFoundException exception) {
+                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)).setPackage("com.cb3g.channel19"));
+                                            }
                                         } else show_result(mode, message);
                                     } else {
                                         final String handle = data.getString("radio_hanlde");
@@ -490,7 +449,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
 
     @Override
     public void click_sound() {
-        sp.play(clicktwo, volumeE, volumeE, 1, 0, 1f);
+        sp.play(clickTwo, volumeE, volumeE, 1, 0, 1f);
     }
 
     @Override

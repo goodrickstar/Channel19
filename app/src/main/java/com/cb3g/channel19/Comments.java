@@ -48,7 +48,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
@@ -224,28 +226,16 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             if (!comment.getUserId().equals(post.getFacebookId()) && !comment.getUserId().equals(RadioService.operator.getUser_id()) && !others.contains(comment.getUserId()))
                 others.add(comment.getUserId());
         }
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("to", post.getFacebookId())
-                .claim("from", RadioService.operator.getUser_id())
-                .claim("handle", RadioService.operator.getHandle())
-                .claim("owner_handle", post.getHandle())
-                .claim("others", others)
-                .claim("text", text)
-                .claim("extra", extra)
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        RadioService.client.newCall(new Request.Builder().url(RadioService.SITE_URL + "user_comment_notification.php").post(new FormBody.Builder()
-                        .add("data", data).build()).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull Response response) {
-                    }
-                });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("to", post.getFacebookId());
+        claims.put("from", RadioService.operator.getUser_id());
+        claims.put("handle", RadioService.operator.getHandle());
+        claims.put("owner_handle", post.getHandle());
+        claims.put("others", others);
+        claims.put("text", text);
+        claims.put("extra", extra);
+        new OkUtil().call("user_comment_notification.php", claims);
+        //TODO: show interaction with post to others
     }
 
     private void text_remark(String content) {

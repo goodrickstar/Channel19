@@ -109,41 +109,32 @@ public class FillProfile extends DialogFragment {
                     updateProfile(newHandle, newCarrier, newTown);
                 } else {
                     SharedPreferences settings = context.getSharedPreferences("settings", MODE_PRIVATE);
-                    Map<String, Object> header = new HashMap<>();
-                    header.put("typ", Header.JWT_TYPE);
-                    final String compactJws = Jwts.builder()
-                            .setHeader(header)
-                            .claim("handle", newHandle)
-                            .claim("handle", newHandle)
-                            .setIssuedAt(new Date(System.currentTimeMillis()))
-                            .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                            .signWith(SignatureAlgorithm.HS256, settings.getString("keychain", null))
-                            .compact();
-                    final Request request = new Request.Builder()
-                            .url(RadioService.SITE_URL + "user_handle_match.php")
-                            .post(new FormBody.Builder().add("data", compactJws).build())
-                            .build();
-                    new OkHttpClient().newCall(request).enqueue(new Callback() {
+                    final Map<String, Object> claims = new HashMap<>();
+                    claims.put("handle", newHandle);
+                    new OkUtil().call("user_handle_match.php", claims, new Callback() {
                         @Override
-                        public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
                         }
 
                         @Override
                         public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                            if (response.isSuccessful()) {
-                                assert response.body() != null;
-                                String data = response.body().string();
-                                requireActivity().runOnUiThread(() -> {
-                                    try {
-                                        JSONObject object = new JSONObject(data);
-                                        if (object.getBoolean("match"))
-                                            binding.handleET.setError("Already in use");
-                                        else
-                                            updateProfile(newHandle, newCarrier, newTown);
-                                    } catch (JSONException e) {
-                                        Logger.INSTANCE.e("Fill Profile JSON error", e.getMessage());
-                                    }
-                                });
+                            try (response) {
+                                if (response.isSuccessful()) {
+                                    assert response.body() != null;
+                                    String data = response.body().string();
+                                    requireActivity().runOnUiThread(() -> {
+                                        try {
+                                            JSONObject object = new JSONObject(data);
+                                            if (object.getBoolean("match"))
+                                                binding.handleET.setError("Already in use");
+                                            else
+                                                updateProfile(newHandle, newCarrier, newTown);
+                                        } catch (JSONException e) {
+                                            Logger.INSTANCE.e("Fill Profile JSON error", e.getMessage());
+                                        }
+                                    });
+                                }
                             }
                         }
                     });

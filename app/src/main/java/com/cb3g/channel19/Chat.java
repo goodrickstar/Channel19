@@ -104,8 +104,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             }
         });
         String data = context.getSharedPreferences("message_history", Context.MODE_PRIVATE).getString(user.getUser_id(), null);
-        if (data != null)
-            adapter.updateData(parseJson(data));
+        if (data != null) adapter.updateData(parseJson(data));
     }
 
 
@@ -149,17 +148,10 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     }
 
     public void gather_history(final boolean sound, boolean scroll) {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .claim("check", user.getUser_id())
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_chat.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        claims.put("check", user.getUser_id());
+        new OkUtil().call("user_chat.php", claims, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 binding.chatView.post(() -> binding.loading.setVisibility(View.GONE));
@@ -168,20 +160,20 @@ public class Chat extends DialogFragment implements View.OnClickListener {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.isSuccessful() && isAdded()) {
-                    if (sound) context.sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                    if (sound)
+                        context.sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
                     assert response.body() != null;
                     final String data = response.body().string();
                     context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().putString(user.getUser_id(), data).apply();
                     binding.chatView.post(() -> {
                         adapter.updateData(parseJson(data));
                         if (scroll) {
-                            RecyclerView.SmoothScroller smoothScroller = new
-                                    LinearSmoothScroller(context) {
-                                        @Override
-                                        protected int getVerticalSnapPreference() {
-                                            return LinearSmoothScroller.SNAP_TO_START;
-                                        }
-                                    };
+                            RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(context) {
+                                @Override
+                                protected int getVerticalSnapPreference() {
+                                    return LinearSmoothScroller.SNAP_TO_START;
+                                }
+                            };
                             smoothScroller.setTargetPosition(0);
                             Objects.requireNonNull(binding.chatView.getLayoutManager()).startSmoothScroll(smoothScroller);
                         }
@@ -292,8 +284,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     glideImageLoader.load(photoHolder.image, photoHolder.loading, Uri.parse(chatRow.getUrl()).toString());
                     photoHolder.image.setOnClickListener(v -> {
                         Utils.vibrate(v);
-                        if (MI != null)
-                            MI.streamFile(chatRow.getUrl());
+                        if (MI != null) MI.streamFile(chatRow.getUrl());
                     });
                     photoHolder.image.setOnLongClickListener(v -> {
                         Utils.vibrate(v);
@@ -356,22 +347,14 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         }
 
         private void delete_message(final String messageId, final String url) {
-            final Map<String, Object> header = new HashMap<>();
-            header.put("typ", Header.JWT_TYPE);
-            final String data = Jwts.builder()
-                    .setHeader(header)
-                    .claim("userId", RadioService.operator.getUser_id())
-                    .claim("check", user.getUser_id())
-                    .claim("messageId", messageId)
-                    .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                    .compact();
-            final Request request = new Request.Builder()
-                    .url(RadioService.SITE_URL + "user_delete_message.php")
-                    .post(new FormBody.Builder().add("data", data).build())
-                    .build();
-            RadioService.client.newCall(request).enqueue(new Callback() {
+            final Map<String, Object> claims = new HashMap<>();
+            claims.put("userId", RadioService.operator.getUser_id());
+            claims.put("check", user.getUser_id());
+            claims.put("messageId", messageId);
+            new OkUtil().call("user_delete_message.php", claims, new Callback() {
                 @Override
-                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
                 }
 
                 @Override

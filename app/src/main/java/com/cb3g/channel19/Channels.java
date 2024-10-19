@@ -30,7 +30,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import io.jsonwebtoken.Jwts;
@@ -57,17 +59,9 @@ public class Channels extends DialogFragment implements View.OnClickListener {
 
     private void list_sidebands() {
         binding.swiper.setRefreshing(true);
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 60000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_channels.php")
-                .post(new FormBody.Builder().add("data", data).build()).build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        new OkUtil().call("user_channels.php", claims, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 binding.swiper.post(() -> binding.swiper.setRefreshing(false));

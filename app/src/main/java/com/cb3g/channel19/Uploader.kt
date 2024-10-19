@@ -74,16 +74,26 @@ class Uploader(
         upload.sendingIds.add("JJ7SAoyqRsS7GQixEL8pbziWguV2")
         when (upload.code) {
             RequestCode.PRIVATE_PHOTO -> {
-                data = Jwts.builder().setHeader(RadioService.header).claim("senderId", operator.user_id).claim("sendToId", upload.sendingIds[0]).claim("url", upload.photo.url).claim("height", upload.photo.height).claim("width", upload.photo.width).claim("reciever", recepient).claim("handle", operator.handle).claim("profileLink", operator.profileLink).signWith(SignatureAlgorithm.HS256, operator.key).compact()
-                request = Request.Builder().url(RadioService.SITE_URL + "user_send_photo.php").post(FormBody.Builder().add("data", data).build()).build()
+                val claims = HashMap<String, Any>()
+                claims["senderId"] = operator.user_id
+                claims["sendToId"] = upload.sendingIds[0]
+                claims["url"] = upload.photo.url
+                claims["height"] = upload.photo.height
+                claims["width"] = upload.photo.width
+                claims["reciever"] = recepient
+                claims["handle"] = operator.handle
+                claims["profileLink"] = operator.profileLink
+                request = OkUtil().request(RadioService.SITE_URL + "user_send_photo.php", claims)
                 for (userId in upload.sendingIds) {
                     Utils.control().child(userId).child(upload.photo.key).setValue(ControlObject(ControlCode.PRIVATE_PHOTO, upload.photo))
                 }
             }
 
             RequestCode.PROFILE -> {
-                data = Jwts.builder().setHeader(RadioService.header).claim("userId", operator.user_id).claim("url", upload.photo.url).signWith(SignatureAlgorithm.HS256, operator.key).compact()
-                request = Request.Builder().url(RadioService.SITE_URL + "user_post_profile.php").post(FormBody.Builder().add("data", data).build()).build()
+                val claims = HashMap<String, Any>()
+                claims["senderId"] = operator.user_id
+                claims["url"] = upload.photo.url
+                request = OkUtil().request(RadioService.SITE_URL + "user_post_profile.php", claims)
             }
 
             RequestCode.MASS_PHOTO -> {

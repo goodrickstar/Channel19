@@ -23,7 +23,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import io.jsonwebtoken.Jwts;
@@ -101,20 +103,14 @@ public class CreateChannel extends DialogFragment {
 
     private void create_channel(final String channelName, final int pin) {
         binding.close.setEnabled(false);
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .claim("channelName", channelName)
-                .claim("pin", pin)
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_create_channel.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        claims.put("channelName", channelName);
+        claims.put("pin", pin);
+        new OkUtil().call("user_create_channel.php", claims, new Callback() {
             @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
@@ -124,7 +120,7 @@ public class CreateChannel extends DialogFragment {
                         assert response.body() != null;
                         final JSONObject data = new JSONObject(response.body().string());
                         requireActivity().runOnUiThread(() -> {
-                            try {
+                            try (response) {
                                 if (data.getBoolean("success")) {
                                     SharedPreferences saved = context.getSharedPreferences("channels", Context.MODE_PRIVATE);
                                     List<Integer> channels = RadioService.gson.fromJson(saved.getString("channels", "[]"), new TypeToken<List<Integer>>() {

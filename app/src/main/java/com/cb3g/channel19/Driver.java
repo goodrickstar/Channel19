@@ -26,6 +26,8 @@ import org.threeten.bp.Instant;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -87,7 +89,7 @@ public class Driver extends Fragment {
             }
             return true;
         });
-        binding.stats.setOnClickListener(v ->{
+        binding.stats.setOnClickListener(v -> {
             context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             FlaggingDialog flaggingDialog = (FlaggingDialog) fragmentManager.findFragmentByTag("FlaggingDialog");
@@ -141,25 +143,16 @@ public class Driver extends Fragment {
     }
 
     public void refreshRank() {
-        final String data = Jwts.builder()
-                .setHeader(RadioService.header)
-                .claim("userId", RadioService.operator.getUser_id())
-                .setIssuedAt(new Date(System.currentTimeMillis() - 240000))
-                .setExpiration(new Date(System.currentTimeMillis() + 240000))
-                .signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey())
-                .compact();
-        final Request request = new Request.Builder()
-                .url(RadioService.SITE_URL + "user_rank.php")
-                .post(new FormBody.Builder().add("data", data).build())
-                .build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        new OkUtil().call("user_rank.php", claims, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
             }
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try {
+                try (response) {
                     if (response.isSuccessful()) {
                         assert response.body() != null;
                         final JSONObject data = new JSONObject(response.body().string());

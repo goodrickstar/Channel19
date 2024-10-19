@@ -56,7 +56,9 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -95,12 +97,11 @@ class Utils {
     }
 
     static void usersInChannel(final Callback callback){
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("handle", operator.getHandle()).claim("channel", operator.getChannel().getChannel()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        call(data, "user_in_channel.php", callback);
-    }
-
-    static void call(final String data, final String phpFile, final Callback callback){
-        client.newCall(new okhttp3.Request.Builder().url(RadioService.SITE_URL + phpFile).post(new FormBody.Builder().add("data", data).build()).build()).enqueue(callback);
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", operator.getUser_id());
+        claims.put("handle", operator.getHandle());
+        if (operator.getChannel()!= null) claims.put("channel", operator.getChannel().getChannel());
+        new OkUtil().call("user_in_channel.php", claims, callback);
     }
 
     static DatabaseReference control() {

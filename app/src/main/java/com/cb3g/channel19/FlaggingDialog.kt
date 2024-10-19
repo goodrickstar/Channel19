@@ -13,6 +13,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import com.cb3g.channel19.RadioService.operator
 import com.example.android.multidex.myapplication.R
 import com.example.android.multidex.myapplication.databinding.FlaggingDialogBinding
 import com.google.gson.Gson
@@ -79,8 +80,9 @@ class FlaggingDialog : DialogFragment() {
     }
 
     private fun checkFlagOut() {
-        val data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.user_id).setIssuedAt(Date(System.currentTimeMillis())).setExpiration(Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.key).compact()
-        Utils.call(data, "user_flag_counting.php", object : Callback{
+        val claims = HashMap<String, Any>()
+        claims.put("userId", operator.user_id)
+        OkUtil().call("user_flag_counting.php", claims, object : Callback{
             override fun onFailure(call: Call, e: IOException) {
                 e.message.toString().log()
             }
@@ -102,6 +104,7 @@ class FlaggingDialog : DialogFragment() {
                     }
                 }
             }
+
         })
     }
 

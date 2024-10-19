@@ -32,6 +32,8 @@ import org.threeten.bp.Instant;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -213,48 +215,22 @@ public class RadioShop extends DialogFragment implements View.OnClickListener, V
     }
 
     void saluteSelf() {
-        final String data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.getUser_id()).claim("handle", RadioService.operator.getHandle()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey()).compact();
-        final Request request = new Request.Builder().url(RadioService.SITE_URL + "user_salute_self.php").post(new FormBody.Builder().add("data", data).build()).build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                response.close();
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        claims.put("handle", RadioService.operator.getHandle());
+        new OkUtil().call("user_salute_self.php", claims);
     }
 
     void clearFlags() {
-        final String data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey()).compact();
-        final Request request = new Request.Builder().url(RadioService.SITE_URL + "user_clear_flags.php").post(new FormBody.Builder().add("data", data).build()).build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                response.close();
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        new OkUtil().call("user_clear_flags.php", claims);
     }
 
     void resetTimer() {
-        final String data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.getKey()).compact();
-        final Request request = new Request.Builder().url(RadioService.SITE_URL + "user_reset" + "_timer.php").post(new FormBody.Builder().add("data", data).build()).build();
-        RadioService.client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                response.close();
-            }
-        });
+        final Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", RadioService.operator.getUser_id());
+        new OkUtil().call("user_reset_timer.php", claims);
     }
 
 }
