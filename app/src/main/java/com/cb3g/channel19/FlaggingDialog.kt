@@ -1,7 +1,6 @@
 package com.cb3g.channel19
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -57,6 +56,8 @@ class FlaggingDialog : DialogFragment() {
         binding.flagsRecycler.setHasFixedSize(true)
         binding.flagsRecycler.setAdapter(adapter)
         binding.flagsChip.isChecked = preferences.getBoolean("option", false)
+        if (binding.flagsChip.isChecked) binding.flagsChip.text = getString(R.string.flags_in)
+        else binding.flagsChip.text = getString(R.string.flags_out)
         binding.flagsChip.setOnCheckedChangeListener { button, checked ->
             Utils.vibrate(button)
             if (checked) binding.flagsChip.text = getString(R.string.flags_in)
@@ -79,7 +80,7 @@ class FlaggingDialog : DialogFragment() {
 
     private fun checkFlagOut() {
         val data = Jwts.builder().setHeader(RadioService.header).claim("userId", RadioService.operator.user_id).setIssuedAt(Date(System.currentTimeMillis())).setExpiration(Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, RadioService.operator.key).compact()
-        Utils.call(RadioService.client, data, "user_flag_counting.php", object : Callback{
+        Utils.call(data, "user_flag_counting.php", object : Callback{
             override fun onFailure(call: Call, e: IOException) {
                 e.message.toString().log()
             }
@@ -123,7 +124,6 @@ class CustomRecycler(private val inflation: LayoutInflater) : RecyclerView.Adapt
     }
 
     override fun onBindViewHolder(holder: FlagViewHolder, position: Int) {
-        "OnBind $position".log()
         val entry = list[position]
         holder.title.text = entry.handle
         if (entry.count == 5) holder.image.setImageResource(R.drawable.flag_red)
@@ -131,8 +131,6 @@ class CustomRecycler(private val inflation: LayoutInflater) : RecyclerView.Adapt
     }
 
     override fun getItemCount(): Int {
-        Gson().toJson(list).log()
-        "size ${list.size}".log()
         return list.size
     }
 }

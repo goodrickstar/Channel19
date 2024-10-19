@@ -29,8 +29,6 @@ public class FireBaseReceiver extends FirebaseMessagingService {
                         sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
                 case "background" ->
                         sendBroadcast(new Intent("background").putExtra("data", messageData.getString("data")).setPackage("com.cb3g.channel19"));
-                case "advertise" ->
-                        sendBroadcast(new Intent("advertise").setPackage("com.cb3g.channel19"));
                 case "confirmInterrupt" ->
                         sendBroadcast(new Intent("confirmInterrupt").setPackage("com.cb3g.channel19"));
             }

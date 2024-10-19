@@ -87,7 +87,7 @@ public class Driver extends Fragment {
             }
             return true;
         });
-        binding.stats.setOnLongClickListener(v ->{
+        binding.stats.setOnClickListener(v ->{
             context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
             Utils.vibrate(v);
             FlaggingDialog flaggingDialog = (FlaggingDialog) fragmentManager.findFragmentByTag("FlaggingDialog");
@@ -96,7 +96,6 @@ public class Driver extends Fragment {
                 flaggingDialog.setStyle(DialogFragment.STYLE_NO_TITLE, R.style.full_screen);
                 flaggingDialog.show(fragmentManager, "FlaggingDialog");
             }
-            return true;
         });
     }
 

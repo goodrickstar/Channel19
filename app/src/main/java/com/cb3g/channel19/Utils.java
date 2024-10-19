@@ -1,6 +1,10 @@
 package com.cb3g.channel19;
 
 
+import static com.cb3g.channel19.RadioService.client;
+import static com.cb3g.channel19.RadioService.header;
+import static com.cb3g.channel19.RadioService.operator;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -37,7 +41,6 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.gson.reflect.TypeToken;
 
 import org.threeten.bp.Duration;
 import org.threeten.bp.Instant;
@@ -53,21 +56,18 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
-import okhttp3.OkHttp;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
 
 class Utils {
+
+    static void clickSound(Context context){
+        context.sendBroadcast(new Intent("nineteenClickSound").setPackage("com.cb3g.channel19"));
+    }
 
     static void AlertOthers(final ArrayList<String> userIds, final String message, boolean confirm) {
         for (String userId : userIds) {
@@ -94,7 +94,12 @@ class Utils {
             control().child(userId).child(getKey()).setValue(new ControlObject(ControlCode.TOAST, message));
     }
 
-    static void call(final OkHttpClient client, final String data, final String phpFile, final Callback callback){
+    static void usersInChannel(final Callback callback){
+        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("handle", operator.getHandle()).claim("channel", operator.getChannel().getChannel()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
+        call(data, "user_in_channel.php", callback);
+    }
+
+    static void call(final String data, final String phpFile, final Callback callback){
         client.newCall(new okhttp3.Request.Builder().url(RadioService.SITE_URL + phpFile).post(new FormBody.Builder().add("data", data).build()).build()).enqueue(callback);
     }
 

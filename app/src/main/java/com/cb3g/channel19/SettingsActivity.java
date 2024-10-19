@@ -45,6 +45,7 @@ import org.threeten.bp.Instant;
 
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -129,7 +130,7 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
                     if (drifrag.isAdded())
                         drifrag.updateProfilePicture();
                     break;
-                case "exitChannelNineTeen":
+                case "killActivity":
                     finish();
                     break;
                 case "nineteenSendProfileToServer":
@@ -395,11 +396,11 @@ public class SettingsActivity extends FragmentActivity implements SI, PurchasesU
         filter.addAction("browseBackgrounds");
         filter.addAction("updateProfilePicture");
         filter.addAction("nineteenUpdateProfile");
-        filter.addAction("exitChannelNineTeen");
         filter.addAction("nineteenSendProfileToServer");
         filter.addAction("requestGPS");
         filter.addAction("nineteenShowBlank");
         filter.addAction("nineteenGifChosen");
+        filter.addAction("killActivity");
         ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
         if (settings.getBoolean("exiting", false)) {
             startActivity(new Intent(this, LoginActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));

@@ -636,7 +636,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (!operator.getSubscribed()) timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
+                sendBroadcast(new Intent("advertise").setPackage("com.cb3g.channel19"));
             }
         }, 900000, 900000);
     }
@@ -673,13 +673,18 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             databaseReference.child("controlling").child(operator.getUser_id()).child(key).removeValue();
         if (control != null) {
             switch (control) {
-                case ALERT:
-                    snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
-                    checkForMessages();
-                    break;
+                case ALERT: {
+                    if (MI != null) {
+                        snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
+                        checkForMessages();
+                    }
+                }
+                break;
                 case TOAST:
-                    snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
-                    checkForMessages();
+                    if (MI != null) {
+                        snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
+                        checkForMessages();
+                    }
                     break;
                 case PRIVATE_MESSAGE:
                     final Message message = snapshot.child("data").getValue(Message.class);
@@ -1422,15 +1427,27 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         operator.setChannel(channel);
         databaseReference.child("audio").child(channel.getChannel_name()).addChildEventListener(audioListener);
         getUsersOnChannel();
-        if (operator.getInvisible() || ghostUsers.contains(operator.getUser_id())) return;
-        final String data = Jwts.builder().setHeader(header).claim("userId", operator.getUser_id()).claim("handle", operator.getHandle()).claim("channel", channel.getChannel()).claim("language", language).claim("profileLink", operator.getProfileLink()).claim("channelName", channel.getChannel_name()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
-        client.newCall(new Request.Builder().url(SITE_URL + "user_entered_channel.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
+        if (operator.getInvisible() || ghostUsers.contains(operator.getUser_id()) || operator.getAdmin())
+            return;
+        Utils.usersInChannel(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
+                try (response) {
+                    if (response.isSuccessful()) {
+                        final String data = response.body().string();
+                        final ArrayList<String> ids = new Gson().fromJson(data, new TypeToken<ArrayList<String>>() {
+                        }.getType());
+                        if (!ids.isEmpty())
+                            Utils.AlertOthers(ids, operator.getHandle() + " has entered the channel", false);
+                    }
+                } catch (IOException e) {
+                    Log.e("user_in_channel.php", e.getMessage());
+                }
             }
         });
     }
@@ -1962,10 +1979,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         checkForMessages();
                         if (!operator.getAdmin()) {
                             flaggedIds.add(target.getUser_id());
-                            uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
                             checkFlagOut();
                         }
-                        kick(target.getUser_id());
                     }
                 }
             }
@@ -1988,7 +2003,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         checkForMessages();
                         if (!operator.getAdmin()) {
                             flaggedIds.add(target.getUser_id());
-                            uploadListToDB("flaggedIDs", new JSONArray(flaggedIds));
                         }
                         Utils.control().child(target.getUser_id()).child(Utils.getKey()).setValue(new ControlObject(ControlCode.LONG_FLAG, new ReputationMark(operator.getUser_id(), operator.getHandle())));
                     }
@@ -2027,6 +2041,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     void kickUser(@NonNull User user) {
+        kick(user.getUser_id());
         final String data = Jwts.builder().setHeader(header).claim("userId", user.getUser_id()).setIssuedAt(new Date(System.currentTimeMillis())).setExpiration(new Date(System.currentTimeMillis() + 60000)).signWith(SignatureAlgorithm.HS256, operator.getKey()).compact();
         final Request request = new Request.Builder().url(SITE_URL + "user_kick.php").post(new FormBody.Builder().add("data", data).build()).build();
         client.newCall(request).enqueue(new Callback() {
@@ -2036,7 +2051,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                kick(user.getUser_id());
                 getUsersOnChannel();
             }
         });
@@ -2340,7 +2354,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         client.newCall(new Request.Builder().url(SITE_URL + "user_check_flags.php").post(new FormBody.Builder().add("data", data).build()).build()).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                LOG.e("get_users_on_channel IOException " + e);
+                LOG.e("user_check_flags.php" + e);
             }
 
             @Override
@@ -2350,15 +2364,32 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         assert response.body() != null;
                         int flags = Integer.parseInt(response.body().string());
                         if (flags >= 20 && !operator.getAdmin()) {
-                            final ArrayList<String> ids = new ArrayList<>();
-                            for (UserListEntry user : userList) {
-                                ids.add(user.getUser().getUser_id());
-                            }
-                            Utils.AlertOthers(ids, operator.getHandle() + " was flagged out!", true);
+                            Utils.usersInChannel(new Callback() {
+                                @Override
+                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+
+                                }
+
+                                @Override
+                                public void onResponse(@NonNull Call call, @NonNull Response response) {
+                                    try (response) {
+                                        if (response.isSuccessful()) {
+                                            final String data = response.body().string();
+                                            final ArrayList<String> ids = new Gson().fromJson(data, new TypeToken<ArrayList<String>>() {
+                                            }.getType());
+                                            if (!ids.isEmpty())
+                                                Utils.AlertOthers(ids, operator.getHandle() + " was flagged out!", true);
+                                        }
+                                    } catch (IOException e) {
+                                        Log.e("checkFlagOut() - user_in_channel.php", e.getMessage());
+                                    }
+                                }
+                            });
+
                             stopSelf();
                         }
                     } catch (IOException e) {
-                        LOG.e("get_users_on_channel", e.getMessage());
+                        LOG.e("user_check_flags.php", e.getMessage());
                     }
                 }
             }
