@@ -45,18 +45,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.jaredrummler.android.device.DeviceName;
 
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -162,6 +159,11 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                         showSnack(new Snack("There was an issue registering this device with Firebase"));
                     }
                 });
+        binding.loginIntoServerWithGoogleButton.setOnLongClickListener(v -> {
+            Utils.vibrate(v);
+            UtilsKKt.gotoPlayStore(LoginActivity.this);
+            return true;
+        });
     }
 
     @Override
@@ -224,6 +226,10 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
         if (Utils.serviceAlive(this) && !settings.getBoolean("exiting", false))
             launch_main_activity();
         handleAuth(auth.getCurrentUser());
+        if (!settings.getString("userId", "0").equals("0") && !settings.getBoolean("info1", false)){
+            settings.edit().putBoolean("info1", true).apply();
+            show_result("Helpful Tips", "Long-press the login button at any time to be directed to the App in the Google Play Store");
+        }
     }
 
     public void handleAuth(FirebaseUser user) {
@@ -305,18 +311,7 @@ public class LoginActivity extends AppCompatActivity implements LI, PurchasesUpd
                                     if (data.getString("user_id").equals("0")) {
                                         final String mode = data.getString("mode");
                                         final String message = data.getString("mode");
-                                        if (mode.equals("Update Required")) {
-                                            show_result(mode, message);
-                                            final String appPackageName = getPackageName();
-                                            try {
-                                                Intent appStoreIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName));
-                                                appStoreIntent.setPackage("com.android.vending");
-                                                startActivity(appStoreIntent);
-                                            } catch (
-                                                    android.content.ActivityNotFoundException exception) {
-                                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)).setPackage("com.cb3g.channel19"));
-                                            }
-                                        } else show_result(mode, message);
+                                        show_result(mode, message);
                                     } else {
                                         final String handle = data.getString("radio_hanlde");
                                         if (handle.equals("default")) {

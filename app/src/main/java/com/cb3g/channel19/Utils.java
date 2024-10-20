@@ -111,7 +111,6 @@ class Utils {
         return image;
     }
 
-
     static String[] getStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return new String[]{Manifest.permission.READ_MEDIA_IMAGES};
@@ -144,20 +143,12 @@ class Utils {
         return true;
     }
 
-    static boolean permissionsAccepted(Context context, String permission) {
-        return (ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED);
-    }
-
     static void showRewardAd(Context context, String userId, int tokens, boolean chosen) {
         Intent rewardIntent = new Intent(context, ActivityReward.class);
         rewardIntent.putExtra("userId", userId);
         rewardIntent.putExtra("tokens", tokens);
         rewardIntent.putExtra("chosen", chosen);
         context.startActivity(rewardIntent);
-    }
-
-    static String formatAudioFileUrl(String url, String userId, long messageNumber) {
-        return url + "users/user-" + userId + "/" + messageNumber + ".m4a";
     }
 
     static String formatLocalAudioFileLocation(String directory, long stamp) {
@@ -194,63 +185,8 @@ class Utils {
         return getDatabase().getReference().child("tokens").child(userId);
     }
 
-    static DatabaseReference getFree(String userId) {
-        return getDatabase().getReference().child("free").child(userId);
-    }
-
     static DatabaseReference getShop() {
         return getDatabase().getReference().child("rewards");
-    }
-
-    public static void logJSON(String json) {
-        int i = 3000;
-        while (json.length() > i) {
-            Logger.INSTANCE.i(json.substring(0, i));
-            json = json.substring(i);
-        }
-        Logger.INSTANCE.i(json.substring(0, i));
-    }
-
-    public static void dLong(String theMsg) {
-        final int MAX_INDEX = 4000;
-        final int MIN_INDEX = 3000;
-
-        // String to be logged is longer than the max...
-        if (theMsg.length() > MAX_INDEX) {
-            String theSubstring = theMsg.substring(0, MAX_INDEX);
-            int theIndex = MAX_INDEX;
-
-            // Try to find a substring break at a line end.
-            theIndex = theSubstring.lastIndexOf('\n');
-            if (theIndex >= MIN_INDEX) {
-                theSubstring = theSubstring.substring(0, theIndex);
-            } else {
-                theIndex = MAX_INDEX;
-            }
-
-            // Log the substring.
-            Logger.INSTANCE.i(theSubstring);
-
-            // Recursively log the remainder.
-            dLong(theMsg.substring(theIndex));
-        }
-
-        // String to be logged is shorter than the max...
-        else {
-            Logger.INSTANCE.i(theMsg);
-        }
-    }
-
-    public static Bitmap returnVideoScreenShot(String fileLocation) {
-        MediaMetadataRetriever ret = new MediaMetadataRetriever();
-        ret.setDataSource(fileLocation);
-        return ret.getFrameAtTime();
-    }
-
-    public static int calculateNoOfColumns(Context context, float columnWidthDp) {
-        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-        float screenWidthDp = displayMetrics.widthPixels / displayMetrics.density;
-        return (int) (screenWidthDp / columnWidthDp + 0.5);
     }
 
     public static void vibrate(View view) {
@@ -276,11 +212,6 @@ class Utils {
         view.postDelayed(() -> methodManager.hideSoftInputFromWindow(view.getWindowToken(), 0), 200);
     }
 
-
-    static String formatInt(int count) {
-        return NumberFormat.getNumberInstance(Locale.US).format(count);
-    }
-
     static double round(double value, int places) {
         if (places < 0) throw new IllegalArgumentException();
         long factor = (long) Math.pow(10, places);
@@ -291,30 +222,6 @@ class Utils {
 
     static double round(double value) {
         return new BigDecimal(value).setScale(2, RoundingMode.HALF_UP).doubleValue();
-    }
-
-    static String formatDoubleToCurrency(double value) {
-        NumberFormat formatter = NumberFormat.getCurrencyInstance();
-        return formatter.format(value);
-    }
-
-    static String formatDiff(String text, Duration duration) {
-        String response = "";
-        if (!text.equals("")) {
-            if (duration.toDays() == 1) response = "yesterday";
-            else if (duration.toDays() > 1) response = duration.toDays() + " days ago";
-            else {
-                if (duration.toHours() == 1) response = duration.toHours() + " hour ago";
-                else if (duration.toMinutes() > 120) response = duration.toHours() + " hours ago";
-                else {
-                    if (duration.toMinutes() == 1) response = duration.toMinutes() + "  min ago";
-                    else if (duration.toMinutes() > 1)
-                        response = duration.toMinutes() + "  mins ago";
-                    else response = text + "s";
-                }
-            }
-        }
-        return response;
     }
 
     static String formatDiff(Duration duration, boolean justNow) {
@@ -355,11 +262,6 @@ class Utils {
         return seconds < 0 ? "-" + positive : positive;
     }
 
-    static String toTime(long value) {
-        DateFormat df2 = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        return df2.format(new Date(new Timestamp(value).getTime()));
-    }
-
     static Duration timeDifferance(long then) {
         return Duration.between(Instant.ofEpochSecond(then), Instant.now());
     }
@@ -382,85 +284,6 @@ class Utils {
 
     static long UTC() {
         return Instant.now().getEpochSecond();
-    }
-
-    private static String capitalize(String str) {
-        if (TextUtils.isEmpty(str)) {
-            return str;
-        }
-        char[] arr = str.toCharArray();
-        boolean capitalizeNext = true;
-        StringBuilder phrase = new StringBuilder();
-        for (char c : arr) {
-            if (capitalizeNext && Character.isLetter(c)) {
-                phrase.append(Character.toUpperCase(c));
-                capitalizeNext = false;
-                continue;
-            } else if (Character.isWhitespace(c)) {
-                capitalizeNext = true;
-            }
-            phrase.append(c);
-        }
-        return phrase.toString();
-    }
-
-    static void returnBitmapFromUrl(Activity activity, String url) {
-        Glide.with(activity)
-                .asBitmap()
-                .load(url)
-                .dontTransform()
-                .apply(RadioService.profileOptions)
-                .thumbnail(0.1f)
-                .into(new Target<Bitmap>() {
-                    @Override
-                    public void onLoadStarted(@Nullable Drawable placeholder) {
-                    }
-
-                    @Override
-                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                    }
-
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        final float scale = activity.getResources().getDisplayMetrics().density;
-                        int pixels = (int) (50 * scale + 0.5f);
-                        Bitmap bitmap = Bitmap.createScaledBitmap(resource, pixels, pixels, true);
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                    }
-
-                    @Override
-                    public void getSize(@NonNull SizeReadyCallback cb) {
-                    }
-
-                    @Override
-                    public void removeCallback(@NonNull SizeReadyCallback cb) {
-                    }
-
-                    @Nullable
-                    @Override
-                    public Request getRequest() {
-                        return null;
-                    }
-
-                    @Override
-                    public void setRequest(@Nullable Request request) {
-                    }
-
-                    @Override
-                    public void onStart() {
-                    }
-
-                    @Override
-                    public void onStop() {
-                    }
-
-                    @Override
-                    public void onDestroy() {
-                    }
-                });
     }
 
 }

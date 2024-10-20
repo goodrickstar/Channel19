@@ -48,21 +48,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import me.shaohui.advancedluban.Luban;
 import me.shaohui.advancedluban.OnCompressListener;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class Comments extends DialogFragment implements ChildEventListener, View.OnClickListener {
     private final CommentAdapter commentAdapter = new CommentAdapter();
@@ -127,26 +118,22 @@ public class Comments extends DialogFragment implements ChildEventListener, View
 
     @Override
     public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-        Comment comment = dataSnapshot.getValue(Comment.class);
+        final Comment comment = dataSnapshot.getValue(Comment.class);
         for (int i = 0; i < comments.size(); i++) {
             assert comment != null;
             if (comments.get(i).getRemarkId().equals(comment.getRemarkId())) {
                 comments.set(i, comment);
-                commentAdapter.notifyDataSetChanged();
+                commentAdapter.notifyItemChanged(i);
             }
         }
     }
 
     @Override
     public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-        Comment comment = dataSnapshot.getValue(Comment.class);
-        for (int i = 0; i < comments.size(); i++) {
-            assert comment != null;
-            if (comments.get(i).getRemarkId().equals(comment.getRemarkId())) {
-                comments.remove(i);
-                commentAdapter.notifyItemRemoved(i);
-            }
-        }
+        final Comment comment = dataSnapshot.getValue(Comment.class);
+        final int i =comments.indexOf(comment);
+        comments.remove(comment);
+        commentAdapter.notifyItemRemoved(i);
     }
 
     @Override
@@ -220,27 +207,18 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         RI.databaseReference().child("remarks").child(post.getPostId()).removeEventListener(this);
     }
 
-    private void commentNotification(final String text, final String extra) {
-        List<String> others = new ArrayList<>();
+    private void commentNotification(final String text) {
+        ArrayList<String> ids = new ArrayList<>();
         for (Comment comment : comments) {
-            if (!comment.getUserId().equals(post.getFacebookId()) && !comment.getUserId().equals(RadioService.operator.getUser_id()) && !others.contains(comment.getUserId()))
-                others.add(comment.getUserId());
+            ids.add(comment.getUserId());
         }
-        final Map<String, Object> claims = new HashMap<>();
-        claims.put("to", post.getFacebookId());
-        claims.put("from", RadioService.operator.getUser_id());
-        claims.put("handle", RadioService.operator.getHandle());
-        claims.put("owner_handle", post.getHandle());
-        claims.put("others", others);
-        claims.put("text", text);
-        claims.put("extra", extra);
-        new OkUtil().call("user_comment_notification.php", claims);
-        //TODO: show interaction with post to others
+        ids.remove(RadioService.operator.getUser_id());
+        UtilsKKt.sendControl(ids, new ControlObject(ControlCode.TOAST, RadioService.operator.getHandle() + " \"" + text + "\""));
     }
 
     private void text_remark(String content) {
         content = content.replaceAll("\\s+", " ").trim();
-        if (content.length() == 0) return;
+        if (content.isEmpty()) return;
         final Comment comment = new Comment();
         comment.setPostId(post.getPostId());
         comment.setRemarkId(Objects.requireNonNull(RI.databaseReference().child("remarks").child(post.getPostId()).push().getKey()));
@@ -251,7 +229,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
         comment.setPost_date(RI.return_timestamp_string());
         RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).setValue(comment);
         update_latest_comment(content);
-        commentNotification(content, "none");
+        commentNotification(content);
     }
 
     public void giphy_remark(final Gif gif) {
@@ -269,7 +247,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             comment.setContent(gif.getUrl());
             RI.databaseReference().child("remarks").child(post.getPostId()).child(comment.getRemarkId()).setValue(comment);
             update_latest_comment("Commented with a giphy.");
-            commentNotification("none", "Commented on your post with a Giphy");
+            commentNotification("none");
         }
     }
 
@@ -334,7 +312,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                             Logger.INSTANCE.e("LUBAN ERROR " + e);
                         }
                     });
-            commentNotification("none", "Commented on your post with a photo");
+            commentNotification("none");
         }
     }
 
@@ -462,7 +440,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
                     photo_holder.name.setText(comment.getHandle());
                     photo_holder.stamp.setText(Utils.showElapsed(comment.getStamp()));
                     glideImageLoader.load(photo_holder.profile, comment.getProfileLink(), RadioService.profileOptions);
-                    photo_holder.content.getLayoutParams().height = (int) (((comment.getImage_height() * ReservoirActivity.screen_width) / comment.getImage_width()) * 0.8);
+                    photo_holder.content.getLayoutParams().height = (int) (((double) (comment.getImage_height() * ReservoirActivity.screen_width) / comment.getImage_width()) * 0.8);
                     photo_holder.content.getLayoutParams().width = (int) (ReservoirActivity.screen_width * 0.8);
                     glideImageLoader.load(photo_holder.content, photo_holder.loading, comment.getContent());
                     photo_holder.content.setOnClickListener(v -> {
@@ -507,7 +485,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             return comments.get(position).getType();
         }
 
-        private class TextHolder extends RecyclerView.ViewHolder {
+        private static class TextHolder extends RecyclerView.ViewHolder {
             TextView name, content, stamp;
             ImageView profile, menu;
 
@@ -521,7 +499,7 @@ public class Comments extends DialogFragment implements ChildEventListener, View
             }
         }
 
-        private class PhotoHolder extends RecyclerView.ViewHolder {
+        private static class PhotoHolder extends RecyclerView.ViewHolder {
             TextView name, stamp;
             ImageView profile, menu, content;
             ProgressBar loading;
