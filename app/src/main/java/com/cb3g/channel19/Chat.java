@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.android.multidex.myapplication.R;
 import com.example.android.multidex.myapplication.databinding.ChatBinding;
+import com.google.gson.Gson;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
@@ -65,6 +67,8 @@ public class Chat extends DialogFragment implements View.OnClickListener {
     private final FragmentManager fragmentManager;
     private GlideImageLoader glideImageLoader;
 
+    private int ammount = 0;
+
     public Chat(FragmentManager fragmentManager, User user) {
         this.fragmentManager = fragmentManager;
         this.user = user;
@@ -82,6 +86,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         launchHistory = requireArguments().getBoolean("launch");
         screenWidth = Utils.getScreenWidth(requireActivity());
         glideImageLoader.load(binding.chatProfilePictureIv, user.getProfileLink(), RadioService.profileOptions);
+        Log.i("logging", new Gson().toJson(user));
         glideImageLoader.load(binding.chatStarIv, Utils.parseRankUrl(user.getRank()));
         binding.chatHandleTv.setText(user.getRadio_hanlde());
         binding.chatView.setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, true));
@@ -105,6 +110,14 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         });
         String data = context.getSharedPreferences("message_history", Context.MODE_PRIVATE).getString(user.getUser_id(), null);
         if (data != null) adapter.updateData(parseJson(data));
+        binding.chatFullHistoryButton.setOnClickListener(view -> {
+            UtilsKKt.clicked(view, context);
+            ammount = 1;
+            gather_history(false, true);
+            Toast.makeText(getActivity(), "Loading full history..", Toast.LENGTH_LONG).show();
+            binding.chatFullHistoryButton.setEnabled(false);
+            binding.chatFullHistoryButton.setVisibility(View.INVISIBLE);
+        });
     }
 
 
@@ -151,6 +164,7 @@ public class Chat extends DialogFragment implements View.OnClickListener {
         final Map<String, Object> claims = new HashMap<>();
         claims.put("userId", RadioService.operator.getUser_id());
         claims.put("check", user.getUser_id());
+        claims.put("ammount", ammount);
         new OkUtil().call("user_chat.php", claims, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
@@ -166,7 +180,8 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                     final String data = response.body().string();
                     context.getSharedPreferences("message_history", Context.MODE_PRIVATE).edit().putString(user.getUser_id(), data).apply();
                     binding.chatView.post(() -> {
-                        adapter.updateData(parseJson(data));
+                        final List<ChatRow> finalData = parseJson(data);
+                        adapter.updateData(finalData);
                         if (scroll) {
                             RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(context) {
                                 @Override
@@ -174,7 +189,8 @@ public class Chat extends DialogFragment implements View.OnClickListener {
                                     return LinearSmoothScroller.SNAP_TO_START;
                                 }
                             };
-                            smoothScroller.setTargetPosition(0);
+                            if (ammount == 1) smoothScroller.setTargetPosition(finalData.size() - 1);
+                            else smoothScroller.setTargetPosition(0);
                             Objects.requireNonNull(binding.chatView.getLayoutManager()).startSmoothScroll(smoothScroller);
                         }
                     });

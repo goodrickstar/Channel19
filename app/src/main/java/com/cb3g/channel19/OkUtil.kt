@@ -1,5 +1,7 @@
 package com.cb3g.channel19
 
+import com.cb3g.channel19.RadioService.SITE_URL
+import com.cb3g.channel19.RadioService.client
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
@@ -21,13 +23,18 @@ class OkUtil {
         return Jwts.builder().claims(claims).issuedAt(Date(System.currentTimeMillis())).expiration(Date(System.currentTimeMillis() + 60000)).signWith(signingKey, Jwts.SIG.HS256).compact();
     }
 
-    fun request(url: String, claims: Map<String, Any>) : Request{
+    fun request(url: String, claims: Map<String, Any>): Request {
         val formBody = FormBody.Builder().add("data", compact(claims, RadioService.operator.key)).build()
         return Request.Builder().url(url).post(formBody).build()
     }
-    fun request(url: String, claims: Map<String, Any>, key: String) : Request{
+
+    fun request(url: String, claims: Map<String, Any>, key: String): Request {
         val formBody = FormBody.Builder().add("data", compact(claims, key)).build()
         return Request.Builder().url(url).post(formBody).build()
+    }
+
+    fun enqueu(request: Request, callback: Callback) {
+        client.newCall(request).enqueue(callback)
     }
 
     private fun compact(key: String): String {
@@ -41,10 +48,11 @@ class OkUtil {
     }
 
     fun call(file: String, claims: Map<String, Any>, callback: Callback) {
-        RadioService.client.newCall(request(RadioService.SITE_URL + file, claims)).enqueue(callback)
+        client.newCall(request(SITE_URL + file, claims)).enqueue(callback)
     }
+
     fun call(file: String, claims: Map<String, Any>) {
-        RadioService.client.newCall(request(RadioService.SITE_URL + file, claims)).enqueue(object : Callback{
+        client.newCall(request(SITE_URL + file, claims)).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
             }
 
@@ -53,9 +61,10 @@ class OkUtil {
 
         })
     }
+
     fun call(file: String, callback: Callback) {
         val formBody = FormBody.Builder().add("data", compact(RadioService.operator.key)).build()
-        val request: Request = Request.Builder().url(RadioService.SITE_URL + file).post(formBody).build()
-        RadioService.client.newCall(request).enqueue(callback)
+        val request: Request = Request.Builder().url(SITE_URL + file).post(formBody).build()
+        client.newCall(request).enqueue(callback)
     }
 }

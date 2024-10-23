@@ -1929,7 +1929,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     void flagUser(User target) {
         final Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", operator.getUser_id());
+        claims.put("userId", target.getUser_id());
         claims.put("operatorId", operator.getUser_id());
         claims.put("handle", operator.getHandle());
         okUtil.call("user_flag.php", claims, new Callback() {
@@ -1956,7 +1956,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     public void longFlagUser(User target) {
         final Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", operator.getUser_id());
+        claims.put("userId", target.getUser_id());
         claims.put("operatorId", operator.getUser_id());
         claims.put("handle", operator.getHandle());
         okUtil.call("user_long_flag.php", claims, new Callback() {

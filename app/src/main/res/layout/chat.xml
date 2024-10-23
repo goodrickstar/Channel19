@@ -5,13 +5,14 @@
     android:layout_height="match_parent"
     android:background="@drawable/black_box_white_outline">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/user_area"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/blue_box_white_outline_transparent"
         android:padding="@dimen/default_padding"
         app:layout_constraintBottom_toTopOf="@+id/chat_view"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/chat_view"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -21,38 +22,50 @@
             android:layout_height="70dp"
             android:layout_marginRight="@dimen/default_padding"
             android:background="@null"
-            android:scaleType="centerCrop" />
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/chat_handle_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/chat_profile_picture_iv"
+            android:layout_marginLeft="@dimen/default_padding"
             android:background="@null"
-            android:textAppearance="@style/title_font" />
+            android:textAppearance="@style/title_font"
+            app:layout_constraintLeft_toRightOf="@+id/chat_profile_picture_iv"
+            app:layout_constraintTop_toTopOf="@+id/chat_profile_picture_iv" />
 
         <ImageView
             android:id="@+id/chat_star_iv"
-            android:layout_width="wrap_content"
+            android:layout_width="@dimen/star_width"
             android:layout_height="@dimen/star_height"
-            android:layout_below="@+id/chat_handle_tv"
-            android:layout_marginLeft="@dimen/star_margin_left"
             android:layout_marginTop="@dimen/star_margin_top"
-            android:layout_toRightOf="@+id/chat_profile_picture_iv"
-            android:scaleType="fitStart" />
+            android:scaleType="fitStart"
+            app:layout_constraintLeft_toRightOf="@+id/chat_profile_picture_iv"
+            app:layout_constraintStart_toStartOf="@+id/chat_handle_tv"
+            app:layout_constraintTop_toBottomOf="@+id/chat_handle_tv" />
 
         <TextView
             android:id="@+id/stamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/chat_star_iv"
-            android:layout_alignBottom="@+id/chat_profile_picture_iv"
-            android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/chat_profile_picture_iv"
+            android:layout_marginRight="8dp"
             android:gravity="right|bottom"
             android:textAppearance="@style/tiny_font"
-            android:textColor="@color/main_white" />
-    </RelativeLayout>
+            android:textColor="@color/main_white"
+            app:layout_constraintBottom_toBottomOf="@+id/chat_profile_picture_iv"
+            app:layout_constraintRight_toRightOf="parent" />
+
+        <ImageView
+            android:id="@+id/chat_full_history_button"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/history"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/chat_profile_picture_iv" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chat_view"

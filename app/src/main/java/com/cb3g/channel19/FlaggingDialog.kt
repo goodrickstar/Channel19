@@ -129,7 +129,7 @@ class CustomRecycler(private val inflation: LayoutInflater) : RecyclerView.Adapt
     override fun onBindViewHolder(holder: FlagViewHolder, position: Int) {
         val entry = list[position]
         holder.title.text = entry.handle
-        if (entry.count == 5) holder.image.setImageResource(R.drawable.flag_red)
+        if (entry.count > 1) holder.image.setImageResource(R.drawable.flag_red)
         else holder.image.setImageResource(R.drawable.flag)
     }
 

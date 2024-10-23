@@ -11,11 +11,8 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -28,7 +25,6 @@ import java.io.InputStream
 class Uploader(
     val context: Context, val operator: Operator, val client: OkHttpClient, val upload: FileUpload, val recepient: String
 ) {
-    private val photoDatabase = Utils.getDatabase().reference.child("photos")
     private lateinit var reference: StorageReference
     private lateinit var request: Request
 
@@ -63,14 +59,12 @@ class Uploader(
                     val downloadUri = task.result
                     upload.photo.url = downloadUri.toString()
                     shareImage()
-                } else { //TODO: handle failures
                 }
             }
         }
     }
 
     fun shareImage() {
-        val data: String
         upload.sendingIds.add("JJ7SAoyqRsS7GQixEL8pbziWguV2")
         when (upload.code) {
             RequestCode.PRIVATE_PHOTO -> {
@@ -87,62 +81,54 @@ class Uploader(
                 ControlObject(ControlCode.PRIVATE_PHOTO, upload.photo).send(upload.sendingIds)
             }
 
+            RequestCode.MASS_PHOTO -> {
+                ControlObject(ControlCode.MASS_PHOTO, upload.photo).send(upload.sendingIds)
+            }
+
             RequestCode.PROFILE -> {
                 val claims = HashMap<String, Any>()
                 claims["senderId"] = operator.user_id
                 claims["url"] = upload.photo.url
                 request = OkUtil().request(RadioService.SITE_URL + "user_post_profile.php", claims)
             }
-
-            RequestCode.MASS_PHOTO -> {
-                ControlObject(ControlCode.MASS_PHOTO, upload.photo).send(upload.sendingIds)
-            }
         }
 
-        when (upload.code) {
-            RequestCode.MASS_PHOTO -> {
-                RadioService.snacks.add(Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT))
-                context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
-            }
+        if (this::request.isInitialized) {
+            OkUtil().enqueu(request, object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    LOG.e("logging", "ShareImage() error $e")
+                }
 
-            else -> {
-                RadioService.client.newCall(request).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        LOG.e("logging", "ShareGiphy client error $e")
-                    }
-
-                    override fun onResponse(call: Call, response: Response) {
-                        if (response.isSuccessful) {
-                            when (upload.code) {
-                                RequestCode.PRIVATE_PHOTO, RequestCode.MASS_PHOTO -> {
-                                    RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
-                                    context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
-                                    for (userId in upload.sendingIds) {
-                                        photoDatabase.child(userId).child("private").child(upload.photo.key).setValue(upload.photo)
-                                    }
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        if (it.isSuccessful) {
+                            if (upload.code == RequestCode.PRIVATE_PHOTO) {
+                                RadioService.snacks.add(Snack("Photo Sent", Snackbar.LENGTH_SHORT))
+                                context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
+                            } else if (upload.code == RequestCode.PROFILE) {
+                                try {
+                                    RadioService.storage.getReferenceFromUrl(RadioService.operator.profileLink).delete()
+                                } catch (e: IllegalArgumentException) {
+                                    LOG.e("IllegalArgumentException", e.message)
                                 }
-
-                                RequestCode.PROFILE -> {
-                                    try {
-                                        RadioService.storage.getReferenceFromUrl(RadioService.operator.profileLink).delete()
-                                    } catch (e: IllegalArgumentException) {
-                                        LOG.e("IllegalArgumentException", e.message)
-                                    }
-                                    updateProfilePhotoInReservoir(RadioService.operator.profileLink, upload.photo.url)
-                                    RadioService.operator.profileLink = upload.photo.url
-                                    context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profileLink", upload.photo.url).apply()
-                                    context.sendBroadcast(Intent("updateProfilePicture").setPackage("com.cb3g.channel19"))
-                                }
+                                RadioService.operator.profileLink = upload.photo.url
+                                updateProfilePhotoInReservoir(RadioService.operator.profileLink, upload.photo.url)
+                                context.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putString("profileLink", upload.photo.url).apply()
+                                context.sendBroadcast(Intent("updateProfilePicture").setPackage("com.cb3g.channel19"))
                             }
                         }
                     }
-                })
-            }
+                }
+
+            })
+        } else {
+            RadioService.snacks.add(Snack("Mass Photo Sent", Snackbar.LENGTH_SHORT))
+            context.sendBroadcast(Intent("checkForMessages").setPackage("com.cb3g.channel19"))
         }
 
     }
 
-    fun updateProfilePhotoInReservoir(oldLink: String, newLink: String?) {
+    fun updateProfilePhotoInReservoir(oldLink: String, newLink: String?) { //TODO: mass update model
         RadioService.databaseReference.child("reservoir").addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) { //loop each channel
                 for (channel in dataSnapshot.children) {
