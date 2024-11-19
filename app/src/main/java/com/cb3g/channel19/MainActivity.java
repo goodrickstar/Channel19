@@ -1154,38 +1154,47 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
         if (transmitFragment.isAdded()) transmitFragment.transmitStart();
     }
 
+    private boolean loadingAd = false;
+
     @Override
     public void showRewardAd() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedAd.load(this, "ca-app-pub-4635898093945616/6205382793", adRequest, new RewardedAdLoadCallback() {
-            @Override
-            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                Logger.INSTANCE.e(loadAdError.getMessage());
-            }
+        if (!loadingAd){
+            loadingAd = true;
+            AdRequest adRequest = new AdRequest.Builder().build();
+            RewardedAd.load(this, "ca-app-pub-4635898093945616/6205382793", adRequest, new RewardedAdLoadCallback() {
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    Logger.INSTANCE.e(loadAdError.getMessage());
+                    loadingAd = false;
+                }
 
-            @Override
-            public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                    @Override
-                    public void onAdShowedFullScreenContent() {
-                        sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
-                        stopRecorder(false);
-                    }
+                @Override
+                public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+                    rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                        @Override
+                        public void onAdShowedFullScreenContent() {
+                            sendBroadcast(new Intent("nineteenPause").setPackage("com.cb3g.channel19"));
+                            stopRecorder(false);
+                            loadingAd = false;
+                        }
 
-                    @Override
-                    public void onAdFailedToShowFullScreenContent(@NotNull AdError adError) {
-                        sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
-                    }
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(@NotNull AdError adError) {
+                            sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
+                            loadingAd = false;
+                        }
 
-                    @Override
-                    public void onAdDismissedFullScreenContent() {
-                        sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
-                    }
-                });
-                rewardedAd.show(MainActivity.this, rewardItem -> {
-                });
-            }
-        });
+                        @Override
+                        public void onAdDismissedFullScreenContent() {
+                            sendBroadcast(new Intent("nineteenPlayPause").setPackage("com.cb3g.channel19"));
+                            loadingAd = false;
+                        }
+                    });
+                    rewardedAd.show(MainActivity.this, rewardItem -> {
+                    });
+                }
+            });
+        }
     }
 
     @Override

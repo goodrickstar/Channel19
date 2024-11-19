@@ -630,7 +630,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (!operator.getSubscribed()) timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                sendBroadcast(new Intent("advertise").setPackage("com.cb3g.channel19"));
+                if (!operator.getSubscribed()) sendBroadcast(new Intent("advertise").setPackage("com.cb3g.channel19"));
             }
         }, 900000, 900000);
     }
