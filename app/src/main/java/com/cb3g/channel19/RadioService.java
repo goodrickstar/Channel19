@@ -150,7 +150,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     private BluetoothAdapter bluetoothAdapter;
     private Locale locale;
     private Context context;
-    private MI MI;
+    private MI mainInterface;
     private NotificationCompat.Builder mBuilder;
     private RemoteViews notifyview;
     private FirebaseStorage temporaryStorage;
@@ -164,14 +164,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             if (intent.getAction() == null) return;
             switch (intent.getAction()) {
                 case "interrupt":
-                    if (MI != null) MI.stopRecorder(false);
+                    if (mainInterface != null) mainInterface.stopRecorder(false);
                     break;
                 case "locationUpdate":
                     final String locationString = intent.getStringExtra("data");
                     if (locationString != null) {
                         operator.setUserLocationString(locationString);
                         if (operator.getSharing()) uploadLocation(operator.getUserLocationString());
-                        if (MI != null) MI.updateLocationDisplay(operator.getUserLocationString());
+                        if (mainInterface != null) mainInterface.updateLocationDisplay(operator.getUserLocationString());
                     }
                     break;
                 case "listUpdate":
@@ -188,7 +188,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     String flagSenderHandle = intent.getStringExtra("handle");
                     Log.i("Animate", flagSenderId + " " + flagSenderHandle);
                     settings.edit().putBoolean("flagDue", true).putString("flagSenderId", flagSenderId).putString("flagSenderHandle", flagSenderHandle).apply();
-                    if (MI != null) MI.displayLongFlag(flagSenderId, flagSenderHandle);
+                    if (mainInterface != null) mainInterface.displayLongFlag(flagSenderId, flagSenderHandle);
                     break;
                 case "confirmInterrupt":
                     sp.play(interrupt, .1f, .1f, 1, 0, 1f);
@@ -316,24 +316,24 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     boolean gps = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
                     if (!gps) {
                         operator.setUserLocationString("");
-                        if (MI != null) MI.updateLocationDisplay("");
+                        if (mainInterface != null) mainInterface.updateLocationDisplay("");
                     }
-                    if (MI != null) MI.startOrStopGPS(gps);
+                    if (mainInterface != null) mainInterface.startOrStopGPS(gps);
                     break;
                 case BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED:
                     bluetoothEnabled = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_DISCONNECTED) == BluetoothHeadset.STATE_CONNECTED && bluetooth;
                     sendBroadcast(new Intent("tooth").setPackage("com.cb3g.channel19").putExtra("data", bluetoothEnabled));
-                    if (MI != null) MI.stopRecorder(false);
+                    if (mainInterface != null) mainInterface.stopRecorder(false);
                     break;
                 case AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED:
                     switch (intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_DISCONNECTED)) {
                         case AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
-                            if (MI != null) {
-                                MI.startTransmit();
+                            if (mainInterface != null) {
+                                mainInterface.startTransmit();
                             }
                         }
                         case AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
-                            if (MI != null) MI.stopRecorder(false);
+                            if (mainInterface != null) mainInterface.stopRecorder(false);
                         }
                     }
                     break;
@@ -353,7 +353,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 autoSkip.add(child.getKey());
             }
             userList = settleUserList(users);
-            if (MI != null) MI.updateUserList(userList);
+            if (mainInterface != null) mainInterface.updateUserList(userList);
         }
 
         @Override
@@ -611,7 +611,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     @Override
                     public void onResponse(@NonNull Call call, @NonNull Response response) {
                         if (response.isSuccessful()) {
-                            try (response; response) {
+                            try (response) {
                                 assert response.body() != null;
                                 final String flagData = response.body().string();
                                 flaggedIds.clear();
@@ -668,14 +668,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (control != null) {
             switch (control) {
                 case ALERT: {
-                    if (MI != null) {
+                    if (mainInterface != null) {
                         snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_INDEFINITE));
                         checkForMessages();
                     }
                 }
                 break;
                 case TOAST:
-                    if (MI != null) {
+                    if (mainInterface != null) {
                         snacks.add(new Snack(snapshot.child("data").getValue(String.class), Snackbar.LENGTH_LONG));
                         checkForMessages();
                     }
@@ -686,7 +686,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     if (settings.getBoolean("pmenabled", true)) {
                         if (!RadioService.blockListContainsId(textIDs, message.getUser_id())) {
                             if (Objects.equals(chat.get(), message.getUser_id())) {
-                                if (MI != null) MI.displayChat(null, true, false);
+                                if (mainInterface != null) mainInterface.displayChat(null, true, false);
                                 else
                                     sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
                             } else {
@@ -717,7 +717,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                         @Override
                         public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
                             if (Objects.equals(chat.get(), privatePhoto.getSenderId())) {
-                                if (MI != null) MI.displayChat(null, true, false);
+                                if (mainInterface != null) mainInterface.displayChat(null, true, false);
                                 else
                                     sendBroadcast(new Intent("nineteenChatSound").setPackage("com.cb3g.channel19"));
                             } else {
@@ -745,11 +745,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
                         @Override
                         public boolean onResourceReady(@NonNull File resource, @NonNull Object model, Target<File> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                            if (!recording && MI != null)
+                            if (!recording && mainInterface != null)
                                 sp.play(glass, .1f, .1f, 1, 0, 1f);
                             if (settings.getBoolean("photos", true) && !paused)
                                 photos.add(massPhoto);
-                            else if (MI != null)
+                            else if (mainInterface != null)
                                 snacks.add(new Snack(massPhoto.getSenderHandle() + " sent you a mass photo", Snackbar.LENGTH_SHORT));
                             Utils.getDatabase().getReference().child("mass history").child(operator.getUser_id()).push().setValue(massPhoto);
                             checkForMessages();
@@ -760,16 +760,16 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 case SALUTE:
                     final ReputationMark salute = snapshot.child("data").getValue(ReputationMark.class);
                     assert salute != null;
-                    if (MI != null) {
-                        MI.showSnack(new Snack(salute.getHandle() + " sent you a SALUTE!", Snackbar.LENGTH_INDEFINITE));
+                    if (mainInterface != null) {
+                        mainInterface.showSnack(new Snack(salute.getHandle() + " sent you a SALUTE!", Snackbar.LENGTH_INDEFINITE));
                     }
                     break;
                 case FLAG:
                     final ReputationMark flag = snapshot.child("data").getValue(ReputationMark.class);
                     assert flag != null;
                     sendBroadcast(new Intent("bird").putExtra("userId", flag.getUserId()).setPackage("com.cb3g.channel19"));
-                    if (MI != null)
-                        MI.showSnack(new Snack(flag.getHandle() + " sent you a FLAG!", Snackbar.LENGTH_LONG));
+                    if (mainInterface != null)
+                        mainInterface.showSnack(new Snack(flag.getHandle() + " sent you a FLAG!", Snackbar.LENGTH_LONG));
                     checkFlagOut();
                     break;
                 case LONG_FLAG:
@@ -794,7 +794,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     editor.putString("salutedIDs", "[]").apply();
                     editor.putString("flaggedIDs", "[]").apply();
                     editor.apply();
-                    if (MI != null) {
+                    if (mainInterface != null) {
                         snacks.add(new Snack("Block Lists Cleared", Snackbar.LENGTH_INDEFINITE));
                         checkForMessages();
                     }
@@ -884,15 +884,15 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     removeZeros();
                     return;
                 }
-                if (MI != null) {
+                if (mainInterface != null) {
                     if (!playing) updateDisplay();
-                    MI.updateQueue(inbounds.size(), paused, poor);
+                    mainInterface.updateQueue(inbounds.size(), paused, poor);
                     notification();
                 }
                 return;
             }
             if (playing || recording) {
-                if (MI != null) MI.updateQueue(inbounds.size(), false, poor);
+                if (mainInterface != null) mainInterface.updateQueue(inbounds.size(), false, poor);
             } else sendBroadcast(new Intent("play").setPackage("com.cb3g.channel19"));
         }).addOnFailureListener(exception -> Logger.INSTANCE.e("download task error", exception.getMessage()));
     }
@@ -914,8 +914,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             final Inbound inbound = inbounds.get(0);
             if (autoSkip.contains(inbound.getUser_id())) {
                 removeZeros();
-                if (MI != null)
-                    MI.showSnack(new Snack("Auto-skipped " + inbound.getHandle(), Snackbar.LENGTH_SHORT));
+                if (mainInterface != null)
+                    mainInterface.showSnack(new Snack("Auto-skipped " + inbound.getHandle(), Snackbar.LENGTH_SHORT));
             } else {
                 playing = true;
                 try {
@@ -999,7 +999,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         UploadTask uploadTask = reference.putFile(Uri.fromFile(file), metadata);
         uploadTask.continueWithTask(task -> {
             if (!task.isSuccessful()) {
-                if (MI != null) MI.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
+                if (mainInterface != null) mainInterface.showSnack(new Snack("Slow Connection", Snackbar.LENGTH_SHORT));
             }
             return reference.getDownloadUrl();
         }).addOnCompleteListener(task -> {
@@ -1027,8 +1027,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 else inbound.setTown(operator.getTown());
                 databaseReference.child("audio").child(operator.getChannel().getChannel_name()).push().setValue(inbound).addOnCompleteListener(task1 -> {
                     if (!recording) sp.play(confirm, .1f, .1f, 1, 0, 1f);
-                    if (MI != null)
-                        MI.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
+                    if (mainInterface != null)
+                        mainInterface.showSnack(new Snack(getString(R.string.checkmark), Snackbar.LENGTH_SHORT));
                 });
                 if (!file.delete()) Log.e("transmit()", "Failed to delete file!");
                 final Map<String, Object> claims = new HashMap<>();
@@ -1041,7 +1041,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
                     @Override
                     public void onResponse(@NotNull Call call, @NotNull Response response) {
-                        try (response; response) {
+                        try (response) {
                             if (response.isSuccessful()) {
                                 assert response.body() != null;
                                 JSONObject data = new JSONObject(response.body().string());
@@ -1102,7 +1102,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     pausedUsers.add(child.getKey());
                 }
                 userList = settleUserList(users);
-                if (MI != null) MI.updateUserList(userList);
+                if (mainInterface != null) mainInterface.updateUserList(userList);
             }
             case "onCall" -> {
                 onCallUsers.clear();
@@ -1110,7 +1110,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     onCallUsers.add(child.getKey());
                 }
                 userList = settleUserList(users);
-                if (MI != null) MI.updateUserList(userList);
+                if (mainInterface != null) mainInterface.updateUserList(userList);
             }
             case "silenced" -> {
                 silencedUsers.clear();
@@ -1118,11 +1118,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     silencedUsers.add(child.getKey());
                 }
                 operator.setSilenced(silencedUsers.contains(operator.getUser_id()));
-                if (MI != null) {
-                    MI.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
+                if (mainInterface != null) {
+                    mainInterface.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
                 }
                 userList = settleUserList(users);
-                if (MI != null) MI.updateUserList(userList);
+                if (mainInterface != null) mainInterface.updateUserList(userList);
             }
             case "ghost" -> {
                 ghostUsers.clear();
@@ -1130,7 +1130,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                     ghostUsers.add(child.getKey());
                 }
                 userList = settleUserList(users);
-                if (MI != null) MI.updateUserList(userList);
+                if (mainInterface != null) mainInterface.updateUserList(userList);
             }
             case "hinderPhotos" -> {
                 List<String> ids = new ArrayList<>();
@@ -1266,12 +1266,12 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull final Response response) {
                 if (response.isSuccessful()) {
-                    try (response; response) {
+                    try (response) {
                         assert response.body() != null;
                         users = returnFilteredList(returnUserListObjectFromJson(response.body().string()));
                         userList = settleUserList(users);
                         handler.post(() -> {
-                            if (MI != null) MI.updateUserList(userList);
+                            if (mainInterface != null) mainInterface.updateUserList(userList);
                         });
                     } catch (IOException e) {
                         LOG.e("get_users_on_channel", e.getMessage());
@@ -1301,14 +1301,14 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
     void recording(final boolean isRecording) {
         recording = isRecording;
-        if (MI != null) {
+        if (mainInterface != null) {
             if (recording) {
                 pre_key_up();
                 if (headsetActive()) {
                     if (Utils.permissionsAccepted(RadioService.this, Utils.getBluetoothPermissions())) {
                         useSco(true);
-                    } else if (MI != null) MI.requestBluetoothPermission();
-                } else MI.startTransmit();
+                    } else if (mainInterface != null) mainInterface.requestBluetoothPermission();
+                } else mainInterface.startTransmit();
             } else {
                 if (headsetActive()) useSco(false);
                 post_key_up();
@@ -1356,11 +1356,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void updateDisplay() {
-        if (MI == null) return;
+        if (mainInterface == null) return;
         if (recording) {
-            MI.updateQueue(inbounds.size(), paused, poor);
+            mainInterface.updateQueue(inbounds.size(), paused, poor);
         } else {
-            MI.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
+            mainInterface.updateDisplay(getlatest(), inbounds.size(), getDuration(), paused, poor, getlatestStamp());
             notification();
         }
     }
@@ -1592,7 +1592,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     public void main_activity_callbacks(MI callbacks) {
-        MI = callbacks;
+        mainInterface = callbacks;
     }
 
     private String getAbbreviationFromUSState(String state) {
@@ -1610,7 +1610,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-                try (response; response) {
+                try (response) {
                     if (response.isSuccessful()) {
                         assert response.body() != null;
                         final JSONObject object = new JSONObject(response.body().string());
@@ -1723,8 +1723,8 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             onlineStatus = "Dead Zone";
         }
         checkForMessages();
-        if (MI != null) {
-            MI.adjustColors(poor);
+        if (mainInterface != null) {
+            mainInterface.adjustColors(poor);
             updateDisplay();
         }
     }
@@ -2103,7 +2103,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (!blockListContainsId(textIDs, id)) {
             textIDs.add(new Block(id, handle));
             update_block_list(textIDs, "textIDs");
-            if (MI != null) MI.updateUserList(userList);
+            if (mainInterface != null) mainInterface.updateUserList(userList);
             if (toast)
                 snacks.add(new Snack("Messages blocked From " + handle, Snackbar.LENGTH_SHORT));
         } else {
@@ -2113,23 +2113,23 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     void checkForMessages() {
-        if (recording || occupied.get() || !phoneIdle || MI == null) return;
+        if (recording || occupied.get() || !phoneIdle || mainInterface == null) return;
         if (!Objects.equals(chat.get(), "0")) {
-            MI.displayChat(null, false, false);
+            mainInterface.displayChat(null, false, false);
         }
         if (!photos.isEmpty()) {
-            MI.displayPhoto(photos.get(0));
+            mainInterface.displayPhoto(photos.get(0));
             photos.remove(0);
             return;
         }
         if (!messages.isEmpty()) {
             Message message = messages.get(0);
             messages.remove(0);
-            MI.displayPm(new String[]{message.getUser_id(), message.getHandle(), message.getMessageText(), message.getRank(), message.getProfileLink()});
+            mainInterface.displayPm(new String[]{message.getUser_id(), message.getHandle(), message.getMessageText(), message.getRank(), message.getProfileLink()});
         }
         if (!snacks.isEmpty()) {
             Snack snack = snacks.get(0);
-            MI.showSnack(snack);
+            mainInterface.showSnack(snack);
         }
     }
 
@@ -2218,11 +2218,11 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 try (response) {
                     if (response.isSuccessful()) {
                         handler.post(() -> {
-                            if (MI != null) {
+                            if (mainInterface != null) {
                                 if (Objects.equals(chat.get(), "0")) {
                                     snacks.add(new Snack("Message Sent", Snackbar.LENGTH_SHORT));
                                     checkForMessages();
-                                } else MI.displayChat(null, false, false);
+                                } else mainInterface.displayChat(null, false, false);
                             }
                         });
                     }
@@ -2273,10 +2273,10 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
         if (paused) return;
         paused = true;
         if (playing) player.pause();
-        if (MI != null) MI.resumeAnimation(new int[]{0, 0});
+        if (mainInterface != null) mainInterface.resumeAnimation(new int[]{0, 0});
         sendBroadcast(new Intent("switchToPlay").setPackage("com.cb3g.channel19"));
         updateDisplay();
-        if (MI != null) {
+        if (mainInterface != null) {
             snacks.add(new Snack("Paused", Snackbar.LENGTH_SHORT));
             checkForMessages();
         }
@@ -2308,7 +2308,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     }
 
     private void downloadImage(final String link) throws MalformedURLException {
-        if (MI != null) MI.showSnack(new Snack("Image Downloading", Snackbar.LENGTH_SHORT));
+        if (mainInterface != null) mainInterface.showSnack(new Snack("Image Downloading", Snackbar.LENGTH_SHORT));
         String fileName = FilenameUtils.getName(new URL(link).getPath());
         fileName = fileName.replace("%", "");
         fileName = fileName.replace("reservoir", "");
@@ -2332,7 +2332,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
             @Override
             public void onResponse(@NonNull Call call, @NonNull final Response response) {
                 if (response.isSuccessful()) {
-                    try (response; response; response) {
+                    try (response) {
                         assert response.body() != null;
                         int flags = Integer.parseInt(response.body().string());
                         if (flags >= 20 && !operator.getAdmin()) {
@@ -2359,7 +2359,6 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                                     }
                                 }
                             });
-
                             stopSelf();
                         }
                     } catch (IOException e) {
@@ -2374,7 +2373,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
     public void onAudioFocusChange(int focusChange) {
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                if (MI != null && recording) MI.stopRecorder(false);
+                if (mainInterface != null && recording) mainInterface.stopRecorder(false);
                 snacks.add(new Snack("Key-up interrupted!", Snackbar.LENGTH_SHORT));
                 checkForMessages();
             }
@@ -2405,7 +2404,7 @@ public class RadioService extends Service implements ValueEventListener, AudioMa
                 case TelephonyManager.CALL_STATE_OFFHOOK, TelephonyManager.CALL_STATE_RINGING -> {
                     if (phoneIdle) {
                         phoneIdle = false;
-                        if (MI != null) MI.stopRecorder(false);
+                        if (mainInterface != null) mainInterface.stopRecorder(false);
                         if (!paused) {
                             onCall = true;
                             pause_playback();

@@ -212,7 +212,7 @@ public class MainActivity extends FragmentActivity implements MI, View.OnClickLi
             if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Notifications");
-                builder.setMessage("In order for Channel 19 to properly operate in the background, a persistant notification is needed");
+                builder.setMessage("In order for Channel 19 to properly operate in the background, a persistent notification is needed");
                 builder.setPositiveButton("Sure!", (dialogInterface, i) -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         requestPermissions(List.of(Manifest.permission.POST_NOTIFICATIONS).toArray(new String[0]), 0);
